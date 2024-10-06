@@ -13,7 +13,7 @@
   - [ ] Allow override of default func
   - [ ] Check implementation with `pdb`
 - [x] `tap` actions
-- [ ] `then` actions
+- [x] `then` actions (no then as this is literally a lambda call)
 - [x] `lambda` actions
 - [x] Work with class and methods
 - [ ] Using _ substitution
