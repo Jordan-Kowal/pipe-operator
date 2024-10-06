@@ -9,7 +9,7 @@ from ast import (
 )
 from inspect import getsource, isclass, stack
 from textwrap import dedent
-from typing import Callable
+from typing import Any, Callable, TypeVar
 
 
 class PipeTransformer(NodeTransformer):
@@ -55,10 +55,20 @@ def pipes(func_or_class: Callable) -> Callable:
     # Update the AST and execute the new code
     tree = PipeTransformer().visit(tree)
     code = compile(
-        tree, filename=(ctx["__file__"] if "__file__" in ctx else "repl"), mode="exec"
+        tree,
+        filename=(ctx["__file__"] if "__file__" in ctx else "repl"),
+        mode="exec",
     )
     exec(code, ctx)
     return ctx[tree.body[0].name]
 
 
-__all__ = ["pipes"]
+T = TypeVar("T")
+
+
+def tap(value: T, func_or_class: Callable[[T], Any]) -> T:
+    func_or_class(value)
+    return value
+
+
+__all__ = ["pipes", "tap"]

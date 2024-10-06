@@ -1,7 +1,7 @@
 from typing import no_type_check
 import unittest
 
-from pipe_operator import pipes
+from pipe_operator import pipes, tap
 
 
 def add(a: int, b: int) -> int:
@@ -62,6 +62,9 @@ class DecoratedClass(BasicClass):
 
 
 class PipeOperatorTestCase(unittest.TestCase):
+    # ------------------------------
+    # Function-related
+    # ------------------------------
     @no_type_check
     @pipes
     def test_one_arg(self) -> None:
@@ -86,13 +89,9 @@ class PipeOperatorTestCase(unittest.TestCase):
         op = 2 >> (lambda a: a**2) >> (lambda a: a**2)
         self.assertEqual(op, 16)
 
-    @no_type_check
-    @pipes
-    def test_does_not_propagate(self) -> None:
-        # rshift uses the `>>` operator, and it should behave normally
-        result = rshift(1000, 4)
-        self.assertEqual(result, 62)
-
+    # ------------------------------
+    # Class-related
+    # ------------------------------
     @no_type_check
     @pipes
     def test_class_call(self) -> None:
@@ -114,6 +113,52 @@ class PipeOperatorTestCase(unittest.TestCase):
         op = instance.compute_score()
         self.assertEqual(op, 928)
 
+    # ------------------------------
+    # Tap
+    # ------------------------------
+    @no_type_check
+    @pipes
+    def test_tap_with_lambda(self) -> None:
+        op = (
+            4
+            >> add(10)
+            >> tap(lambda a: a**3)
+            >> tap(lambda a: a**3)
+            >> double
+            >> tap(lambda a: a**3)
+            >> add(1)
+        )
+        self.assertEqual(op, 29)
+
+    @no_type_check
+    @pipes
+    def test_tap_with_func(self) -> None:
+        op = (
+            4
+            >> add(10)
+            >> tap(double)
+            >> tap(double)
+            >> double
+            >> tap(double)
+            >> add(1)
+        )
+        self.assertEqual(op, 29)
+
+    # ------------------------------
+    # Settings
+    # ------------------------------
+    @no_type_check
+    @pipes
+    def test_does_not_propagate(self) -> None:
+        # rshift uses the `>>` operator, and it should behave normally
+        result = rshift(1000, 4)
+        self.assertEqual(result, 62)
+        result = 1000 >> rshift(4)
+        self.assertEqual(result, 62)
+
+    # ------------------------------
+    # Others
+    # ------------------------------
     @no_type_check
     @pipes
     def test_complex(self) -> None:

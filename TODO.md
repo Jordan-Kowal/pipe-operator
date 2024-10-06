@@ -12,13 +12,15 @@
   - [ ] Automatic print
   - [ ] Allow override of default func
   - [ ] Check implementation with `pdb`
-- [ ] `tap` actions
+- [x] `tap` actions
 - [ ] `then` actions
 - [x] `lambda` actions
 - [x] Work with class and methods
-- [ ] Kernel operators (`>> _ + 3`)
-- [ ] Allow calling methods of object
-- [ ] Allow calling attribute of object (like a lambda/then)
+- [ ] Using _ substitution
+  - [ ] Kernel operators (`>> _ + 3`)
+  - [ ] Allow calling methods of object
+  - [ ] Allow calling attribute of object (like a lambda/then)
+  - [ ] Should work with `tap`
 - [x] Handle missing parenthesis (`print()` vs `print`)
 - [ ] `if` workflow
 - [ ] `case` workflow
