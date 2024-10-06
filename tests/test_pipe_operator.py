@@ -144,6 +144,24 @@ class PipeOperatorTestCase(unittest.TestCase):
         self.assertEqual(op, 33)
 
     # ------------------------------
+    # Operators
+    # ------------------------------
+    @no_type_check
+    @pipes
+    def test_operators(self) -> None:
+        op = (
+            1_000
+            >> _ + 3
+            >> 10 - _
+            >> _ + _
+            >> _ * 10 + 3
+            >> 10 + _ - 5
+            >> 10 - 12 + _
+            >> 1 + _ + _ + 1
+        )
+        self.assertEqual(op, -6)
+
+    # ------------------------------
     # Tap
     # ------------------------------
     @no_type_check

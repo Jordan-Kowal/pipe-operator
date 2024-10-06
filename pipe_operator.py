@@ -3,34 +3,46 @@ from inspect import getsource, isclass, stack
 from textwrap import dedent
 from typing import Any, Callable, TypeVar
 
+PLACEHOLDER = "_"
+
 
 class PipeTransformer(ast.NodeTransformer):
     def visit_BinOp(self, node: ast.BinOp) -> ast.AST:
         # Exit early if not `>>` operator
-        if not isinstance(node.op, (ast.RShift)):
+        if not isinstance(node.op, ast.RShift):
             return node
+
         # Property call `_.attribute`
         if (
             isinstance(node.right, ast.Attribute)
             and isinstance(node.right.value, ast.Name)
-            and node.right.value.id == "_"
+            and node.right.value.id == PLACEHOLDER
         ):
-            return self.transform_attribute(node)
+            return self._transform_attribute(node)
+
         # Method call `_.method(...)`
         if (
             isinstance(node.right, ast.Call)
             and isinstance(node.right.func, ast.Attribute)
             and isinstance(node.right.func.value, ast.Name)
-            and node.right.func.value.id == "_"
+            and node.right.func.value.id == PLACEHOLDER
         ):
-            return self.transform_method_call(node)
+            return self._transform_method_call(node)
+
+        # Binary operator instruction other than `>>`
+        if isinstance(node.right, ast.BinOp) and not isinstance(
+            node.right.op, ast.RShift
+        ):
+            return self._transform_operation(node)
+
         # Lambda or function without parenthesis
         if not isinstance(node.right, ast.Call):
-            return self.transform_name_to_call(node)
-        # Basic function call `a >> b(...)`
-        return self.transform_pipe_operation(node)
+            return self._transform_name_to_call(node)
 
-    def transform_attribute(self, node: ast.expr) -> ast.expr:
+        # Basic function call `a >> b(...)`
+        return self._transform_pipe_operation(node)
+
+    def _transform_attribute(self, node: ast.expr) -> ast.expr:
         """Rewrite `a >> _.property` as `a.property`"""
         attr = ast.Attribute(
             value=node.left,
@@ -41,7 +53,7 @@ class PipeTransformer(ast.NodeTransformer):
         )
         return self.visit(attr)
 
-    def transform_method_call(self, node: ast.expr) -> ast.Call:
+    def _transform_method_call(self, node: ast.expr) -> ast.Call:
         """Rewrite `a >> _.method(...)` as `a.method(...)`"""
         call = ast.Call(
             func=ast.Attribute(
@@ -58,7 +70,15 @@ class PipeTransformer(ast.NodeTransformer):
         )
         return self.visit(call)
 
-    def transform_name_to_call(self, node: ast.expr) -> ast.Call:
+    def _transform_operation(self, node: ast.expr) -> ast.AST:
+        if not self._contains_underscore(node.right):
+            raise SyntaxError(
+                "[pipe_operator] Missing `_` in binary operator instruction"
+            )
+        # TODO: Add support for other binary operators
+        return self.generic_visit(node)
+
+    def _transform_name_to_call(self, node: ast.expr) -> ast.Call:
         """Convert function name / lambda etc without braces into call"""
         call = ast.Call(
             func=node.right,
@@ -69,11 +89,19 @@ class PipeTransformer(ast.NodeTransformer):
         )
         return self.visit(call)
 
-    def transform_pipe_operation(self, node: ast.expr) -> ast.Call:
+    def _transform_pipe_operation(self, node: ast.expr) -> ast.Call:
         """Rewrite `a >> b(...)` as `b(a, ...)`"""
         args = 0 if isinstance(node.op, ast.RShift) else len(node.right.args)
         node.right.args.insert(args, node.left)
         return self.visit(node.right)
+
+    @staticmethod
+    def _contains_underscore(node: ast.expr) -> bool:
+        """Checks if a node contains an underscore Name node"""
+        for subnode in ast.walk(node):
+            if isinstance(subnode, ast.Name) and subnode.id == "_":
+                return True
+        return False
 
 
 def pipes(func_or_class: Callable) -> Callable:

@@ -23,8 +23,9 @@
 - [x] Handle missing parenthesis (`print()` vs `print`)
 - [ ] `if` workflow
 - [ ] `case` workflow
-- [ ] Debugger/code info update/fix
-- [ ] Fix ruff and mypy issues
+- [ ] Issues
+  - [ ] Recompute line errors correctly (`ast.fix_missing_locations(tree)`)
+  - [ ] Fix ruff and mypy issues
 
 ## Deployment
 
