@@ -1,0 +1,42 @@
+[project]
+name = "pipe_operator"
+version = "1.0.0"
+description = " Elixir's pipe operator in Python"
+dependencies = []
+
+[project.urls]
+homepage = "https://github.com/Jordan-Kowal/pipe-operator"
+
+# ------------------------------
+# Dependencies
+# ------------------------------
+[tool.uv]
+dev-dependencies = ["mypy>=1.11.2", "ruff>=0.6.7"]
+
+# ------------------------------
+# MYPY
+# ------------------------------
+[tool.mypy]
+python_version = "3.12"
+mypy_path = "./pipe_operator"
+
+check_untyped_defs = true
+disallow_untyped_defs = true
+follow_imports = "silent"
+ignore_missing_imports = false
+show_column_numbers = true
+strict_optional = false
+warn_redundant_casts = true
+warn_unused_ignores = true
+disable_error_code = "attr-defined,import-untyped"
+
+# ------------------------------
+# RUFF
+# ------------------------------
+[tool.ruff.format]
+quote-style = "double"
+docstring-code-format = true
+
+[tool.ruff.lint.isort]
+known-first-party = ["pipe_operator"]
+force-sort-within-sections = true

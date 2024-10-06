@@ -1,36 +1,45 @@
 """
-   Implement a @pipes decorator that converts the << and >> operators
-   to mimic Elixir pipes.
+Implement a @pipes decorator that converts the << and >> operators
+to mimic Elixir pipes.
 """
 
-
-from ast import Call, parse, Name, NodeTransformer, LShift, RShift, \
-    increment_lineno, walk
+from ast import (
+    Call,
+    LShift,
+    Name,
+    NodeTransformer,
+    RShift,
+    increment_lineno,
+    parse,
+    walk,
+)
 from inspect import getsource, isclass, stack
 from itertools import takewhile
 from textwrap import dedent
 
 
 class _PipeTransformer(NodeTransformer):
-
     def visit_BinOp(self, node):
         if isinstance(node.op, (LShift, RShift)):
             # Convert function name / lambda etc without braces into call
             if not isinstance(node.right, Call):
-                return self.visit(Call(
-                    func=node.right,
-                    args=[node.left],
-                    keywords=[],
-                    starargs=None,
-                    kwargs=None,
-                    lineno=node.right.lineno,
-                    col_offset=node.right.col_offset
-                ))
+                return self.visit(
+                    Call(
+                        func=node.right,
+                        args=[node.left],
+                        keywords=[],
+                        starargs=None,
+                        kwargs=None,
+                        lineno=node.right.lineno,
+                        col_offset=node.right.col_offset,
+                    )
+                )
             else:
                 # Rewrite a >> b(...) as b(a, ...)
                 node.right.args.insert(
                     0 if isinstance(node.op, RShift) else len(node.right.args),
-                    node.left)
+                    node.left,
+                )
                 return self.visit(node.right)
 
         else:
@@ -61,26 +70,29 @@ def pipes(func_or_class):
             node.col_offset += source_indent
 
     # Update name of function or class to compile
-    #tree.body[0].name = decorated_name
+    # tree.body[0].name = decorated_name
 
     # remove the pipe decorator so that we don't recursively
     # call it again. The AST node for the decorator will be a
     # Call if it had braces, and a Name if it had no braces.
     # The location of the decorator function name in these
     # nodes is slightly different.
-    tree.body[0].decorator_list = \
-        [d for d in tree.body[0].decorator_list
-         if isinstance(d, Call) and d.func.id != 'pipes'
-         or isinstance(d, Name) and d.id != 'pipes']
+    tree.body[0].decorator_list = [
+        d
+        for d in tree.body[0].decorator_list
+        if isinstance(d, Call)
+        and d.func.id != "pipes"
+        or isinstance(d, Name)
+        and d.id != "pipes"
+    ]
 
     # Apply the visit_BinOp transformation
     tree = _PipeTransformer().visit(tree)
 
     # now compile the AST into an altered function or class definition
     code = compile(
-        tree,
-        filename=(ctx['__file__'] if '__file__' in ctx else "repl"),
-        mode="exec")
+        tree, filename=(ctx["__file__"] if "__file__" in ctx else "repl"), mode="exec"
+    )
 
     # and execute the definition in the original context so that the
     # decorated function can access the same scopes as the original
