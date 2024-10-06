@@ -18,14 +18,13 @@
 - [x] Work with class and methods
 - [ ] Using _ substitution
   - [ ] Kernel operators (`>> _ + 3`)
-  - [ ] Allow calling methods of object
-  - [ ] Allow calling attribute of object (like a lambda/then)
-  - [ ] Should work with `tap`
+  - [x] Allow calling methods of object
+  - [x] Allow calling attribute of object
 - [x] Handle missing parenthesis (`print()` vs `print`)
 - [ ] `if` workflow
 - [ ] `case` workflow
 - [ ] Debugger/code info update/fix
-- [ ] Fix typing issue
+- [ ] Fix ruff and mypy issues
 
 ## Deployment
 

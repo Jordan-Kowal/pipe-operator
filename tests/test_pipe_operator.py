@@ -27,8 +27,15 @@ class BasicClass:
     def increment(self) -> None:
         self.value += 1
 
-    def get_value(self) -> int:
+    @property
+    def get_value_property(self) -> int:
         return self.value
+
+    def get_value_method(self) -> int:
+        return self.value
+
+    def get_value_plus_arg(self, value: int) -> int:
+        return self.value + value
 
 
 class ClassWithDecoratedMethod(BasicClass):
@@ -63,7 +70,7 @@ class DecoratedClass(BasicClass):
 
 class PipeOperatorTestCase(unittest.TestCase):
     # ------------------------------
-    # Function-related
+    # Function related
     # ------------------------------
     @no_type_check
     @pipes
@@ -90,7 +97,7 @@ class PipeOperatorTestCase(unittest.TestCase):
         self.assertEqual(op, 16)
 
     # ------------------------------
-    # Class-related
+    # Class related
     # ------------------------------
     @no_type_check
     @pipes
@@ -112,6 +119,29 @@ class PipeOperatorTestCase(unittest.TestCase):
         instance = DecoratedClass(1)
         op = instance.compute_score()
         self.assertEqual(op, 928)
+
+    # ------------------------------
+    # Class instance related
+    # ------------------------------
+    @no_type_check
+    @pipes
+    def test_method_call(self) -> None:
+        op = 33 >> BasicClass >> _.get_value_method()
+        self.assertEqual(op, 33)
+        op = 33 >> BasicClass >> _.get_value_plus_arg(10)
+        self.assertEqual(op, 43)
+
+    @no_type_check
+    @pipes
+    def test_attribute_call(self) -> None:
+        op = 33 >> BasicClass >> _.value
+        self.assertEqual(op, 33)
+
+    @no_type_check
+    @pipes
+    def test_property_call(self) -> None:
+        op = 33 >> BasicClass >> _.get_value_property
+        self.assertEqual(op, 33)
 
     # ------------------------------
     # Tap
