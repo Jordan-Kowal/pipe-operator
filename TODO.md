@@ -7,20 +7,23 @@
 
 ## Implementation
 
-- [ ] Pipe default workflow through AST
+- [x] Pipe default workflow through AST
 - [ ] Debug mode
   - [ ] Automatic print
   - [ ] Allow override of default func
   - [ ] Check implementation with `pdb`
 - [ ] `tap` actions
 - [ ] `then` actions
-- [ ] `lambda` actions
-- [ ] Work with class and methods
+- [x] `lambda` actions
+- [x] Work with class and methods
 - [ ] Kernel operators (`>> _ + 3`)
-- [ ] Handle missing parenthesis (`print()` vs `print`)
+- [ ] Allow calling methods of object
+- [ ] Allow calling attribute of object (like a lambda/then)
+- [x] Handle missing parenthesis (`print()` vs `print`)
 - [ ] `if` workflow
 - [ ] `case` workflow
 - [ ] Debugger/code info update/fix
+- [ ] Fix typing issue
 
 ## Deployment
 

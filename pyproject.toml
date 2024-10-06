@@ -18,7 +18,7 @@ dev-dependencies = ["mypy>=1.11.2", "ruff>=0.6.7"]
 # ------------------------------
 [tool.mypy]
 python_version = "3.12"
-mypy_path = "./pipe_operator"
+mypy_path = "."
 
 check_untyped_defs = true
 disallow_untyped_defs = true
