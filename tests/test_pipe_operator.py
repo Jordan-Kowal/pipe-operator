@@ -16,6 +16,10 @@ def _sum(*args: int) -> int:
     return sum(args)
 
 
+def rshift(a: int, b: int) -> int:
+    return a >> b
+
+
 class BasicClass:
     def __init__(self, value: int) -> None:
         self.value = value
@@ -66,7 +70,7 @@ class PipeOperatorTestCase(unittest.TestCase):
 
     @no_type_check
     @pipes
-    def test_two_plus_arg(self) -> None:
+    def test_two_or_more_args(self) -> None:
         op = 1 >> add(5) >> add(10)
         self.assertEqual(op, 16)
 
@@ -81,6 +85,13 @@ class PipeOperatorTestCase(unittest.TestCase):
     def test_lambda(self) -> None:
         op = 2 >> (lambda a: a**2) >> (lambda a: a**2)
         self.assertEqual(op, 16)
+
+    @no_type_check
+    @pipes
+    def test_does_not_propagate(self) -> None:
+        # rshift uses the `>>` operator, and it should behave normally
+        result = rshift(1000, 4)
+        self.assertEqual(result, 62)
 
     @no_type_check
     @pipes
