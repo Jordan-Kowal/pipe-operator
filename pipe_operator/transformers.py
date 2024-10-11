@@ -1,15 +1,9 @@
 import ast
 
+from pipe_operator.utils import node_contains_name
+
 DEFAULT_PLACEHOLDER = "_"
 DEFAULT_LAMBDA_VAR = "Z"
-
-
-def _contains_name(node: ast.expr, name: str) -> bool:
-    """Checks if a node contains a Name(id=`name`) node"""
-    for subnode in ast.walk(node):
-        if isinstance(subnode, ast.Name) and subnode.id == name:
-            return True
-    return False
 
 
 class PipeTransformer(ast.NodeTransformer):
@@ -91,7 +85,7 @@ class PipeTransformer(ast.NodeTransformer):
         if isinstance(node.right, ast.BinOp) and not isinstance(
             node.right.op, ast.RShift
         ):
-            if not _contains_name(node.right, self.placeholder):
+            if not node_contains_name(node.right, self.placeholder):
                 raise RuntimeError(
                     f"[PipeTransformer] BinOp requires the `{self.placeholder}` variable at least once"
                 )
@@ -180,7 +174,7 @@ class LambdaTransformer(ast.NodeTransformer):
     def visit_BinOp(self, node: ast.BinOp) -> ast.AST:
         """Changes the BinOp node into a lambda node if necessary"""
         # Maybe change the operation
-        if not isinstance(node.op, ast.RShift) and _contains_name(
+        if not isinstance(node.op, ast.RShift) and node_contains_name(
             node, self.placeholder
         ):
             return self._create_lambda(node)

@@ -1,7 +1,7 @@
 import ast
 from inspect import getsource, isclass, stack
 from textwrap import dedent
-from typing import Callable, Optional
+from typing import Any, Callable, Optional, TypeVar
 
 from pipe_operator.transformers import (
     DEFAULT_LAMBDA_VAR,
@@ -52,3 +52,12 @@ def pipes(
         return wrapper(func)
 
     return wrapper
+
+
+T = TypeVar("T")
+
+
+def tap(value: T, func_or_class: Callable[[T], Any]) -> T:
+    """Calls a function with the value but returns the original value"""
+    func_or_class(value)
+    return value

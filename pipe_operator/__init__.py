@@ -1,4 +1,3 @@
-from .pipe_operator import pipes
-from .utils import tap
+from .pipe_operator import pipes, tap
 
 __all__ = ["pipes", "tap"]
