@@ -10,6 +10,42 @@ def _contains_name(node: ast.expr, name: str) -> bool:
 
 
 class PipeTransformer(ast.NodeTransformer):
+    """
+    Transform an elixir pipe-like list of instruction into a python-compatible one.
+
+    It handles:
+        class calls                         a >> B()                 B(a)
+        method calls                        a >> _.method(...)       a.method(...)
+        property calls                      a >> _.property          a.property
+        binary operators                    a >> _ + 3               (lambda Z: Z + 3)(a)
+        function calls                      a >> b(...)              b(a, ...)
+        function calls w/o parenthesis      a >> b                   b(a)
+        lambda calls                        a >> (lambda x: x + 4)   (lambda x: x + 4)(a)
+
+    Usage:
+        ```
+        PipeTransformer("_", "Z")
+
+        3 >> double >> Class
+        Class(double(3))
+
+        (
+            3
+            >> Class
+            >> _.attribute
+            >> _.method(4)
+            >> _ + 4
+            >> double()
+            >> double(4)
+            >> double
+            >> (lambda x: x + 4)
+        )
+        (lambda x: x + 4)(
+            double(double(double((lambda Z: Z + 4)(Class(3).attribute.method(4))), 4))
+        )
+        ```
+    """
+
     def __init__(self, placeholder: str = "_", lambda_var: str = "Z") -> None:
         self.placeholder = placeholder
         self.lambda_var = lambda_var
@@ -51,7 +87,7 @@ class PipeTransformer(ast.NodeTransformer):
             return self._transform_name_to_call(node)
 
         # Basic function/class call `a >> b(...)`
-        return self._transform_pipe_operation(node)
+        return self._transform_call(node)
 
     def _transform_attribute(self, node: ast.expr) -> ast.expr:
         """Rewrite `a >> _.property` as `a.property`"""
@@ -82,7 +118,7 @@ class PipeTransformer(ast.NodeTransformer):
         return self.visit(call)
 
     def _transform_operation_to_lambda(self, node: ast.expr) -> ast.AST:
-        """Rewrites `_ + a + b - _` as `lambda pipe_x: pipe_x + a + b - pipe_x`"""
+        """Rewrites `_ + a + b - _` as `lambda X: X + a + b - X`"""
         return self.lambda_transformer.visit(node)
 
     def _transform_name_to_call(self, node: ast.expr) -> ast.Call:
@@ -96,7 +132,7 @@ class PipeTransformer(ast.NodeTransformer):
         )
         return self.visit(call)
 
-    def _transform_pipe_operation(self, node: ast.expr) -> ast.Call:
+    def _transform_call(self, node: ast.expr) -> ast.Call:
         """Rewrite `a >> b(...)` as `b(a, ...)`"""
         args = 0 if isinstance(node.op, ast.RShift) else len(node.right.args)
         node.right.args.insert(args, node.left)
@@ -110,9 +146,11 @@ class LambdaTransformer(ast.NodeTransformer):
     and also replaces the `placeholder` variable with `var_name`
 
     Usage:
+        ```
         LambdaTransformer("_", "Z")
         1_000 >> _ + 3 >> double >> _ - _
         1000 >> (lambda Z: Z + 3) >> double >> (lambda Z: Z - Z)
+        ```
     """
 
     def __init__(
@@ -166,9 +204,11 @@ class NameReplacer(ast.NodeTransformer):
     In a Name node, replaces the id from `target` to `replacement`
 
     Usage:
+        ```
         NameReplacer("_", "x")
-        In:     "1000 + _ + func(_)"
-        Out:    "1000 + x + func(x)"
+        In: "1000 + _ + func(_)"
+        Out: "1000 + x + func(x)"
+        ```
     """
 
     def __init__(self, target: str, replacement: str) -> None:
