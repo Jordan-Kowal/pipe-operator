@@ -25,9 +25,14 @@ class PipeTransformer(ast.NodeTransformer):
         function calls w/o parenthesis      a >> b                   b(a)
         lambda calls                        a >> (lambda x: x + 4)   (lambda x: x + 4)(a)
 
+    Args:
+        placeholder:    The placeholder variable used in method, attribute, and binary calls. Defaults to `_`
+        lambda_var:     The variable name used in generated lambda functions when transforming binary operations.
+                        Useful to avoid overriding existing variables. Defaults to `Z`.
+
     Usage:
         ```
-        PipeTransformer("_", "Z")
+        PipeTransformer(placeholder="_", lambda_var="Z")
 
         3 >> double >> Class
         Class(double(3))
