@@ -21,6 +21,7 @@
   - [x] Allow calling methods of object
   - [x] Allow calling attribute of object
 - [x] Handle missing parenthesis (`print()` vs `print`)
+- [ ] Allow parameter overrides: operator, placeholder, replacement
 - [ ] `if` workflow
 - [ ] `case` workflow
 - [ ] Issues

@@ -5,6 +5,10 @@ LAMBDA_VAR = "_pipe_x"
 
 
 class PipeTransformer(ast.NodeTransformer):
+    def __init__(self) -> None:
+        self.lambda_transformer = LambdaTransformer(self, PLACEHOLDER, LAMBDA_VAR)
+        super().__init__()
+
     def visit_BinOp(self, node: ast.BinOp) -> ast.AST:
         # Exit early if not `>>` operator
         if not isinstance(node.op, ast.RShift):
@@ -72,8 +76,7 @@ class PipeTransformer(ast.NodeTransformer):
 
     def _transform_operation_to_lambda(self, node: ast.expr) -> ast.AST:
         """Rewrites `_ + a + b - _` as `lambda pipe_x: pipe_x + a + b - pipe_x`"""
-        transformer = LambdaTransformer(self)
-        return transformer.visit(node)
+        return self.lambda_transformer.visit(node)
 
     def _transform_name_to_call(self, node: ast.expr) -> ast.Call:
         """Convert function name / lambda etc without braces into call"""
@@ -103,49 +106,49 @@ class PipeTransformer(ast.NodeTransformer):
 
 class LambdaTransformer(ast.NodeTransformer):
     """
-    Changes a BinOp node (which is not a right shift operation)
-    into a 1-arg lambda function that performs the same operation
-    but replaces `_` with `_pipe_x`.
+    Changes a not-right-shift BinOp node
+    into a 1-arg lambda function node that performs the same operation
+    but also replaces the `placeholder` variable with `var_name`
 
-    Example:
+    Usage:
+        LambdaTransformer()
         1_000 >> _ + 3 >> double >> _ - _
         1000 >> (lambda _pipe_x: _pipe_x + 3) >> double >> (lambda _pipe_x: _pipe_x - _pipe_x)
     """
 
-    def __init__(self, parent: ast.NodeTransformer) -> None:
-        self.parent = parent
+    def __init__(
+        self, fallback_transformer: ast.NodeTransformer, placeholder: str, var_name: str
+    ) -> None:
+        self.fallback_transformer = fallback_transformer
+        self.placeholder = placeholder
+        self.var_name = var_name
+        self.name_transformer = NameReplacer(placeholder, var_name)
         super().__init__()
 
-    def visit_BinOp(self, node: ast.expr) -> ast.expr:
-        # If the operation contains `_` and is NOT a right-shift operation
-        if self._contains_underscore(node) and not isinstance(node.op, ast.RShift):
-            # Create a lambda function that replaces `_` with `x`
+    def visit_BinOp(self, node: ast.BinOp) -> ast.AST:
+        # Maybe change the operation
+        if not isinstance(node.op, ast.RShift) and self._contains_placeholder(node):
             return self._create_lambda(node)
-
         # Recursively visit all BinOp nodes in the AST
         node.left = self.visit(node.left)
         node.right = self.visit(node.right)
-        return self.parent.visit(node)
+        return self.fallback_transformer.visit(node)
 
-    def _contains_underscore(self, node: ast.expr) -> bool:
-        """Checks if a node contains an underscore variable."""
+    def _contains_placeholder(self, node: ast.BinOp) -> bool:
+        """Checks if a node contains an `placeholder` Name node."""
         for subnode in ast.walk(node):
-            if isinstance(subnode, ast.Name) and subnode.id == PLACEHOLDER:
+            if isinstance(subnode, ast.Name) and subnode.id == self.placeholder:
                 return True
         return False
 
-    def _create_lambda(self, node: ast.expr) -> ast.Lambda:
+    def _create_lambda(self, node: ast.BinOp) -> ast.Lambda:
         """Transforms the binary operation into a lambda function."""
-        # Replace all occurrences of `_` with a lambda argument `x`
-        replacer = NameReplacer(PLACEHOLDER, LAMBDA_VAR)
-        new_node = replacer.visit(node)
-
-        # Create the lambda function: `lambda x: <new_node>`
-        lambda_func = ast.Lambda(
+        new_node = self.name_transformer.visit(node)
+        return ast.Lambda(
             args=ast.arguments(
                 args=[
                     ast.arg(
-                        arg=LAMBDA_VAR,
+                        arg=self.var_name,
                         annotation=None,
                         lineno=node.lineno,
                         col_offset=node.col_offset,
@@ -161,16 +164,16 @@ class LambdaTransformer(ast.NodeTransformer):
             lineno=node.lineno,
             col_offset=node.col_offset,
         )
-        return lambda_func
 
 
 class NameReplacer(ast.NodeTransformer):
     """
     In a Name node, replaces the id from `target` to `replacement`
 
-    Example with target = "_", replacement = "x":
-        "1000 + _ + func(_)"
-        "1000 + x + func(x)"
+    Usage:
+        NameReplacer("_", "x")
+        In:     "1000 + _ + func(_)"
+        Out:    "1000 + x + func(x)"
     """
 
     def __init__(self, target: str, replacement: str) -> None:
