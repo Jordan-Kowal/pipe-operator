@@ -11,6 +11,7 @@ Elixir's pipe operator in Python
 - Decorator
   - works on func, method, or even class
   - Does not propagate
+  - With or without parenthesis
 
 ## How it works
 

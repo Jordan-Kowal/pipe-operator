@@ -22,6 +22,7 @@
   - [x] Allow calling attribute of object
   - [ ] Struct calls (tuple, list, dict, set, string)
 - [x] Handle missing parenthesis (`print()` vs `print`)
+- [x] Allow decorator call without parenthesis
 - [ ] Allow parameter overrides: operator, placeholder, replacement
 - [ ] `if` workflow
 - [ ] `case` workflow

@@ -127,7 +127,25 @@ class PipeOperatorTestCase(unittest.TestCase):
     @no_type_check
     @pipes
     def test_complex(self) -> None:
-        pass
+        op = (
+            1
+            >> BasicClass
+            >> _.value
+            >> BasicClass()
+            >> _.get_value_property
+            >> BasicClass()
+            >> _.get_value_method()
+            >> BasicClass()
+            >> _.get_value_plus_arg(10)
+            >> 10 + _ - 5
+            >> double
+            >> tap(double)
+            >> double()
+            >> add(1)
+            >> _sum(2, 3)
+            >> (lambda a: a * 2)
+        )
+        self.assertEqual(op, 140)
 
     # ------------------------------
     # Ways to apply the decorator
@@ -154,6 +172,12 @@ class PipeOperatorTestCase(unittest.TestCase):
         self.assertEqual(result, 62)
         result = 1000 >> rshift(4)
         self.assertEqual(result, 62)
+
+    @no_type_check
+    @pipes()
+    def test_can_be_called_with_parenthesis(self) -> None:
+        op = 33 >> double >> add(10) >> _ + 10
+        self.assertEqual(op, 86)
 
     # ------------------------------
     # Others
