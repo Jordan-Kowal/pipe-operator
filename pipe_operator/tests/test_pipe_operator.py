@@ -70,62 +70,26 @@ class DecoratedClass(BasicClass):
 
 class PipeOperatorTestCase(unittest.TestCase):
     # ------------------------------
-    # Function related
+    # Basic workflow
     # ------------------------------
     @no_type_check
     @pipes
-    def test_one_arg(self) -> None:
-        op = 1 >> double >> double()
-        self.assertEqual(op, 4)
-
-    @no_type_check
-    @pipes
-    def test_two_or_more_args(self) -> None:
-        op = 1 >> add(5) >> add(10)
-        self.assertEqual(op, 16)
-
-    @no_type_check
-    @pipes
-    def test_unlimited_args(self) -> None:
-        op = 1 >> _sum >> _sum(2, 3)
-        self.assertEqual(op, 6)
-
-    @no_type_check
-    @pipes
-    def test_lambda(self) -> None:
-        op = 2 >> (lambda a: a**2) >> (lambda a: a**2)
-        self.assertEqual(op, 16)
-
-    # ------------------------------
-    # Class related
-    # ------------------------------
-    @no_type_check
-    @pipes
-    def test_class_call(self) -> None:
-        op = 1 >> BasicClass
+    def test_class_calls(self) -> None:
+        op = 1 >> BasicClass >> _.value >> BasicClass()
         self.assertIsInstance(op, BasicClass)
         self.assertEqual(op.value, 1)
 
     @no_type_check
     @pipes
-    def test_decorated_method(self) -> None:
-        instance = ClassWithDecoratedMethod(1)
-        op = instance.compute_score()
-        self.assertEqual(op, 928)
+    def test_attribute_calls(self) -> None:
+        op = 33 >> BasicClass >> _.value
+        self.assertEqual(op, 33)
+        op = 33 >> BasicClass >> _.get_value_property
+        self.assertEqual(op, 33)
 
     @no_type_check
     @pipes
-    def test_decorated_class(self) -> None:
-        instance = DecoratedClass(1)
-        op = instance.compute_score()
-        self.assertEqual(op, 928)
-
-    # ------------------------------
-    # Class instance related
-    # ------------------------------
-    @no_type_check
-    @pipes
-    def test_method_call(self) -> None:
+    def test_method_calls(self) -> None:
         op = 33 >> BasicClass >> _.get_value_method()
         self.assertEqual(op, 33)
         op = 33 >> BasicClass >> _.get_value_plus_arg(10)
@@ -133,22 +97,7 @@ class PipeOperatorTestCase(unittest.TestCase):
 
     @no_type_check
     @pipes
-    def test_attribute_call(self) -> None:
-        op = 33 >> BasicClass >> _.value
-        self.assertEqual(op, 33)
-
-    @no_type_check
-    @pipes
-    def test_property_call(self) -> None:
-        op = 33 >> BasicClass >> _.get_value_property
-        self.assertEqual(op, 33)
-
-    # ------------------------------
-    # Operators
-    # ------------------------------
-    @no_type_check
-    @pipes
-    def test_operators(self) -> None:
+    def test_binary_operators(self) -> None:
         x = 50
         op = (
             1_000
@@ -163,40 +112,40 @@ class PipeOperatorTestCase(unittest.TestCase):
         )
         self.assertEqual(op, 80304)
 
-    # ------------------------------
-    # Tap
-    # ------------------------------
     @no_type_check
     @pipes
-    def test_tap_with_lambda(self) -> None:
-        op = (
-            4
-            >> add(10)
-            >> tap(lambda a: a**3)
-            >> tap(lambda a: a**3)
-            >> double
-            >> tap(lambda a: a**3)
-            >> add(1)
-        )
-        self.assertEqual(op, 29)
+    def test_function_calls(self) -> None:
+        op = 1 >> double >> double() >> add(1) >> _sum(2, 3)
+        self.assertEqual(op, 10)
 
     @no_type_check
     @pipes
-    def test_tap_with_func(self) -> None:
-        op = (
-            4
-            >> add(10)
-            >> tap(double)
-            >> tap(double)
-            >> double
-            >> tap(double)
-            >> add(1)
-        )
-        self.assertEqual(op, 29)
+    def test_lambda_calls(self) -> None:
+        op = 2 >> (lambda a: a**2) >> (lambda a: a**2)
+        self.assertEqual(op, 16)
+
+    @no_type_check
+    @pipes
+    def test_complex(self) -> None:
+        pass
 
     # ------------------------------
-    # Settings
+    # Ways to apply the decorator
     # ------------------------------
+    @no_type_check
+    @pipes
+    def test_decorated_method(self) -> None:
+        instance = ClassWithDecoratedMethod(1)
+        op = instance.compute_score()
+        self.assertEqual(op, 928)
+
+    @no_type_check
+    @pipes
+    def test_decorated_class(self) -> None:
+        instance = DecoratedClass(1)
+        op = instance.compute_score()
+        self.assertEqual(op, 928)
+
     @no_type_check
     @pipes
     def test_does_not_propagate(self) -> None:
@@ -211,5 +160,14 @@ class PipeOperatorTestCase(unittest.TestCase):
     # ------------------------------
     @no_type_check
     @pipes
-    def test_complex(self) -> None:
-        pass
+    def test_tap(self) -> None:
+        op = (
+            4
+            >> add(10)
+            >> tap(lambda a: a**3)
+            >> tap(double)
+            >> double
+            >> tap(lambda a: a**3)
+            >> add(1)
+        )
+        self.assertEqual(op, 29)
