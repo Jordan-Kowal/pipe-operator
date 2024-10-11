@@ -11,3 +11,8 @@ Elixir's pipe operator in Python
 - Decorator
   - works on func, method, or even class
   - Does not propagate
+
+## How it works
+
+- AST changes
+- Operator -> Lambda

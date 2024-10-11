@@ -4,6 +4,7 @@ from textwrap import dedent
 from typing import Any, Callable, TypeVar
 
 PLACEHOLDER = "_"
+LAMBDA_VAR = "pipe_x"
 
 
 class PipeTransformer(ast.NodeTransformer):
@@ -30,10 +31,12 @@ class PipeTransformer(ast.NodeTransformer):
             return self._transform_method_call(node)
 
         # Binary operator instruction other than `>>`
-        if isinstance(node.right, ast.BinOp) and not isinstance(
-            node.right.op, ast.RShift
+        if (
+            isinstance(node.right, ast.BinOp)
+            and not isinstance(node.right.op, ast.RShift)
+            and self._contains_underscore(node.right)
         ):
-            return self._transform_operation(node)
+            return self._transform_operation_to_lambda(node)
 
         # Lambda or function without parenthesis
         if not isinstance(node.right, ast.Call):
@@ -70,13 +73,10 @@ class PipeTransformer(ast.NodeTransformer):
         )
         return self.visit(call)
 
-    def _transform_operation(self, node: ast.expr) -> ast.AST:
-        if not self._contains_underscore(node.right):
-            raise SyntaxError(
-                "[pipe_operator] Missing `_` in binary operator instruction"
-            )
-        # TODO: Add support for other binary operators
-        return self.generic_visit(node)
+    def _transform_operation_to_lambda(self, node: ast.expr) -> ast.AST:
+        """Rewrites `_ + a + b - _` as `lambda pipe_x: pipe_x + a + b - pipe_x`"""
+        transformer = LambdaTransformer(self)
+        return transformer.visit(node)
 
     def _transform_name_to_call(self, node: ast.expr) -> ast.Call:
         """Convert function name / lambda etc without braces into call"""
@@ -102,6 +102,73 @@ class PipeTransformer(ast.NodeTransformer):
             if isinstance(subnode, ast.Name) and subnode.id == "_":
                 return True
         return False
+
+
+class PlaceholderReplacer(ast.NodeTransformer):
+    """Replaces all `_` with a lambda argument `x`."""
+
+    def visit_Name(self, subnode: ast.expr) -> ast.expr:
+        if subnode.id != PLACEHOLDER:
+            return subnode
+        return ast.Name(
+            id=LAMBDA_VAR,
+            ctx=ast.Load(),
+            lineno=subnode.lineno,
+            col_offset=subnode.col_offset,
+        )
+
+
+class LambdaTransformer(ast.NodeTransformer):
+    def __init__(self, parent: ast.NodeTransformer) -> None:
+        self.parent = parent
+        super().__init__()
+
+    def visit_BinOp(self, node: ast.expr) -> ast.expr:
+        # If the operation contains `_` and is NOT a right-shift operation
+        if self._contains_underscore(node) and not isinstance(node.op, ast.RShift):
+            # Create a lambda function that replaces `_` with `x`
+            return self._create_lambda(node)
+
+        # Recursively visit all BinOp nodes in the AST
+        node.left = self.visit(node.left)
+        node.right = self.visit(node.right)
+        return self.parent.visit(node)
+
+    def _contains_underscore(self, node: ast.expr) -> bool:
+        """Checks if a node contains an underscore variable."""
+        for subnode in ast.walk(node):
+            if isinstance(subnode, ast.Name) and subnode.id == PLACEHOLDER:
+                return True
+        return False
+
+    def _create_lambda(self, node: ast.expr) -> ast.Lambda:
+        """Transforms the binary operation into a lambda function."""
+        # Replace all occurrences of `_` with a lambda argument `x`
+        replacer = PlaceholderReplacer()
+        new_node = replacer.visit(node)
+
+        # Create the lambda function: `lambda x: <new_node>`
+        lambda_func = ast.Lambda(
+            args=ast.arguments(
+                args=[
+                    ast.arg(
+                        arg=LAMBDA_VAR,
+                        annotation=None,
+                        lineno=node.lineno,
+                        col_offset=node.col_offset,
+                    )
+                ],
+                posonlyargs=[],
+                kwonlyargs=[],
+                kw_defaults=[],
+                kwarg=None,
+                defaults=[],
+            ),
+            body=new_node,
+            lineno=node.lineno,
+            col_offset=node.col_offset,
+        )
+        return lambda_func
 
 
 def pipes(func_or_class: Callable) -> Callable:

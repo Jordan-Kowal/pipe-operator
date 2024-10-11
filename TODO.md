@@ -16,8 +16,8 @@
 - [x] `then` actions (no then as this is literally a lambda call)
 - [x] `lambda` actions
 - [x] Work with class and methods
-- [ ] Using _ substitution
-  - [ ] Kernel operators (`>> _ + 3`)
+- [x] Using _ substitution
+  - [x] Kernel operators (`>> _ + 3`)
   - [x] Allow calling methods of object
   - [x] Allow calling attribute of object
 - [x] Handle missing parenthesis (`print()` vs `print`)
