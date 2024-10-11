@@ -176,8 +176,17 @@ class PipeOperatorTestCase(unittest.TestCase):
     @no_type_check
     @pipes()
     def test_can_be_called_with_parenthesis(self) -> None:
-        op = 33 >> double >> add(10) >> _ + 10
+        foo = 10
+        op = 33 >> double >> add(10) >> _ + foo
         self.assertEqual(op, 86)
+
+    @no_type_check
+    @pipes(placeholder="__", lambda_var="foo")
+    def test_can_be_called_with_custom_params(self) -> None:
+        foo = 10
+        # The `foo` from `__ + foo` will be overwritten by our `lambda_var` with the same name
+        op = 33 >> double >> add(10) >> __ + foo
+        self.assertEqual(op, 152)
 
     # ------------------------------
     # Others

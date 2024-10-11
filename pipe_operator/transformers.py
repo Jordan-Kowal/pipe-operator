@@ -1,8 +1,11 @@
 import ast
 
+DEFAULT_PLACEHOLDER = "_"
+DEFAULT_LAMBDA_VAR = "Z"
+
 
 def _contains_name(node: ast.expr, name: str) -> bool:
-    """Checks if a node contains a Name(id=`placeholder`) node"""
+    """Checks if a node contains a Name(id=`name`) node"""
     for subnode in ast.walk(node):
         if isinstance(subnode, ast.Name) and subnode.id == name:
             return True
@@ -46,7 +49,11 @@ class PipeTransformer(ast.NodeTransformer):
         ```
     """
 
-    def __init__(self, placeholder: str = "_", lambda_var: str = "Z") -> None:
+    def __init__(
+        self,
+        placeholder: str = DEFAULT_PLACEHOLDER,
+        lambda_var: str = DEFAULT_LAMBDA_VAR,
+    ) -> None:
         self.placeholder = placeholder
         self.lambda_var = lambda_var
         self.lambda_transformer = LambdaTransformer(self, placeholder, lambda_var)
@@ -75,11 +82,14 @@ class PipeTransformer(ast.NodeTransformer):
             return self._transform_method_call(node)
 
         # Binary operator instruction other than `>>`
-        if (
-            isinstance(node.right, ast.BinOp)
-            and not isinstance(node.right.op, ast.RShift)
-            and _contains_name(node.right, self.placeholder)
+        # Will crash if does not have the placeholder
+        if isinstance(node.right, ast.BinOp) and not isinstance(
+            node.right.op, ast.RShift
         ):
+            if not _contains_name(node.right, self.placeholder):
+                raise RuntimeError(
+                    f"[PipeTransformer] BinOp requires the `{self.placeholder}` variable at least once"
+                )
             return self._transform_operation_to_lambda(node)
 
         # Lambda or function without parenthesis

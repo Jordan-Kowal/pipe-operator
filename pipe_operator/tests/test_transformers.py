@@ -42,6 +42,11 @@ class PipeTransformerTestCase(TestCase):
         result = transform_code(source, self.transformer)
         self.assertEqual(result, "(lambda Z: Z * Z + 3)((lambda Z: Z + 4)(3))")
 
+    def test_binOp_crash_on_missing_placeholder(self) -> None:
+        with self.assertRaises(RuntimeError):
+            source = "3 >> __ + 4"
+            transform_code(source, self.transformer)
+
     def test_func(self) -> None:
         source = "3 >> double()"
         result = transform_code(source, self.transformer)
@@ -68,6 +73,15 @@ class PipeTransformerTestCase(TestCase):
         self.assertEqual(
             result,
             "(lambda x: x + 4)(double(double(double((lambda Z: Z + 4)(Class(3).attribute.method(4))), 4)))",
+        )
+
+    def test_with_custom_params(self) -> None:
+        transformer = PipeTransformer("__", "XXX")
+        source = "3 >> Class >> __.attribute >> __.method(4) >> __ + 4 >> double() >> double(4) >> double >> (lambda x: x + 4)"
+        result = transform_code(source, transformer)
+        self.assertEqual(
+            result,
+            "(lambda x: x + 4)(double(double(double((lambda XXX: XXX + 4)(Class(3).attribute.method(4))), 4)))",
         )
 
 

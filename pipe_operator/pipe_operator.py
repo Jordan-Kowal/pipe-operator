@@ -3,10 +3,18 @@ from inspect import getsource, isclass, stack
 from textwrap import dedent
 from typing import Callable, Optional
 
-from pipe_operator.transformers import PipeTransformer
+from pipe_operator.transformers import (
+    DEFAULT_LAMBDA_VAR,
+    DEFAULT_PLACEHOLDER,
+    PipeTransformer,
+)
 
 
-def pipes(func: Optional[Callable] = None) -> Callable:
+def pipes(
+    func: Optional[Callable] = None,
+    placeholder: str = DEFAULT_PLACEHOLDER,
+    lambda_var: str = DEFAULT_LAMBDA_VAR,
+) -> Callable:
     def wrapper(func_or_class: Callable) -> Callable:
         if isclass(func_or_class):
             # [2] because we are at pipes() > wrapper()
@@ -29,7 +37,8 @@ def pipes(func: Optional[Callable] = None) -> Callable:
         ]
 
         # Update the AST and execute the new code
-        tree = PipeTransformer().visit(tree)
+        transformer = PipeTransformer(placeholder=placeholder, lambda_var=lambda_var)
+        tree = transformer.visit(tree)
         code = compile(
             tree,
             filename=(ctx["__file__"] if "__file__" in ctx else "repl"),

@@ -16,14 +16,17 @@
 - [x] `then` actions (no then as this is literally a lambda call)
 - [x] `lambda` actions
 - [x] Work with class and methods
-- [] Using _ substitution
+- [ ] Using _ substitution
   - [x] Kernel operators (`>> _ + 3`)
   - [x] Allow calling methods of object
   - [x] Allow calling attribute of object
   - [ ] Struct calls (tuple, list, dict, set, string)
 - [x] Handle missing parenthesis (`print()` vs `print`)
 - [x] Allow decorator call without parenthesis
-- [ ] Allow parameter overrides: operator, placeholder, replacement
+- [ ] Allow parameter overrides:
+  - [ ] operator
+  - [x] placeholder
+  - [x] replacement
 - [ ] `if` workflow
 - [ ] `case` workflow
 - [ ] Issues
