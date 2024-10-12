@@ -5,13 +5,16 @@ from typing import Any, Callable, Optional, TypeVar
 
 from pipe_operator.transformers import (
     DEFAULT_LAMBDA_VAR,
+    DEFAULT_OPERATOR,
     DEFAULT_PLACEHOLDER,
     PipeTransformer,
 )
+from pipe_operator.utils import OperatorString
 
 
 def pipes(
     func: Optional[Callable] = None,
+    operator: OperatorString = DEFAULT_OPERATOR,
     placeholder: str = DEFAULT_PLACEHOLDER,
     lambda_var: str = DEFAULT_LAMBDA_VAR,
 ) -> Callable:
@@ -37,7 +40,9 @@ def pipes(
         ]
 
         # Update the AST and execute the new code
-        transformer = PipeTransformer(placeholder=placeholder, lambda_var=lambda_var)
+        transformer = PipeTransformer(
+            operator=operator, placeholder=placeholder, lambda_var=lambda_var
+        )
         tree = transformer.visit(tree)
         code = compile(
             tree,

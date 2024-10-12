@@ -76,19 +76,20 @@ class PipeTransformerTestCase(TestCase):
         )
 
     def test_with_custom_params(self) -> None:
-        transformer = PipeTransformer("__", "XXX")
-        source = "3 >> Class >> __.attribute >> __.method(4) >> __ + 4 >> double() >> double(4) >> double >> (lambda x: x + 4)"
+        transformer = PipeTransformer(placeholder="__", lambda_var="XXX", operator="|")
+        # The `>>` will not be replaced because we declared `|` as the operator
+        source = "3 | Class | __.attribute | __.method(4) | __ >> 4 | double() | double(4) | double | (lambda x: x + 4)"
         result = transform_code(source, transformer)
         self.assertEqual(
             result,
-            "(lambda x: x + 4)(double(double(double((lambda XXX: XXX + 4)(Class(3).attribute.method(4))), 4)))",
+            "(lambda x: x + 4)(double(double(double((lambda XXX: XXX >> 4)(Class(3).attribute.method(4))), 4)))",
         )
 
 
 class LambdaTransformerTestCase(TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        cls.transformer = LambdaTransformer(ast.NodeTransformer(), "_", "Z")
+        cls.transformer = LambdaTransformer(ast.NodeTransformer())
         return super().setUpClass()
 
     def test_simple(self) -> None:
@@ -118,7 +119,12 @@ class LambdaTransformerTestCase(TestCase):
     def test_should_fallback_on_parent(self) -> None:
         fake_transformer = MagicMock()
         fake_transformer.visit = MagicMock()
-        transformer = LambdaTransformer(fake_transformer, "_", "Z")
+        transformer = LambdaTransformer(
+            fallback_transformer=fake_transformer,
+            operator=ast.RShift,
+            placeholder="_",
+            var_name="Z",
+        )
         source_code = "3 + 4"
         transform_code(source_code, transformer)
         fake_transformer.visit.assert_called_once()
@@ -127,7 +133,7 @@ class LambdaTransformerTestCase(TestCase):
 class NameReplacerTestCase(TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        cls.transformer = NameReplacer("_", "Z")
+        cls.transformer = NameReplacer()
         return super().setUpClass()
 
     def test_correctly_replaces_names(self) -> None:

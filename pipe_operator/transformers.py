@@ -1,7 +1,9 @@
 import ast
+from typing import Type
 
-from pipe_operator.utils import node_contains_name
+from pipe_operator.utils import OperatorString, node_contains_name, string_to_ast_BinOp
 
+DEFAULT_OPERATOR: OperatorString = ">>"
 DEFAULT_PLACEHOLDER = "_"
 DEFAULT_LAMBDA_VAR = "Z"
 
@@ -20,13 +22,14 @@ class PipeTransformer(ast.NodeTransformer):
         lambda calls                        a >> (lambda x: x + 4)   (lambda x: x + 4)(a)
 
     Args:
-        placeholder:    The placeholder variable used in method, attribute, and binary calls. Defaults to `_`
+        operator:       The operator which will represent the pipe. Must be a valid python operator. Defaults to `>>`.
+        placeholder:    The placeholder variable used in method, attribute, and binary calls. Defaults to `_`.
         lambda_var:     The variable name used in generated lambda functions when transforming binary operations.
                         Useful to avoid overriding existing variables. Defaults to `Z`.
 
     Usage:
         ```
-        PipeTransformer(placeholder="_", lambda_var="Z")
+        PipeTransformer()
 
         3 >> double >> Class
         Class(double(3))
@@ -50,17 +53,21 @@ class PipeTransformer(ast.NodeTransformer):
 
     def __init__(
         self,
+        operator: OperatorString = DEFAULT_OPERATOR,
         placeholder: str = DEFAULT_PLACEHOLDER,
         lambda_var: str = DEFAULT_LAMBDA_VAR,
     ) -> None:
+        self.operator: Type[ast.operator] = string_to_ast_BinOp(operator)
         self.placeholder = placeholder
         self.lambda_var = lambda_var
-        self.lambda_transformer = LambdaTransformer(self, placeholder, lambda_var)
+        self.lambda_transformer = LambdaTransformer(
+            self, self.operator, placeholder, lambda_var
+        )
         super().__init__()
 
     def visit_BinOp(self, node: ast.BinOp) -> ast.AST:
-        # Exit early if not `>>` operator
-        if not isinstance(node.op, ast.RShift):
+        # Exit early if not our pipe operator
+        if not isinstance(node.op, self.operator):
             return node
 
         # Property call `_.attribute`
@@ -80,10 +87,10 @@ class PipeTransformer(ast.NodeTransformer):
         ):
             return self._transform_method_call(node)
 
-        # Binary operator instruction other than `>>`
+        # Binary operator instruction other than our pipe operator
         # Will crash if does not have the placeholder
         if isinstance(node.right, ast.BinOp) and not isinstance(
-            node.right.op, ast.RShift
+            node.right.op, self.operator
         ):
             if not node_contains_name(node.right, self.placeholder):
                 raise RuntimeError(
@@ -143,14 +150,14 @@ class PipeTransformer(ast.NodeTransformer):
 
     def _transform_call(self, node: ast.expr) -> ast.Call:
         """Rewrite `a >> b(...)` as `b(a, ...)`"""
-        args = 0 if isinstance(node.op, ast.RShift) else len(node.right.args)
+        args = 0 if isinstance(node.op, self.operator) else len(node.right.args)
         node.right.args.insert(args, node.left)
         return self.visit(node.right)
 
 
 class LambdaTransformer(ast.NodeTransformer):
     """
-    If the node is a BinOp (but not `>>`) and contains the placeholder variable,
+    If the node is a BinOp (but not our pipe operator) and contains the placeholder variable,
     it changes it into a 1-arg lambda function node that performs the same operation
     and also replaces the `placeholder` variable with `var_name`
 
@@ -163,9 +170,14 @@ class LambdaTransformer(ast.NodeTransformer):
     """
 
     def __init__(
-        self, fallback_transformer: ast.NodeTransformer, placeholder: str, var_name: str
+        self,
+        fallback_transformer: ast.NodeTransformer,
+        operator: Type[ast.operator] = ast.RShift,
+        placeholder: str = DEFAULT_PLACEHOLDER,
+        var_name: str = DEFAULT_LAMBDA_VAR,
     ) -> None:
         self.fallback_transformer = fallback_transformer
+        self.operator = operator
         self.placeholder = placeholder
         self.var_name = var_name
         self.name_transformer = NameReplacer(placeholder, var_name)
@@ -174,7 +186,7 @@ class LambdaTransformer(ast.NodeTransformer):
     def visit_BinOp(self, node: ast.BinOp) -> ast.AST:
         """Changes the BinOp node into a lambda node if necessary"""
         # Maybe change the operation
-        if not isinstance(node.op, ast.RShift) and node_contains_name(
+        if not isinstance(node.op, self.operator) and node_contains_name(
             node, self.placeholder
         ):
             return self._create_lambda(node)
@@ -220,7 +232,9 @@ class NameReplacer(ast.NodeTransformer):
         ```
     """
 
-    def __init__(self, target: str, replacement: str) -> None:
+    def __init__(
+        self, target: str = DEFAULT_PLACEHOLDER, replacement: str = DEFAULT_LAMBDA_VAR
+    ) -> None:
         if target == replacement:
             raise ValueError("`target` and `replacement` must be different")
         self.target = target

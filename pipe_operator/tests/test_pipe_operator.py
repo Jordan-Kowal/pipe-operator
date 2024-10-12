@@ -182,11 +182,11 @@ class PipeOperatorTestCase(TestCase):
         self.assertEqual(op, 86)
 
     @no_type_check
-    @pipes(placeholder="__", lambda_var="foo")
+    @pipes(placeholder="__", lambda_var="foo", operator="|")
     def test_can_be_called_with_custom_params(self) -> None:
         foo = 10
         # The `foo` from `__ + foo` will be overwritten by our `lambda_var` with the same name
-        op = 33 >> double >> add(10) >> __ + foo
+        op = 33 | double | add(10) | __ + foo
         self.assertEqual(op, 152)
 
     # ------------------------------
