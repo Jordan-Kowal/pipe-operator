@@ -99,7 +99,19 @@ class PipeTransformerTestCase(TestCase):
         self.assertEqual(result, "(lambda x: x + 4)(3)")
 
     def test_complex(self) -> None:
-        source = "3 >> Class >> _.attribute >> _.method(4) >> _ + 4 >> double() >> double(4) >> double >> (lambda x: x + 4) >> [_, 4, {_: 1, 2: _}] >> [x for x in range(len(_))]"
+        source = (
+            "3 "
+            + ">> Class "
+            + ">> _.attribute "
+            + ">> _.method(4) "
+            + ">> _ + 4 "
+            + ">> double() "
+            + ">> double(4) "
+            + ">> double "
+            + ">> (lambda x: x + 4) "
+            + ">> [_, 4, {_: 1, 2: _}] "
+            + ">> [x for x in range(len(_))]"
+        )
         result = transform_code(source, self.transformer)
         self.assertEqual(
             result,
@@ -109,7 +121,19 @@ class PipeTransformerTestCase(TestCase):
     def test_with_custom_params(self) -> None:
         transformer = PipeTransformer(placeholder="__", lambda_var="XXX", operator="|")
         # The `>>` will not be replaced because we declared `|` as the operator
-        source = "3 | Class | __.attribute | __.method(4) | __ >> 4 | double() | double(4) | double | (lambda x: x + 4) | [__, 4, {__: 1, 2: __}] | [x for x in range(len(__))]"
+        source = (
+            "3 "
+            + "| Class "
+            + "| __.attribute "
+            + "| __.method(4) "
+            + "| __ >> 4 "
+            + "| double() "
+            + "| double(4) "
+            + "| double "
+            + "| (lambda x: x + 4) "
+            + "| [__, 4, {__: 1, 2: __}] "
+            + "| [x for x in range(len(__))]"
+        )
         result = transform_code(source, transformer)
         self.assertEqual(
             result,

@@ -28,8 +28,8 @@
 - [x] Debug mode
   - [x] Automatic print
   - [x] Check implementation with `pdb`
-- [ ] QA
-  - [ ] Format test inputs
+- [x] QA
+  - [x] Format test inputs
   - [x] Add coverage
   - [x] Add dependency updates through github action
   - [x] Run tests on multiple python versions
