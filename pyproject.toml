@@ -1,7 +1,7 @@
 [project]
 name = "pipe_operator"
 version = "1.0.0"
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 description = " Elixir's pipe operator in Python"
 dependencies = []
 
@@ -12,11 +12,7 @@ homepage = "https://github.com/Jordan-Kowal/pipe-operator"
 # Dependencies
 # ------------------------------
 [tool.uv]
-dev-dependencies = [
-    "coverage>=7.6.1",
-    "mypy>=1.11.2",
-    "ruff>=0.6.9",
-]
+dev-dependencies = ["coverage>=7.6.2", "mypy>=1.11.2", "ruff>=0.6.9"]
 
 # ------------------------------
 # MYPY
