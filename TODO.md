@@ -32,7 +32,7 @@
   - [ ] Format test inputs
   - [ ] Add coverage
   - [ ] Add makefile
-  - [ ] Add dependabot for UV
+  - [x] Add dependency updates through github action
   - [ ] Run tests on multiple python versions
 - [ ] Issues
   - [ ] Recompute line errors correctly (`ast.fix_missing_locations(tree)`)
@@ -50,3 +50,4 @@
 - [ ] Other workflows?
   - [ ] `if` workflow
   - [ ] `case` workflow
+- [ ] Replace custom workflow with `dependabot` when `uv` gets supported
