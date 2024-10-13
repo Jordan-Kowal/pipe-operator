@@ -1,3 +1,4 @@
+import types
 from typing import no_type_check
 from unittest import TestCase
 from unittest.mock import Mock
@@ -115,6 +116,31 @@ class PipeOperatorTestCase(TestCase):
 
     @no_type_check
     @pipes
+    def test_f_strings(self) -> None:
+        op = 50 >> f"value is {_}" >> f"And now is '{_}'"
+        self.assertEqual(op, "And now is 'value is 50'")
+
+    @no_type_check
+    @pipes
+    def test_struct_creations(self) -> None:
+        op = 1 >> {1, _, 3} >> [_, {4}] >> {"value": _} >> (_, "other value in tuple")
+        self.assertEqual(op, ({"value": [{1, 3}, {4}]}, "other value in tuple"))
+
+    @no_type_check
+    @pipes
+    def test_comprehensions(self) -> None:
+        op = (
+            10
+            >> [x for x in range(_) if x >= _ - 2]
+            >> {x + 1 for x in _}
+            >> {x: x + 1 for x in _}
+            >> ((k, v) for k, v in _.items())
+        )
+        self.assertIsInstance(op, types.GeneratorType)
+        self.assertEqual(list(op), [(9, 10), (10, 11)])
+
+    @no_type_check
+    @pipes
     def test_function_calls(self) -> None:
         op = 1 >> double >> double() >> add(1) >> _sum(2, 3)
         self.assertEqual(op, 10)
@@ -139,14 +165,18 @@ class PipeOperatorTestCase(TestCase):
             >> BasicClass()
             >> _.get_value_plus_arg(10)
             >> 10 + _ - 5
+            >> {_, 1, 2, 3}
+            >> [x for x in _ if x > 4]
+            >> (lambda x: x[0])
             >> double
             >> tap(double)
             >> double()
             >> add(1)
             >> _sum(2, 3)
             >> (lambda a: a * 2)
+            >> f"value is {_}"
         )
-        self.assertEqual(op, 140)
+        self.assertEqual(op, "value is 140")
 
     # ------------------------------
     # Ways to apply the decorator

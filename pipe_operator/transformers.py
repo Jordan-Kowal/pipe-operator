@@ -1,7 +1,13 @@
 import ast
 from typing import Type
 
-from pipe_operator.utils import OperatorString, node_contains_name, string_to_ast_BinOp
+from pipe_operator.utils import (
+    OperatorString,
+    node_contains_name,
+    node_is_regular_BinOp,
+    node_is_supported_operation,
+    string_to_ast_BinOp,
+)
 
 DEFAULT_OPERATOR: OperatorString = ">>"
 DEFAULT_PLACEHOLDER = "_"
@@ -13,13 +19,16 @@ class PipeTransformer(ast.NodeTransformer):
     Transform an elixir pipe-like list of instruction into a python-compatible one.
 
     It handles:
-        class calls                         a >> B()                 B(a)
-        method calls                        a >> _.method(...)       a.method(...)
-        property calls                      a >> _.property          a.property
-        binary operators                    a >> _ + 3               (lambda Z: Z + 3)(a)
-        function calls                      a >> b(...)              b(a, ...)
-        function calls w/o parenthesis      a >> b                   b(a)
-        lambda calls                        a >> (lambda x: x + 4)   (lambda x: x + 4)(a)
+        class calls                         a >> B()                            B(a)
+        method calls                        a >> _.method(...)                  a.method(...)
+        property calls                      a >> _.property                     a.property
+        binary operators                    a >> _ + 3                          (lambda Z: Z + 3)(a)
+        f-strings                           a >> f"{_}"                         (lambda Z: f"{Z}")(a)
+        list/set/... creations              a >> [_, 1, 2]                      (lambda Z: [Z, 1, 2])(a)
+        list/set/... comprehensions         a >> [x + _ for x in range(_)]      (lambda Z: [x + Z for x in range(Z)])(a)
+        function calls                      a >> b(...)                         b(a, ...)
+        function calls w/o parenthesis      a >> b                              b(a)
+        lambda calls                        a >> (lambda x: x + 4)              (lambda x: x + 4)(a)
 
     Args:
         operator:       The operator which will represent the pipe. Must be a valid python operator. Defaults to `>>`.
@@ -60,8 +69,11 @@ class PipeTransformer(ast.NodeTransformer):
         self.operator: Type[ast.operator] = string_to_ast_BinOp(operator)
         self.placeholder = placeholder
         self.lambda_var = lambda_var
-        self.lambda_transformer = LambdaTransformer(
-            self, self.operator, placeholder, lambda_var
+        self.lambda_transformer = ToLambdaTransformer(
+            fallback_transformer=self,
+            excluded_operator=self.operator,
+            placeholder=placeholder,
+            var_name=lambda_var,
         )
         super().__init__()
 
@@ -87,15 +99,10 @@ class PipeTransformer(ast.NodeTransformer):
         ):
             return self._transform_method_call(node)
 
-        # Binary operator instruction other than our pipe operator
-        # Will crash if does not have the placeholder
-        if isinstance(node.right, ast.BinOp) and not isinstance(
-            node.right.op, self.operator
-        ):
-            if not node_contains_name(node.right, self.placeholder):
-                raise RuntimeError(
-                    f"[PipeTransformer] BinOp requires the `{self.placeholder}` variable at least once"
-                )
+        # Direct operations like BinOp (but not our operator),
+        # or List/Tuple/Set/Dict (and comprehensions)
+        # or F-strings
+        if node_is_supported_operation(node.right, self.operator):
             return self._transform_operation_to_lambda(node)
 
         # Lambda or function without parenthesis
@@ -134,7 +141,12 @@ class PipeTransformer(ast.NodeTransformer):
         return self.visit(call)
 
     def _transform_operation_to_lambda(self, node: ast.expr) -> ast.AST:
-        """Rewrites `_ + a + b - _` as `lambda X: X + a + b - X`"""
+        """Rewrites operations like `_ + 3` as `(lambda Z: Z + 3)`"""
+        if not node_contains_name(node.right, self.placeholder):
+            name = node.right.__class__.__name__
+            raise RuntimeError(
+                f"[PipeTransformer] `{name}` operation requires the `{self.placeholder}` variable at least once"
+            )
         return self.lambda_transformer.visit(node)
 
     def _transform_name_to_call(self, node: ast.expr) -> ast.Call:
@@ -155,48 +167,94 @@ class PipeTransformer(ast.NodeTransformer):
         return self.visit(node.right)
 
 
-class LambdaTransformer(ast.NodeTransformer):
+class ToLambdaTransformer(ast.NodeTransformer):
     """
-    If the node is a BinOp (but not our pipe operator) and contains the placeholder variable,
-    it changes it into a 1-arg lambda function node that performs the same operation
-    and also replaces the `placeholder` variable with `var_name`
+    Transforms specific operations (like BinOp, List/Tuple/Set/Dict/F-string, or a comprehension)
+    that use the `placeholder` variable into a 1-arg lambda function node
+    that performs the same operation while also replacing the `placeholder` variable with `var_name`.
+    Will crash if the operation does not contain the `placeholder` variable.
+
+    Args:
+        fallback_transformer:   The transformer to use if the operation is not supported
+        excluded_operator:      The operator to exclude (because this is our pipe operator)
+        placeholder:            The variable to be replaced
+        var_name:               The variable name to use in our generated lambda functions
 
     Usage:
         ```
-        LambdaTransformer("_", "Z")
+        LambdaTransformer(
+            ast.NodeTransformer(),
+            excluded_operator=ast.RShift,
+            placeholder="_",
+            var_name="Z",
+        )
+
         1_000 >> _ + 3 >> double >> _ - _
         1000 >> (lambda Z: Z + 3) >> double >> (lambda Z: Z - Z)
+
+        1_000 >> _ + 3 >> [_, 1, 2, [_, _]]
+        1000 >> (lambda Z: Z + 3) >> (lambda Z: [Z, 1, 2, [Z, Z]])
         ```
     """
 
     def __init__(
         self,
         fallback_transformer: ast.NodeTransformer,
-        operator: Type[ast.operator] = ast.RShift,
+        excluded_operator: Type[ast.operator] = ast.RShift,
         placeholder: str = DEFAULT_PLACEHOLDER,
         var_name: str = DEFAULT_LAMBDA_VAR,
     ) -> None:
         self.fallback_transformer = fallback_transformer
-        self.operator = operator
+        self.excluded_operator = excluded_operator
         self.placeholder = placeholder
         self.var_name = var_name
         self.name_transformer = NameReplacer(placeholder, var_name)
         super().__init__()
 
     def visit_BinOp(self, node: ast.BinOp) -> ast.AST:
-        """Changes the BinOp node into a lambda node if necessary"""
-        # Maybe change the operation
-        if not isinstance(node.op, self.operator) and node_contains_name(
+        return self._transform(node)
+
+    def visit_Dict(self, node: ast.Dict) -> ast.AST:
+        return self._transform(node)
+
+    def visit_DictComp(self, node: ast.DictComp) -> ast.AST:
+        return self._transform(node)
+
+    def visit_GeneratorExp(self, node: ast.GeneratorExp) -> ast.AST:
+        return self._transform(node)
+
+    def visit_JoinedStr(self, node: ast.JoinedStr) -> ast.AST:
+        return self._transform(node)
+
+    def visit_List(self, node: ast.List) -> ast.AST:
+        return self._transform(node)
+
+    def visit_ListComp(self, node: ast.ListComp) -> ast.AST:
+        return self._transform(node)
+
+    def visit_Set(self, node: ast.Set) -> ast.AST:
+        return self._transform(node)
+
+    def visit_SetComp(self, node: ast.SetComp) -> ast.AST:
+        return self._transform(node)
+
+    def visit_Tuple(self, node: ast.Tuple) -> ast.AST:
+        return self._transform(node)
+
+    def _transform(self, node: ast.expr) -> ast.AST:
+        """Maybe transforms the operation into a lambda function or perform recursive visit"""
+        is_not_BinOp = not isinstance(node, ast.BinOp)
+        is_valid_BinOp = node_is_regular_BinOp(node, self.excluded_operator)
+        if (is_not_BinOp or is_valid_BinOp) and node_contains_name(
             node, self.placeholder
         ):
-            return self._create_lambda(node)
-        # Recursively visit all BinOp nodes in the AST
+            return self._to_lambda(node)
         node.left = self.visit(node.left)
         node.right = self.visit(node.right)
         return self.fallback_transformer.visit(node)
 
-    def _create_lambda(self, node: ast.BinOp) -> ast.Lambda:
-        """Transforms the binary operation into a lambda function"""
+    def _to_lambda(self, node: ast.expr) -> ast.Lambda:
+        """Transforms the operation into a lambda function"""
         new_node = self.name_transformer.visit(node)
         return ast.Lambda(
             args=ast.arguments(
@@ -224,11 +282,15 @@ class NameReplacer(ast.NodeTransformer):
     """
     In a Name node, replaces the id from `target` to `replacement`
 
+    Args:
+        target:         The id to be replaced
+        replacement:    The id to replace the target
+
     Usage:
         ```
         NameReplacer("_", "x")
-        In: "1000 + _ + func(_)"
-        Out: "1000 + x + func(x)"
+        "1000 + _ + func(_)"
+        "1000 + x + func(x)"
         ```
     """
 
@@ -241,7 +303,7 @@ class NameReplacer(ast.NodeTransformer):
         self.replacement = replacement
         super().__init__()
 
-    def visit_Name(self, subnode: ast.expr) -> ast.expr:
+    def visit_Name(self, subnode: ast.Name) -> ast.Name:
         """Replaces the Name node with a new one if necessary"""
         if subnode.id != self.target:
             return subnode
