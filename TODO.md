@@ -25,18 +25,15 @@
   - [x] operator
   - [x] placeholder
   - [x] replacement
-- [ ] Debug mode
-  - [ ] Automatic print
-  - [ ] Allow override of default func
-  - [ ] Check implementation with `pdb`
-- [ ] Other workflows?
-  - [ ] `if` workflow
-  - [ ] `case` workflow
+- [x] Debug mode
+  - [x] Automatic print
+  - [x] Check implementation with `pdb`
 - [ ] QA
   - [ ] Format test inputs
   - [ ] Add coverage
   - [ ] Add makefile
   - [ ] Add dependabot for UV
+  - [ ] Run tests on multiple python versions
 - [ ] Issues
   - [ ] Recompute line errors correctly (`ast.fix_missing_locations(tree)`)
   - [ ] Fix ruff and mypy issues
@@ -47,3 +44,9 @@
 - [ ] CI/CD Deploy
 - [ ] Readme
 - [ ] Changelog
+
+## Later
+
+- [ ] Other workflows?
+  - [ ] `if` workflow
+  - [ ] `case` workflow

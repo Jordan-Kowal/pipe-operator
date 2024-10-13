@@ -1,5 +1,6 @@
 import ast
 from inspect import getsource, isclass, stack
+import pdb
 from textwrap import dedent
 from typing import Any, Callable, Optional, TypeVar
 
@@ -17,6 +18,7 @@ def pipes(
     operator: OperatorString = DEFAULT_OPERATOR,
     placeholder: str = DEFAULT_PLACEHOLDER,
     lambda_var: str = DEFAULT_LAMBDA_VAR,
+    debug: bool = False,
 ) -> Callable:
     def wrapper(func_or_class: Callable) -> Callable:
         if isclass(func_or_class):
@@ -41,7 +43,10 @@ def pipes(
 
         # Update the AST and execute the new code
         transformer = PipeTransformer(
-            operator=operator, placeholder=placeholder, lambda_var=lambda_var
+            operator=operator,
+            placeholder=placeholder,
+            lambda_var=lambda_var,
+            debug_mode=debug,
         )
         tree = transformer.visit(tree)
         code = compile(
@@ -63,6 +68,11 @@ T = TypeVar("T")
 
 
 def tap(value: T, func_or_class: Callable[[T], Any]) -> T:
-    """Calls a function with the value but returns the original value"""
+    """Calls the function with the value but returns the original value"""
     func_or_class(value)
     return value
+
+
+def start_pdb(x: T = None) -> T:
+    """Shortcut to start the pdb debugger in the pipe."""
+    return tap(x, lambda _: pdb.set_trace())

@@ -116,6 +116,15 @@ class PipeTransformerTestCase(TestCase):
             "(lambda XXX: [x for x in range(len(XXX))])((lambda XXX: [XXX, 4, {XXX: 1, 2: XXX}])((lambda x: x + 4)(double(double(double((lambda XXX: XXX >> 4)(Class(3).attribute.method(4))), 4)))))",
         )
 
+    def test_with_debug_mode(self) -> None:
+        transformer = PipeTransformer(debug_mode=True)
+        source = "3 >> _ + 4 >> double"
+        result = transform_code(source, transformer)
+        self.assertEqual(
+            result,
+            "(lambda x: (print(x), x)[1])(double((lambda x: (print(x), x)[1])((lambda x: (print(x), x)[1])((lambda Z: Z + 4)(3)))))",
+        )
+
 
 class ToLambdaTransformerTestCase(TestCase):
     @classmethod

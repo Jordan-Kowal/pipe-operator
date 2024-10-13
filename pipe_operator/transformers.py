@@ -1,5 +1,5 @@
 import ast
-from typing import Type
+from typing import Optional, Type
 
 from pipe_operator.utils import (
     OperatorString,
@@ -35,6 +35,7 @@ class PipeTransformer(ast.NodeTransformer):
         placeholder:    The placeholder variable used in method, attribute, and binary calls. Defaults to `_`.
         lambda_var:     The variable name used in generated lambda functions when transforming binary operations.
                         Useful to avoid overriding existing variables. Defaults to `Z`.
+        debug_mode:     If true, will print the output after each pipe operation. Defaults to `False`.
 
     Usage:
         ```
@@ -65,16 +66,23 @@ class PipeTransformer(ast.NodeTransformer):
         operator: OperatorString = DEFAULT_OPERATOR,
         placeholder: str = DEFAULT_PLACEHOLDER,
         lambda_var: str = DEFAULT_LAMBDA_VAR,
+        debug_mode: bool = False,
     ) -> None:
+        # State
         self.operator: Type[ast.operator] = string_to_ast_BinOp(operator)
         self.placeholder = placeholder
         self.lambda_var = lambda_var
+        self.debug_mode = debug_mode
+        self.debug_func_node: Optional[ast.expr] = None
+        # Computed
         self.lambda_transformer = ToLambdaTransformer(
             fallback_transformer=self,
             excluded_operator=self.operator,
             placeholder=placeholder,
             var_name=lambda_var,
         )
+        if debug_mode:
+            self.debug_func_node = self._create_debug_lambda()
         super().__init__()
 
     def visit_BinOp(self, node: ast.BinOp) -> ast.AST:
@@ -82,35 +90,39 @@ class PipeTransformer(ast.NodeTransformer):
         if not isinstance(node.op, self.operator):
             return node
 
+        transformed_node = None
+
         # Property call `_.attribute`
         if (
             isinstance(node.right, ast.Attribute)
             and isinstance(node.right.value, ast.Name)
             and node.right.value.id == self.placeholder
         ):
-            return self._transform_attribute(node)
-
+            transformed_node = self._transform_attribute(node)
         # Method call `_.method(...)`
-        if (
+        elif (
             isinstance(node.right, ast.Call)
             and isinstance(node.right.func, ast.Attribute)
             and isinstance(node.right.func.value, ast.Name)
             and node.right.func.value.id == self.placeholder
         ):
-            return self._transform_method_call(node)
-
+            transformed_node = self._transform_method_call(node)
         # Direct operations like BinOp (but not our operator),
         # or List/Tuple/Set/Dict (and comprehensions)
         # or F-strings
-        if node_is_supported_operation(node.right, self.operator):
-            return self._transform_operation_to_lambda(node)
-
+        elif node_is_supported_operation(node.right, self.operator):
+            transformed_node = self._transform_operation_to_lambda(node)
         # Lambda or function without parenthesis
-        if not isinstance(node.right, ast.Call):
-            return self._transform_name_to_call(node)
-
+        elif not isinstance(node.right, ast.Call):
+            transformed_node = self._transform_name_to_call(node)
         # Basic function/class call `a >> b(...)`
-        return self._transform_call(node)
+        else:
+            transformed_node = self._transform_call(node)
+
+        if self.debug_mode:
+            transformed_node = self._add_debug(transformed_node)
+
+        return transformed_node
 
     def _transform_attribute(self, node: ast.expr) -> ast.expr:
         """Rewrite `a >> _.property` as `a.property`"""
@@ -140,7 +152,7 @@ class PipeTransformer(ast.NodeTransformer):
         )
         return self.visit(call)
 
-    def _transform_operation_to_lambda(self, node: ast.expr) -> ast.AST:
+    def _transform_operation_to_lambda(self, node: ast.expr) -> ast.expr:
         """Rewrites operations like `_ + 3` as `(lambda Z: Z + 3)`"""
         if not node_contains_name(node.right, self.placeholder):
             name = node.right.__class__.__name__
@@ -165,6 +177,60 @@ class PipeTransformer(ast.NodeTransformer):
         args = 0 if isinstance(node.op, self.operator) else len(node.right.args)
         node.right.args.insert(args, node.left)
         return self.visit(node.right)
+
+    def _add_debug(self, node: ast.expr) -> ast.Call:
+        """Changes the node so that it also prints the results before returning it."""
+        return ast.Call(
+            func=self.debug_func_node,
+            args=[node],
+            keywords=[],
+            lineno=node.lineno,
+            col_offset=node.col_offset,
+        )
+
+    @staticmethod
+    def _create_debug_lambda() -> ast.expr:
+        """Generates the AST for: `lambda x: (print(x), x)[1]`"""
+        return ast.Lambda(
+            args=ast.arguments(
+                posonlyargs=[],
+                args=[ast.arg(arg="x", annotation=None, lineno=0, col_offset=0)],
+                kwonlyargs=[],
+                kw_defaults=[],
+                defaults=[],
+            ),
+            body=ast.Subscript(
+                value=ast.Tuple(
+                    elts=[
+                        ast.Call(
+                            func=ast.Name(
+                                id="print", ctx=ast.Load(), lineno=0, col_offset=0
+                            ),
+                            args=[
+                                ast.Name(id="x", ctx=ast.Load(), lineno=0, col_offset=0)
+                            ],
+                            keywords=[],
+                            lineno=0,
+                            col_offset=0,
+                        ),
+                        ast.Name(id="x", ctx=ast.Load(), lineno=0, col_offset=0),
+                    ],
+                    ctx=ast.Load(),
+                    lineno=0,
+                    col_offset=0,
+                ),
+                slice=ast.Index(  # type: ignore
+                    value=ast.Constant(value=1, lineno=0, col_offset=0),
+                    lineno=0,
+                    col_offset=0,
+                ),
+                ctx=ast.Load(),
+                lineno=0,
+                col_offset=0,
+            ),
+            lineno=0,
+            col_offset=0,
+        )
 
 
 class ToLambdaTransformer(ast.NodeTransformer):

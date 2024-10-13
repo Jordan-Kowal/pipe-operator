@@ -17,3 +17,9 @@ Elixir's pipe operator in Python
 
 - AST changes
 - Operator -> Lambda
+
+## Debug
+
+debug=True
+tap(print)
+start_pdb() (tap(lambda x: pdb.set_trace()))
