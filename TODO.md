@@ -34,15 +34,20 @@
   - [x] Add dependency updates through github action
   - [x] Run tests on multiple python versions
 - [ ] Issues
-  - [ ] Recompute line errors correctly (`ast.fix_missing_locations(tree)`)
-  - [ ] Fix ruff and mypy issues
+  - [ ] Recompute line errors numbers correctly
+  - [ ] Investigate issues with `mypy`
+  - [ ] Investigate issues with `ruff`
+  - [ ] Investigate issues with `flake8`
+  - [ ] Investigate issues with `black`
 
 ## Deployment
 
-- [ ] PIPY setup (<https://github.com/scikit-learn/scikit-learn/blob/main/pyproject.toml>)
+- [ ] Project and PIPY setup (<https://github.com/scikit-learn/scikit-learn/blob/main/pyproject.toml>)
 - [ ] CI/CD Deploy
-- [ ] Readme
+- [ ] Update docstrings
+- [ ] Update README.md and add tags
 - [ ] Changelog
+- [ ] Rework TODO.md
 
 ## Later
 
