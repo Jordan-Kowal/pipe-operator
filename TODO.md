@@ -30,10 +30,9 @@
   - [x] Check implementation with `pdb`
 - [ ] QA
   - [ ] Format test inputs
-  - [ ] Add coverage
-  - [ ] Add makefile
+  - [x] Add coverage
   - [x] Add dependency updates through github action
-  - [ ] Run tests on multiple python versions
+  - [x] Run tests on multiple python versions
 - [ ] Issues
   - [ ] Recompute line errors correctly (`ast.fix_missing_locations(tree)`)
   - [ ] Fix ruff and mypy issues

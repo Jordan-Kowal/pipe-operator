@@ -11,7 +11,11 @@ homepage = "https://github.com/Jordan-Kowal/pipe-operator"
 # Dependencies
 # ------------------------------
 [tool.uv]
-dev-dependencies = ["mypy>=1.11.2", "ruff>=0.6.7"]
+dev-dependencies = [
+    "coverage>=7.6.2",
+    "mypy>=1.11.2",
+    "ruff>=0.6.7",
+]
 
 # ------------------------------
 # MYPY
