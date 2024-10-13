@@ -1,11 +1,11 @@
 import ast
-from typing import Literal, Type
+from typing import Dict, Literal, Type
 
 OperatorString = Literal[
     "+", "-", "*", "/", "%", "**", "<<", ">>", "|", "^", "&", "//", "@"
 ]
 
-AST_STRING_MAP: dict[OperatorString, Type[ast.operator]] = {
+AST_STRING_MAP: Dict[OperatorString, Type[ast.operator]] = {
     "+": ast.Add,
     "-": ast.Sub,
     "*": ast.Mult,
