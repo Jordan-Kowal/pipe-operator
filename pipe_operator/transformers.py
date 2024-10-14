@@ -320,7 +320,7 @@ class ToLambdaTransformer(ast.NodeTransformer):
         return self.fallback_transformer.visit(node)
 
     def _to_lambda(self, node: ast.expr) -> ast.Lambda:
-        """Transforms the operation into a lambda function"""
+        """Transforms the operation into a lambda function."""
         new_node = self.name_transformer.visit(node)
         return ast.Lambda(
             args=ast.arguments(
@@ -346,18 +346,33 @@ class ToLambdaTransformer(ast.NodeTransformer):
 
 class NameReplacer(ast.NodeTransformer):
     """
-    In a Name node, replaces the id from `target` to `replacement`
+    Transformer that recursively replaces `Name(id=target)` nodes
+    with `Name(id=replacement)` nodes in the AST.
 
     Args:
-        target:         The id to be replaced
-        replacement:    The id to replace the target
+        target (str): The id to search for. Defaults to `DEFAULT_PLACEHOLDER`.
+        replacement (str): The id to replace with. Defaults to `DEFAULT_LAMBDA_VAR`.
 
-    Usage:
-        ```
-        NameReplacer("_", "x")
-        "1000 + _ + func(_)"
-        "1000 + x + func(x)"
-        ```
+    Raises:
+        ValueError: If `target` and `replacement` are the same.
+
+    Examples:
+        To replace all occurrences of `_` with `Z` in a Python expression:
+
+        >>> import ast
+        >>> source_code = "1000 + _ + func(_) + _"
+        >>> tree = ast.parse(source_code)
+
+        Apply the `NameReplacer` transformer:
+
+        >>> replacer = NameReplacer(target="_", replacement="Z")
+        >>> transformed_tree = replacer.visit(tree)
+        >>> ast.fix_missing_locations(transformed_tree)
+
+        Convert the AST back to source code (e.g., using `ast.unparse`):
+
+        >>> ast.unparse(transformed_tree)
+        "1000 + Z + func(Z) + Z"
     """
 
     def __init__(
@@ -370,7 +385,7 @@ class NameReplacer(ast.NodeTransformer):
         super().__init__()
 
     def visit_Name(self, subnode: ast.Name) -> ast.Name:
-        """Replaces the Name node with a new one if necessary"""
+        """Maybe replaces the `Name(id=target)` node with `Name(id=replacement)."""
         if subnode.id != self.target:
             return subnode
         return ast.Name(

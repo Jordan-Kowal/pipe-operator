@@ -35,14 +35,14 @@ SUPPORTED_DIRECT_OPERATIONS = (
 
 
 def string_to_ast_BinOp(value: OperatorString) -> Type[ast.operator]:
-    """Converts a string to a BinOp"""
+    """Tries converting a string to a BinOp."""
     if value not in AST_STRING_MAP:
         raise ValueError(f"Invalid operator: {value}")
     return AST_STRING_MAP[value]
 
 
 def node_contains_name(node: ast.expr, name: str) -> bool:
-    """Checks if a node contains a Name(id=`name`) node"""
+    """Checks if a node contains a Name(id=`name`) by walking the AST."""
     for subnode in ast.walk(node):
         if isinstance(subnode, ast.Name) and subnode.id == name:
             return True
@@ -52,14 +52,14 @@ def node_contains_name(node: ast.expr, name: str) -> bool:
 def node_is_regular_BinOp(
     node: ast.expr, forbidden_operator: Type[ast.operator]
 ) -> bool:
-    """Checks if a node is a BinOp but not the pipe operator"""
+    """Checks if a node is a BinOp but not the pipe operator."""
     return isinstance(node, ast.BinOp) and not isinstance(node.op, forbidden_operator)
 
 
 def node_is_supported_operation(
     node: ast.expr, forbidden_operator: Type[ast.operator]
 ) -> bool:
-    """Checks if a node is a direct operation or a regular BinOp"""
+    """Checks if a node is a direct operation or a regular BinOp."""
     is_supported_operation = isinstance(node, SUPPORTED_DIRECT_OPERATIONS)
     is_supported_BinOp = node_is_regular_BinOp(node, forbidden_operator)
     return is_supported_operation or is_supported_BinOp
