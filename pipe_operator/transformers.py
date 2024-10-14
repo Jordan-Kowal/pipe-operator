@@ -236,31 +236,44 @@ class PipeTransformer(ast.NodeTransformer):
 class ToLambdaTransformer(ast.NodeTransformer):
     """
     Transforms specific operations (like BinOp, List/Tuple/Set/Dict/F-string, or a comprehension)
-    that use the `placeholder` variable into a 1-arg lambda function node
-    that performs the same operation while also replacing the `placeholder` variable with `var_name`.
+    that use the `placeholder` variable into a 1-arg lambda function node that performs
+    the same operation while also replacing the `placeholder` variable with `var_name`.
     Will crash if the operation does not contain the `placeholder` variable.
 
     Args:
-        fallback_transformer:   The transformer to use if the operation is not supported
-        excluded_operator:      The operator to exclude (because this is our pipe operator)
-        placeholder:            The variable to be replaced
-        var_name:               The variable name to use in our generated lambda functions
+        fallback_transformer (ast.NodeTransformer): The transformer to fallback on.
+        excluded_operator (Type[ast.operator]): The operator to exclude.
+            Defaults to `ast.RShift`.
+        placeholder (str): The variable to be replaced.
+            Defaults to `DEFAULT_PLACEHOLDER`.
+        var_name (str): The variable name to use in our generated lambda functions.
+            Defaults to `DEFAULT_LAMBDA_VAR`.
 
-    Usage:
-        ```
-        LambdaTransformer(
-            ast.NodeTransformer(),
-            excluded_operator=ast.RShift,
-            placeholder="_",
-            var_name="Z",
-        )
+    Raises:
+        ValueError: If `placeholder` and `var_name` are the same.
 
-        1_000 >> _ + 3 >> double >> _ - _
-        1000 >> (lambda Z: Z + 3) >> double >> (lambda Z: Z - Z)
+    Examples:
+        To replace all occurrences of `_` with `Z` in a Python expression:
 
-        1_000 >> _ + 3 >> [_, 1, 2, [_, _]]
-        1000 >> (lambda Z: Z + 3) >> (lambda Z: [Z, 1, 2, [Z, Z]])
-        ```
+        >>> import ast
+        >>> source_code = "1_000 >> _ + 3 >> double >> [_, 1, 2, [_, _]]"
+        >>> tree = ast.parse(source_code)
+
+        Apply the `LambdaTransformer` transformer:
+
+        >>> replacer = LambdaTransformer(
+        >>>     ast.NodeTransformer(),
+        >>>     excluded_operator=ast.RShift,
+        >>>     placeholder="_",
+        >>>     var_name="Z",
+        >>> )
+        >>> transformed_tree = replacer.visit(tree)
+        >>> ast.fix_missing_locations(transformed_tree)
+
+        Convert the AST back to source code:
+
+        >>> ast.unparse(transformed_tree)
+        "1000 >> (lambda Z: Z + 3) >> double >> (lambda Z: [Z, 1, 2, [Z, Z]])"
     """
 
     def __init__(
@@ -308,7 +321,7 @@ class ToLambdaTransformer(ast.NodeTransformer):
         return self._transform(node)
 
     def _transform(self, node: ast.expr) -> ast.AST:
-        """Maybe transforms the operation into a lambda function or perform recursive visit"""
+        """Either transforms the current node into a lambda function or perform recursive visits."""
         is_not_BinOp = not isinstance(node, ast.BinOp)
         is_valid_BinOp = node_is_regular_BinOp(node, self.excluded_operator)
         if (is_not_BinOp or is_valid_BinOp) and node_contains_name(
@@ -320,7 +333,11 @@ class ToLambdaTransformer(ast.NodeTransformer):
         return self.fallback_transformer.visit(node)
 
     def _to_lambda(self, node: ast.expr) -> ast.Lambda:
-        """Transforms the operation into a lambda function."""
+        """
+        Creates a 1-arg lambda function that performs the operation of the original node,
+        while also replacing the `placeholder` variable with the `var_name`
+        (which is also the name of the lambda argument).
+        """
         new_node = self.name_transformer.visit(node)
         return ast.Lambda(
             args=ast.arguments(
@@ -369,7 +386,7 @@ class NameReplacer(ast.NodeTransformer):
         >>> transformed_tree = replacer.visit(tree)
         >>> ast.fix_missing_locations(transformed_tree)
 
-        Convert the AST back to source code (e.g., using `ast.unparse`):
+        Convert the AST back to source code:
 
         >>> ast.unparse(transformed_tree)
         "1000 + Z + func(Z) + Z"
