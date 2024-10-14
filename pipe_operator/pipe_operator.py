@@ -68,11 +68,29 @@ T = TypeVar("T")
 
 
 def tap(value: T, func_or_class: Callable[[T], Any]) -> T:
-    """Calls the function with the value but returns the original value"""
+    """
+    Given a function, calls it with the value and returns the value.
+
+    Args:
+        value (T): The value to pass to the function and to return.
+        func_or_class (Callable[[T], Any]): The function/class to call.
+
+    Returns:
+        T: The original value.
+    """
     func_or_class(value)
     return value
 
 
 def start_pdb(x: T = None) -> T:
-    """Shortcut to start the pdb debugger in the pipe."""
+    """
+    Shortcut to start the pdb debugger in the pipe.
+    Using `tap`, it starts the pdb debugger and returns the original value.
+
+    Args:
+        x (T, optional): The value to return. Defaults to None.
+
+    Returns:
+        T: The original value.
+    """
     return tap(x, lambda _: pdb.set_trace())
