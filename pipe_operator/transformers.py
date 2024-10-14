@@ -17,9 +17,8 @@ DEFAULT_LAMBDA_VAR = "Z"
 class PipeTransformer(ast.NodeTransformer):
     """
     Transform an elixir pipe-like list of instruction into a python-compatible one.
-
     It handles:
-        class calls                         a >> B()                            B(a)
+        class calls                         a >> B(...)                         B(a, ...)
         method calls                        a >> _.method(...)                  a.method(...)
         property calls                      a >> _.property                     a.property
         binary operators                    a >> _ + 3                          (lambda Z: Z + 3)(a)
@@ -27,38 +26,43 @@ class PipeTransformer(ast.NodeTransformer):
         list/set/... creations              a >> [_, 1, 2]                      (lambda Z: [Z, 1, 2])(a)
         list/set/... comprehensions         a >> [x + _ for x in range(_)]      (lambda Z: [x + Z for x in range(Z)])(a)
         function calls                      a >> b(...)                         b(a, ...)
-        function calls w/o parenthesis      a >> b                              b(a)
+        calls without parenthesis           a >> b                              b(a)
         lambda calls                        a >> (lambda x: x + 4)              (lambda x: x + 4)(a)
 
+
     Args:
-        operator:       The operator which will represent the pipe. Must be a valid python operator. Defaults to `>>`.
-        placeholder:    The placeholder variable used in method, attribute, and binary calls. Defaults to `_`.
-        lambda_var:     The variable name used in generated lambda functions when transforming binary operations.
-                        Useful to avoid overriding existing variables. Defaults to `Z`.
-        debug_mode:     If true, will print the output after each pipe operation. Defaults to `False`.
+        operator (OperatorString): The operator which will represent the pipe. Defaults to `>>`.
+        placeholder (str): The placeholder variable used in method, attribute, and binary calls.
+            Defaults to `_`.
+        lambda_var (str): The variable name used in generated lambda functions when transforming
+            binary operations. Useful to avoid overriding existing variables. Defaults to `Z`.
+        debug_mode (bool): If true, will print the output after each pipe operation. Defaults to `False`.
 
-    Usage:
-        ```
-        PipeTransformer()
+    Raises:
+        ValueError: If `placeholder` and `lambda_var` are the same.
 
-        3 >> double >> Class
-        Class(double(3))
+    Examples:
+        To transform a pipe-like list of instructions into a python-compatible one:
 
-        (
-            3
-            >> Class
-            >> _.attribute
-            >> _.method(4)
-            >> _ + 4
-            >> double()
-            >> double(4)
-            >> double
-            >> (lambda x: x + 4)
-        )
-        (lambda x: x + 4)(
-            double(double(double((lambda Z: Z + 4)(Class(3).attribute.method(4))), 4))
-        )
-        ```
+        >>> import ast
+        >>> source_code = "3 >> Class >> _.attribute >> _.method(4) >> _ + 4 >> double() >> double(4) >> double >> (lambda x: x + 4)"
+        >>> tree = ast.parse(source_code)
+
+        Apply the `PipeTransformer` transformer:
+
+        >>> replacer = PipeTransformer(
+        >>>     operator=">>",
+        >>>     placeholder="_",
+        >>>     lambda_var="Z",
+        >>>     debug_mode=False
+        >>> )
+        >>> transformed_tree = replacer.visit(tree)
+        >>> ast.fix_missing_locations(transformed_tree)
+
+        Convert the AST back to source code:
+
+        >>> ast.unparse(transformed_tree)
+        "(lambda x: x + 4)(double(double(double((lambda Z: Z + 4)(Class(3).attribute.method(4))), 4)))"
     """
 
     def __init__(
@@ -112,7 +116,7 @@ class PipeTransformer(ast.NodeTransformer):
         # or F-strings
         elif node_is_supported_operation(node.right, self.operator):
             transformed_node = self._transform_operation_to_lambda(node)
-        # Lambda or function without parenthesis
+        # Lambda or function without parenthesis like `a >> b`
         elif not isinstance(node.right, ast.Call):
             transformed_node = self._transform_name_to_call(node)
         # Basic function/class call `a >> b(...)`
@@ -125,7 +129,7 @@ class PipeTransformer(ast.NodeTransformer):
         return transformed_node
 
     def _transform_attribute(self, node: ast.expr) -> ast.expr:
-        """Rewrite `a >> _.property` as `a.property`"""
+        """Rewrite `a >> _.property` as `a.property`."""
         attr = ast.Attribute(
             value=node.left,
             attr=node.right.attr,
@@ -136,7 +140,7 @@ class PipeTransformer(ast.NodeTransformer):
         return self.visit(attr)
 
     def _transform_method_call(self, node: ast.expr) -> ast.Call:
-        """Rewrite `a >> _.method(...)` as `a.method(...)`"""
+        """Rewrite `a >> _.method(...)` as `a.method(...)`."""
         call = ast.Call(
             func=ast.Attribute(
                 value=node.left,
@@ -153,7 +157,7 @@ class PipeTransformer(ast.NodeTransformer):
         return self.visit(call)
 
     def _transform_operation_to_lambda(self, node: ast.expr) -> ast.expr:
-        """Rewrites operations like `_ + 3` as `(lambda Z: Z + 3)`"""
+        """Rewrites operations like `_ + 3` as `(lambda Z: Z + 3)`."""
         if not node_contains_name(node.right, self.placeholder):
             name = node.right.__class__.__name__
             raise RuntimeError(
@@ -162,7 +166,7 @@ class PipeTransformer(ast.NodeTransformer):
         return self.lambda_transformer.visit(node)
 
     def _transform_name_to_call(self, node: ast.expr) -> ast.Call:
-        """Convert function name / lambda etc without braces into call"""
+        """Rewrites `a >> b` as `b(a)`."""
         call = ast.Call(
             func=node.right,
             args=[node.left],
@@ -173,13 +177,13 @@ class PipeTransformer(ast.NodeTransformer):
         return self.visit(call)
 
     def _transform_call(self, node: ast.expr) -> ast.Call:
-        """Rewrite `a >> b(...)` as `b(a, ...)`"""
+        """Rewrite `a >> b(...)` as `b(a, ...)`."""
         args = 0 if isinstance(node.op, self.operator) else len(node.right.args)
         node.right.args.insert(args, node.left)
         return self.visit(node.right)
 
     def _add_debug(self, node: ast.expr) -> ast.Call:
-        """Changes the node so that it also prints the results before returning it."""
+        """Updates the node so that it also prints the results before returning it."""
         return ast.Call(
             func=self.debug_func_node,
             args=[node],
@@ -190,7 +194,7 @@ class PipeTransformer(ast.NodeTransformer):
 
     @staticmethod
     def _create_debug_lambda() -> ast.expr:
-        """Generates the AST for: `lambda x: (print(x), x)[1]`"""
+        """Generates the AST for: `lambda x: (print(x), x)[1]`."""
         return ast.Lambda(
             args=ast.arguments(
                 posonlyargs=[],
@@ -253,7 +257,7 @@ class ToLambdaTransformer(ast.NodeTransformer):
         ValueError: If `placeholder` and `var_name` are the same.
 
     Examples:
-        To replace all occurrences of `_` with `Z` in a Python expression:
+        To transformer operations into lambdas:
 
         >>> import ast
         >>> source_code = "1_000 >> _ + 3 >> double >> [_, 1, 2, [_, _]]"
