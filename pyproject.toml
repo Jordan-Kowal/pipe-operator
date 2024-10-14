@@ -34,7 +34,7 @@ show_column_numbers = true
 strict_optional = false
 warn_redundant_casts = true
 warn_unused_ignores = true
-disable_error_code = "attr-defined,import-untyped,operator,call-arg,call-overload,name-defined"
+disable_error_code = "attr-defined,import-untyped,name-defined"
 
 # ------------------------------
 # RUFF
