@@ -12,7 +12,12 @@ homepage = "https://github.com/Jordan-Kowal/pipe-operator"
 # Dependencies
 # ------------------------------
 [tool.uv]
-dev-dependencies = ["coverage>=7.6.2", "mypy>=1.11.2", "ruff>=0.6.9"]
+dev-dependencies = [
+    "coverage>=7.6.2",
+    "flake8>=7.1.1",
+    "mypy>=1.11.2",
+    "ruff>=0.6.9",
+]
 
 # ------------------------------
 # MYPY
@@ -29,7 +34,7 @@ show_column_numbers = true
 strict_optional = false
 warn_redundant_casts = true
 warn_unused_ignores = true
-disable_error_code = "attr-defined,import-untyped"
+disable_error_code = "attr-defined,import-untyped,operator,call-arg,call-overload,name-defined"
 
 # ------------------------------
 # RUFF
@@ -37,6 +42,9 @@ disable_error_code = "attr-defined,import-untyped"
 [tool.ruff.format]
 quote-style = "double"
 docstring-code-format = true
+
+[tool.ruff.lint]
+ignore = ["F821"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["pipe_operator"]

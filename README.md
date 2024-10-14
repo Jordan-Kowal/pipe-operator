@@ -13,6 +13,12 @@ Elixir's pipe operator in Python
   - Does not propagate
   - With or without parenthesis
 
+## Linters and quality
+
+- ruff: `# ruff: noqa: F821`
+- flake8: `# flake8: noqa: F821` ignore = W503, F821
+- mypy: ignore `operator,call-arg,call-overload,name-defined`
+
 ## How it works
 
 - AST changes

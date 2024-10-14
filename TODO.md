@@ -35,10 +35,9 @@
   - [x] Run tests on multiple python versions
 - [ ] Issues
   - [ ] Recompute line errors numbers correctly
-  - [ ] Investigate issues with `mypy`
-  - [ ] Investigate issues with `ruff`
-  - [ ] Investigate issues with `flake8`
-  - [ ] Investigate issues with `black`
+  - [x] Investigate issues with `mypy`
+  - [x] Investigate issues with `ruff`
+  - [x] Investigate issues with `flake8`
 
 ## Deployment
 
