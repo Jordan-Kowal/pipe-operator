@@ -43,7 +43,7 @@
 
 - [ ] Project and PIPY setup (<https://github.com/scikit-learn/scikit-learn/blob/main/pyproject.toml>)
 - [ ] CI/CD Deploy
-- [ ] Update docstrings
+- [x] Update docstrings
 - [ ] Update README.md and add tags
 - [ ] Changelog
 - [ ] Rework TODO.md
