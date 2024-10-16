@@ -19,14 +19,15 @@
 - [x] Handle typing correctly
 - [ ] Update docstrings
 - [ ] Add complex test
+- [ ] Fix pyright issue with unlimited args and 0 required args
 
 ## QA
 
 - [ ] Pyright support
   - [x] Add to deps
-  - [ ] Fix typing issues
-  - [ ] Add in githooks
-  - [ ] Add in CI/CD
+  - [x] Fix typing issues
+  - [x] Add in githooks
+  - [x] Add in CI/CD
 
 ## Deployment
 
