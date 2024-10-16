@@ -38,12 +38,13 @@
 - [ ] Handle methods
 - [ ] Handle property
 - [ ] Get result easily at the end
-- [ ] Add `tap` action
+- [x] Add `tap` action
 - [x] Add `debug` mode
 - [ ] Add `start pdb` mode
 - [ ] Allow override of operator
 - [x] Handle typing correctly
 - [ ] Update docstrings
+- [ ] Add complex test
 
 ## Shared
 

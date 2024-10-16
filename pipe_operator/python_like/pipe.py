@@ -1,4 +1,4 @@
-from typing import Callable, Concatenate, Generic, ParamSpec, TypeVar
+from typing import Any, Callable, Concatenate, Generic, Optional, ParamSpec, TypeVar
 
 TInput = TypeVar("TInput")
 TOutput = TypeVar("TOutput")
@@ -18,15 +18,45 @@ class Pipe(Generic[TInput, FuncParams, TOutput]):
         self.kwargs = kwargs
 
 
-class PipeValue(Generic[TValue]):
+class PipeStart(Generic[TValue]):
     def __init__(self, value: TValue, debug: bool = False) -> None:
         self.value = value
         self.debug = debug
+        self.result: Optional[Any] = None
+        self.chained = False
+        self.step = 0
 
     def __rshift__(
         self, other: Pipe[TValue, FuncParams, TOutput]
-    ) -> "PipeValue[TOutput]":
-        result = other.f(self.value, *other.args, **other.kwargs)
+    ) -> "_PipeChain[TOutput]":
+        self.result = other.f(self.value, *other.args, **other.kwargs)
+        is_tap = isinstance(other, Tap)
         if self.debug:
-            print(result)
-        return PipeValue(result)
+            self._print_debug(is_tap=is_tap)
+        if is_tap:
+            return self  # type: ignore
+        return _PipeChain(self.result, debug=self.debug, step=self.step + 1)
+
+    def _print_debug(self, is_tap: bool) -> None:
+        if not self.chained:
+            print(self.value)
+        if is_tap:
+            print(self.value)
+        else:
+            print(self.result)
+
+
+class _PipeChain(PipeStart[TValue]):
+    def __init__(self, value: TValue, debug: bool = False, step: int = 0) -> None:
+        super().__init__(value, debug)
+        self.chained = True
+
+
+class Tap(Pipe[TValue, FuncParams, TValue]):
+    def __init__(
+        self,
+        f: Callable[Concatenate[TValue, FuncParams], object],
+        *args: FuncParams.args,
+        **kwargs: FuncParams.kwargs,
+    ) -> None:
+        super().__init__(f, *args, **kwargs)  # type: ignore
