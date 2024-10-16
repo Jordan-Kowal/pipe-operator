@@ -76,3 +76,14 @@ class PipeTestCase(TestCase):
             )
             self.assertEqual(op.value, 12)
         self.assertEqual(mock_print.call_count, 5)
+
+    def test_complex(self) -> None:
+        op = (
+            PipeStart("3")
+            >> Pipe(double_str)
+            >> Pipe(int)
+            >> Tap(compute, 2000, z=10)
+            >> Pipe(lambda x: x + 1)
+            >> Pipe(_sum, 4, 5, 6)
+        )
+        self.assertEqual(op.value, 49)
