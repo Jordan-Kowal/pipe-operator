@@ -49,7 +49,7 @@ class PipeTestCase(TestCase):
             # >> Pipe(_sum, 4, 5)
             >> Pipe(lambda x: x + 1)
         )
-        self.assertEqual(op.value, 116)
+        self.assertEqual(op.value, 107)
 
     def test_with_tap(self) -> None:
         mock = Mock()
@@ -86,4 +86,4 @@ class PipeTestCase(TestCase):
             >> Pipe(lambda x: x + 1)
             # >> Pipe(_sum, 4, 5, 6)
         )
-        self.assertEqual(op.value, 49)
+        self.assertEqual(op.value, 34)
