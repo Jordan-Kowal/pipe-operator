@@ -37,8 +37,10 @@ class PipeStart(Generic[TValue]):
         return _PipeChain(self.result, debug=self.debug)
 
     def _print_debug(self, is_tap: bool) -> None:
+        # Extra print if first call
         if not self.chained:
             print(self.value)
+        # Then print either the value or the result
         if is_tap:
             print(self.value)
         else:
