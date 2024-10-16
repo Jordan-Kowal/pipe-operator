@@ -1,12 +1,12 @@
 from typing import (
     Any,
     Callable,
-    Concatenate,
     Generic,
     Optional,
-    ParamSpec,
     TypeVar,
 )
+
+from typing_extensions import Concatenate, ParamSpec
 
 TInput = TypeVar("TInput")
 TOutput = TypeVar("TOutput")

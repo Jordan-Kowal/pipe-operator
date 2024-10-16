@@ -149,6 +149,9 @@ wheels = [
 name = "pipe-operator"
 version = "1.0.0"
 source = { virtual = "." }
+dependencies = [
+    { name = "typing-extensions" },
+]
 
 [package.dev-dependencies]
 dev = [
@@ -160,6 +163,7 @@ dev = [
 ]
 
 [package.metadata]
+requires-dist = [{ name = "typing-extensions", specifier = ">=4.12.2" }]
 
 [package.metadata.requires-dev]
 dev = [
