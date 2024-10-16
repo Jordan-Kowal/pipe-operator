@@ -33,7 +33,7 @@ class PipeValue(Generic[TValue]):
         self.value = value
         self.debug = debug
         self.result: Optional[Any] = None
-        self.chained = False
+        self.chained = chained
 
     def __rshift__(
         self, other: Pipe[TValue, FuncParams, TOutput]

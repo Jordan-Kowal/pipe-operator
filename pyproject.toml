@@ -38,6 +38,12 @@ warn_unused_ignores = true
 disable_error_code = "attr-defined,import-untyped,name-defined"
 
 # ------------------------------
+# PYRIGHT
+# ------------------------------
+[tool.pyright]
+reportOperatorIssue = "none"
+
+# ------------------------------
 # RUFF
 # ------------------------------
 [tool.ruff.format]

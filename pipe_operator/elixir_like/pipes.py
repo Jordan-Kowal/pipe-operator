@@ -122,11 +122,11 @@ def pipes(
         tree = ast.parse(dedent(source))
 
         # Remove the @pipes decorator and @pipes() decorators from the AST to avoid recursive calls
-        tree.body[0].decorator_list = [
+        tree.body[0].decorator_list = [  # type: ignore
             d
-            for d in tree.body[0].decorator_list
+            for d in tree.body[0].decorator_list  # type: ignore
             if isinstance(d, ast.Call)
-            and d.func.id != "pipes"
+            and d.func.id != "pipes"  # type: ignore
             or isinstance(d, ast.Name)
             and d.id != "pipes"
         ]

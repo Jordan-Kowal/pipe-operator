@@ -128,35 +128,38 @@ class PipeTransformer(ast.NodeTransformer):
 
         return transformed_node
 
-    def _transform_attribute(self, node: ast.expr) -> ast.expr:
+    def _transform_attribute(self, node: ast.BinOp) -> ast.expr:
         """Rewrite `a >> _.property` as `a.property`."""
+        node_right: ast.Attribute = node.right  # type: ignore
         attr = ast.Attribute(
             value=node.left,
-            attr=node.right.attr,
+            attr=node_right.attr,
             ctx=ast.Load(),
-            lineno=node.right.lineno,
-            col_offset=node.right.col_offset,
+            lineno=node_right.lineno,
+            col_offset=node_right.col_offset,
         )
         return self.visit(attr)
 
-    def _transform_method_call(self, node: ast.expr) -> ast.Call:
+    def _transform_method_call(self, node: ast.BinOp) -> ast.Call:
         """Rewrite `a >> _.method(...)` as `a.method(...)`."""
+        node_right: ast.Call = node.right  # type: ignore
+        node_right_func: ast.Attribute = node_right.func  # type: ignore
         call = ast.Call(
             func=ast.Attribute(
                 value=node.left,
-                attr=node.right.func.attr,
+                attr=node_right_func.attr,
                 ctx=ast.Load(),
-                lineno=node.right.func.lineno,
-                col_offset=node.right.func.col_offset,
+                lineno=node_right_func.lineno,
+                col_offset=node_right_func.col_offset,
             ),
-            args=node.right.args,
-            keywords=node.right.keywords,
-            lineno=node.right.lineno,
-            col_offset=node.right.col_offset,
+            args=node_right.args,
+            keywords=node_right.keywords,
+            lineno=node_right.lineno,
+            col_offset=node_right.col_offset,
         )
         return self.visit(call)
 
-    def _transform_operation_to_lambda(self, node: ast.expr) -> ast.expr:
+    def _transform_operation_to_lambda(self, node: ast.BinOp) -> ast.expr:
         """Rewrites operations like `_ + 3` as `(lambda Z: Z + 3)`."""
         if not node_contains_name(node.right, self.placeholder):
             name = node.right.__class__.__name__
@@ -165,7 +168,7 @@ class PipeTransformer(ast.NodeTransformer):
             )
         return self.lambda_transformer.visit(node)
 
-    def _transform_name_to_call(self, node: ast.expr) -> ast.Call:
+    def _transform_name_to_call(self, node: ast.BinOp) -> ast.Call:
         """Rewrites `a >> b` as `b(a)`."""
         call = ast.Call(
             func=node.right,
@@ -176,16 +179,17 @@ class PipeTransformer(ast.NodeTransformer):
         )
         return self.visit(call)
 
-    def _transform_call(self, node: ast.expr) -> ast.Call:
+    def _transform_call(self, node: ast.BinOp) -> ast.Call:
         """Rewrite `a >> b(...)` as `b(a, ...)`."""
-        args = 0 if isinstance(node.op, self.operator) else len(node.right.args)
-        node.right.args.insert(args, node.left)
-        return self.visit(node.right)
+        right: ast.Call = node.right  # type: ignore
+        args = 0 if isinstance(node.op, self.operator) else len(right.args)
+        right.args.insert(args, node.left)
+        return self.visit(right)
 
     def _add_debug(self, node: ast.expr) -> ast.Call:
         """Updates the node so that it also prints the results before returning it."""
         return ast.Call(
-            func=self.debug_func_node,
+            func=self.debug_func_node,  # noqa # type: ignore
             args=[node],
             keywords=[],
             lineno=node.lineno,
@@ -332,8 +336,8 @@ class ToLambdaTransformer(ast.NodeTransformer):
             node, self.placeholder
         ):
             return self._to_lambda(node)
-        node.left = self.visit(node.left)
-        node.right = self.visit(node.right)
+        node.left = self.visit(node.left)  # type: ignore
+        node.right = self.visit(node.right)  # type: ignore
         return self.fallback_transformer.visit(node)
 
     def _to_lambda(self, node: ast.expr) -> ast.Lambda:
@@ -405,13 +409,13 @@ class NameReplacer(ast.NodeTransformer):
         self.replacement = replacement
         super().__init__()
 
-    def visit_Name(self, subnode: ast.Name) -> ast.Name:
+    def visit_Name(self, node: ast.Name) -> ast.Name:
         """Maybe replaces the `Name(id=target)` node with `Name(id=replacement)."""
-        if subnode.id != self.target:
-            return subnode
+        if node.id != self.target:
+            return node
         return ast.Name(
             id=self.replacement,
             ctx=ast.Load(),
-            lineno=subnode.lineno,
-            col_offset=subnode.col_offset,
+            lineno=node.lineno,
+            col_offset=node.col_offset,
         )
