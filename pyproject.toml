@@ -16,6 +16,7 @@ dev-dependencies = [
     "coverage>=7.6.2",
     "flake8>=7.1.1",
     "mypy>=1.11.2",
+    "pyright>=1.1.385",
     "ruff>=0.6.9",
 ]
 

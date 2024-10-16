@@ -8,7 +8,7 @@ def double(x: int) -> int:
     return x * 2
 
 
-def double_str(x: str) -> str:
+def duplicate_string(x: str) -> str:
     return f"{x}{x}"
 
 
@@ -42,7 +42,7 @@ class PipeTestCase(TestCase):
     def test_with_functions(self) -> None:
         op = (
             PipeStart("3")
-            >> Pipe(double_str)
+            >> Pipe(duplicate_string)
             >> Pipe(int)
             >> Pipe(double)
             >> Pipe(compute, 30, z=10)
@@ -80,7 +80,7 @@ class PipeTestCase(TestCase):
     def test_complex(self) -> None:
         op = (
             PipeStart("3")
-            >> Pipe(double_str)
+            >> Pipe(duplicate_string)
             >> Pipe(int)
             >> Tap(compute, 2000, z=10)
             >> Pipe(lambda x: x + 1)

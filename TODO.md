@@ -20,6 +20,14 @@
 - [ ] Update docstrings
 - [ ] Add complex test
 
+## QA
+
+- [ ] Pyright support
+  - [x] Add to deps
+  - [ ] Fix typing issues
+  - [ ] Add in githooks
+  - [ ] Add in CI/CD
+
 ## Deployment
 
 - [ ] Maybe rename modules
