@@ -1,7 +1,7 @@
 from unittest import TestCase
 from unittest.mock import Mock, patch
 
-from pipe_operator.python_like.pipe import Pipe, PipeStart, Tap
+from pipe_operator.python_like.pipe import Pipe, PipeValue, Tap
 
 
 def double(x: int) -> int:
@@ -41,7 +41,7 @@ class BasicClass:
 class PipeTestCase(TestCase):
     def test_with_functions(self) -> None:
         op = (
-            PipeStart("3")
+            PipeValue("3")
             >> Pipe(duplicate_string)
             >> Pipe(int)
             >> Pipe(double)
@@ -54,7 +54,7 @@ class PipeTestCase(TestCase):
     def test_with_tap(self) -> None:
         mock = Mock()
         op = (
-            PipeStart(3)
+            PipeValue(3)
             >> Tap(lambda x: [x])
             >> Pipe(double)
             >> Tap(str)
@@ -69,7 +69,7 @@ class PipeTestCase(TestCase):
     def test_debug(self) -> None:
         with patch("builtins.print") as mock_print:
             op = (
-                PipeStart(3, debug=True)
+                PipeValue(3, debug=True)
                 >> Pipe(double)
                 >> Tap(lambda x: mock_print(x))
                 >> Pipe(double)
@@ -79,7 +79,7 @@ class PipeTestCase(TestCase):
 
     def test_complex(self) -> None:
         op = (
-            PipeStart("3")
+            PipeValue("3")
             >> Pipe(duplicate_string)
             >> Pipe(int)
             >> Tap(compute, 2000, z=10)

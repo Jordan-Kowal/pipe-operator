@@ -1,4 +1,12 @@
-from typing import Any, Callable, Concatenate, Generic, Optional, ParamSpec, TypeVar
+from typing import (
+    Any,
+    Callable,
+    Concatenate,
+    Generic,
+    Optional,
+    ParamSpec,
+    TypeVar,
+)
 
 TInput = TypeVar("TInput")
 TOutput = TypeVar("TOutput")
@@ -18,8 +26,10 @@ class Pipe(Generic[TInput, FuncParams, TOutput]):
         self.kwargs = kwargs
 
 
-class PipeStart(Generic[TValue]):
-    def __init__(self, value: TValue, debug: bool = False) -> None:
+class PipeValue(Generic[TValue]):
+    def __init__(
+        self, value: TValue, debug: bool = False, chained: bool = False
+    ) -> None:
         self.value = value
         self.debug = debug
         self.result: Optional[Any] = None
@@ -27,14 +37,14 @@ class PipeStart(Generic[TValue]):
 
     def __rshift__(
         self, other: Pipe[TValue, FuncParams, TOutput]
-    ) -> "_PipeChain[TOutput]":
+    ) -> "PipeValue[TOutput]":
         self.result = other.f(self.value, *other.args, **other.kwargs)
         is_tap = isinstance(other, Tap)
         if self.debug:
             self._print_debug(is_tap=is_tap)
         if is_tap:
             return self  # type: ignore
-        return _PipeChain(self.result, debug=self.debug)
+        return PipeValue(self.result, debug=self.debug, chained=True)
 
     def _print_debug(self, is_tap: bool) -> None:
         # Extra print if first call
@@ -45,12 +55,6 @@ class PipeStart(Generic[TValue]):
             print(self.value)
         else:
             print(self.result)
-
-
-class _PipeChain(PipeStart[TValue]):
-    def __init__(self, value: TValue, debug: bool = False) -> None:
-        super().__init__(value, debug)
-        self.chained = True
 
 
 class Tap(Pipe[TValue, FuncParams, TValue]):
