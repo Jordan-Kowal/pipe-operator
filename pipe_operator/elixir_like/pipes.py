@@ -4,13 +4,13 @@ import pdb
 from textwrap import dedent
 from typing import Any, Callable, Optional, TypeVar
 
-from pipe_operator.transformers import (
+from pipe_operator.elixir_like.transformers import (
     DEFAULT_LAMBDA_VAR,
     DEFAULT_OPERATOR,
     DEFAULT_PLACEHOLDER,
     PipeTransformer,
 )
-from pipe_operator.utils import OperatorString
+from pipe_operator.elixir_like.utils import OperatorString
 
 
 def pipes(

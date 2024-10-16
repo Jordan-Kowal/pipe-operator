@@ -1,7 +1,7 @@
 import ast
 from typing import Optional, Type
 
-from pipe_operator.utils import (
+from pipe_operator.elixir_like.utils import (
     OperatorString,
     node_contains_name,
     node_is_regular_BinOp,

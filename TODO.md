@@ -1,11 +1,6 @@
 # TODO
 
-## Setup
-
-- [x] Project setup (pyproject, uv, precommits)
-- [x] Basic CI/CD (ruff/tests)
-
-## Implementation
+## AST Implementation
 
 - [x] Pipe default workflow through AST
   - [x] `tap` actions
@@ -28,29 +23,44 @@
 - [x] Debug mode
   - [x] Automatic print
   - [x] Check implementation with `pdb`
-- [x] QA
-  - [x] Format test inputs
-  - [x] Add coverage
-  - [x] Add dependency updates through github action
-  - [x] Run tests on multiple python versions
 - [ ] Issues
   - [ ] Recompute line errors numbers correctly
   - [x] Investigate issues with `mypy`
   - [x] Investigate issues with `ruff`
   - [x] Investigate issues with `flake8`
+- [x] Update docstrings
+
+## Python implementation
+
+- [x] Handle functions
+- [x] Handle lambdas
+- [ ] Handle class
+- [ ] Handle methods
+- [ ] Handle property
+- [ ] Get result easily at the end
+- [ ] Add `tap` action
+- [x] Add `debug` mode
+- [ ] Add `start pdb` mode
+- [ ] Allow override of operator
+- [x] Handle typing correctly
+- [ ] Update docstrings
+
+## Shared
+
+- [x] QA
+  - [x] Format test inputs
+  - [x] Add coverage
+  - [x] Add dependency updates through github action
+  - [x] Run tests on multiple python versions
 
 ## Deployment
 
+- [ ] Maybe rename modules
 - [ ] Project and PIPY setup (<https://github.com/scikit-learn/scikit-learn/blob/main/pyproject.toml>)
 - [ ] CI/CD Deploy
-- [x] Update docstrings
 - [ ] Update README.md and add tags
 - [ ] Changelog
-- [ ] Rework TODO.md
 
 ## Later
 
-- [ ] Other workflows?
-  - [ ] `if` workflow
-  - [ ] `case` workflow
 - [ ] Replace custom workflow with `dependabot` when `uv` gets supported

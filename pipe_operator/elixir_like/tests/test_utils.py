@@ -1,7 +1,7 @@
 import ast
 from unittest import TestCase
 
-from pipe_operator.utils import (
+from pipe_operator.elixir_like.utils import (
     node_contains_name,
     node_is_regular_BinOp,
     node_is_supported_operation,

@@ -5,7 +5,7 @@ from unittest import TestCase
 from unittest.mock import Mock
 
 from pipe_operator import pipes, tap
-from pipe_operator.pipe_operator import start_pdb
+from pipe_operator.elixir_like.pipes import start_pdb
 
 
 def add(a: int, b: int) -> int:
