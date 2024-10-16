@@ -24,7 +24,6 @@ class PipeStart(Generic[TValue]):
         self.debug = debug
         self.result: Optional[Any] = None
         self.chained = False
-        self.step = 0
 
     def __rshift__(
         self, other: Pipe[TValue, FuncParams, TOutput]
@@ -35,7 +34,7 @@ class PipeStart(Generic[TValue]):
             self._print_debug(is_tap=is_tap)
         if is_tap:
             return self  # type: ignore
-        return _PipeChain(self.result, debug=self.debug, step=self.step + 1)
+        return _PipeChain(self.result, debug=self.debug)
 
     def _print_debug(self, is_tap: bool) -> None:
         if not self.chained:
@@ -47,7 +46,7 @@ class PipeStart(Generic[TValue]):
 
 
 class _PipeChain(PipeStart[TValue]):
-    def __init__(self, value: TValue, debug: bool = False, step: int = 0) -> None:
+    def __init__(self, value: TValue, debug: bool = False) -> None:
         super().__init__(value, debug)
         self.chained = True
 
