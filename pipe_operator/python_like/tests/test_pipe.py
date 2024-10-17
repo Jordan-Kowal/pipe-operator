@@ -1,7 +1,7 @@
 from unittest import TestCase
 from unittest.mock import Mock, patch
 
-from pipe_operator.python_like.pipe import Pipe, PipeValue, Tap
+from pipe_operator.python_like.pipe import Pipe, PipeValue, Tap, Then
 
 
 def double(x: int) -> int:
@@ -37,6 +37,10 @@ class BasicClass:
     def get_value_plus_arg(self, value: int) -> int:
         return self.value + value
 
+    @classmethod
+    def get_double(cls, instance: "BasicClass") -> "BasicClass":
+        return BasicClass(instance.value * 2)
+
 
 class PipeTestCase(TestCase):
     def test_with_functions(self) -> None:
@@ -44,12 +48,27 @@ class PipeTestCase(TestCase):
             PipeValue("3")
             >> Pipe(duplicate_string)
             >> Pipe(int)
-            >> Pipe(double)
             >> Pipe(compute, 30, z=10)
             # >> Pipe(_sum, 4, 5)
-            >> Pipe(lambda x: x + 1)
         )
-        self.assertEqual(op.value, 107)
+        self.assertEqual(op.value, 73)
+
+    def test_with_lambdas(self) -> None:
+        op = (
+            PipeValue("3")
+            >> Then[str, int](lambda x: int(x) + 1)
+            >> Then[int, int](lambda x: double(x))
+        )
+        self.assertEqual(op.value, 8)
+
+    def test_with_class(self) -> None:
+        op = (
+            PipeValue(3)
+            >> Pipe(double)
+            >> Pipe(BasicClass)
+            >> Pipe(BasicClass.get_double)
+        )
+        self.assertEqual(op.value.value, 12)
 
     def test_with_tap(self) -> None:
         mock = Mock()
@@ -84,6 +103,9 @@ class PipeTestCase(TestCase):
             >> Pipe(int)
             >> Tap(compute, 2000, z=10)
             >> Pipe(lambda x: x + 1)
+            >> Pipe(BasicClass)
+            >> Pipe(BasicClass.get_double)
+            >> Then[BasicClass, int](lambda x: x.value * 2)
             # >> Pipe(_sum, 4, 5, 6)
         )
-        self.assertEqual(op.value, 34)
+        self.assertEqual(op.value, 136)

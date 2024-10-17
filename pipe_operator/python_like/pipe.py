@@ -4,6 +4,7 @@ from typing import (
     Generic,
     Optional,
     TypeVar,
+    Union,
 )
 
 from typing_extensions import Concatenate, ParamSpec
@@ -12,6 +13,9 @@ TInput = TypeVar("TInput")
 TOutput = TypeVar("TOutput")
 TValue = TypeVar("TValue")
 FuncParams = ParamSpec("FuncParams")
+
+ThenInput = TypeVar("ThenInput")
+ThenOutput = TypeVar("ThenOutput")
 
 
 class Pipe(Generic[TInput, FuncParams, TOutput]):
@@ -36,9 +40,9 @@ class PipeValue(Generic[TValue]):
         self.chained = chained
 
     def __rshift__(
-        self, other: Pipe[TValue, FuncParams, TOutput]
+        self, other: Union[Pipe[TValue, FuncParams, TOutput], "Then[TValue, TOutput]"]
     ) -> "PipeValue[TOutput]":
-        self.result = other.f(self.value, *other.args, **other.kwargs)
+        self.result = other.f(self.value, *other.args, **other.kwargs)  # type: ignore
         is_tap = isinstance(other, Tap)
         if self.debug:
             self._print_debug(is_tap=is_tap)
@@ -55,6 +59,13 @@ class PipeValue(Generic[TValue]):
             print(self.value)
         else:
             print(self.result)
+
+
+class Then(Generic[ThenInput, ThenOutput]):
+    def __init__(self, f: Callable[[ThenInput], ThenOutput]) -> None:
+        self.f = f
+        self.args = ()
+        self.kwargs = {}  # type: ignore
 
 
 class Tap(Pipe[TValue, FuncParams, TValue]):

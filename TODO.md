@@ -8,7 +8,7 @@
 
 - [x] Handle functions
 - [x] Handle lambdas
-- [ ] Handle class
+- [x] Handle class
 - [ ] Handle methods
 - [ ] Handle property
 - [ ] Get result easily at the end
@@ -20,14 +20,6 @@
 - [ ] Update docstrings
 - [ ] Add complex test
 - [ ] Fix pyright issue with unlimited args and 0 required args
-
-## QA
-
-- [ ] Pyright support
-  - [x] Add to deps
-  - [x] Fix typing issues
-  - [x] Add in githooks
-  - [x] Add in CI/CD
 
 ## Deployment
 
