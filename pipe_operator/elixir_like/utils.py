@@ -21,6 +21,8 @@ AST_STRING_MAP: Dict[OperatorString, Type[ast.operator]] = {
     "@": ast.MatMult,
 }
 
+AST_STRING_KEYS = list(AST_STRING_MAP.keys())
+
 SUPPORTED_DIRECT_OPERATIONS = (
     ast.Dict,
     ast.DictComp,
@@ -37,7 +39,9 @@ SUPPORTED_DIRECT_OPERATIONS = (
 def string_to_ast_BinOp(value: OperatorString) -> Type[ast.operator]:
     """Tries converting a string to a BinOp."""
     if value not in AST_STRING_MAP:
-        raise ValueError(f"Invalid operator: {value}")
+        raise ValueError(
+            f'[pipe_operator] Invalid pipe operator: "{value}". It should be one of: {AST_STRING_KEYS}'
+        )
     return AST_STRING_MAP[value]
 
 

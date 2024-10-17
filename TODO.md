@@ -18,7 +18,7 @@
 - [ ] Allow override of operator
 - [x] Handle typing correctly
 - [ ] Update docstrings
-- [ ] Add complex test
+- [x] Add complex test
 - [ ] Fix pyright issue with unlimited args and 0 required args
 
 ## Deployment

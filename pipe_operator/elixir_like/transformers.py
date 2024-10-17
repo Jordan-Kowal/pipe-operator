@@ -164,7 +164,7 @@ class PipeTransformer(ast.NodeTransformer):
         if not node_contains_name(node.right, self.placeholder):
             name = node.right.__class__.__name__
             raise RuntimeError(
-                f"[PipeTransformer] `{name}` operation requires the `{self.placeholder}` variable at least once"
+                f"[pipe_operator] `{name}` operation requires the `{self.placeholder}` variable at least once"
             )
         return self.lambda_transformer.visit(node)
 
@@ -404,7 +404,9 @@ class NameReplacer(ast.NodeTransformer):
         self, target: str = DEFAULT_PLACEHOLDER, replacement: str = DEFAULT_LAMBDA_VAR
     ) -> None:
         if target == replacement:
-            raise ValueError("`target` and `replacement` must be different")
+            raise ValueError(
+                "[pipe_operator] `target` and `replacement` must be different"
+            )
         self.target = target
         self.replacement = replacement
         super().__init__()

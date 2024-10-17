@@ -43,6 +43,20 @@ class BasicClass:
 
 
 class PipeTestCase(TestCase):
+    # ------------------------------
+    # Settings
+    # ------------------------------
+    def test_pipe_does_not_support_lambdas(self) -> None:
+        with self.assertRaises(TypeError):
+            _ = PipeValue(3) >> Pipe(lambda x: x + 1)
+
+    def test_then_only_supports_lambdas(self) -> None:
+        with self.assertRaises(TypeError):
+            _ = PipeValue(3) >> Then(double)
+
+    # ------------------------------
+    # Workflows
+    # ------------------------------
     def test_with_functions(self) -> None:
         op = (
             PipeValue("3")
@@ -53,7 +67,7 @@ class PipeTestCase(TestCase):
         )
         self.assertEqual(op.value, 73)
 
-    def test_with_lambdas(self) -> None:
+    def test_with_then(self) -> None:
         op = (
             PipeValue("3")
             >> Then[str, int](lambda x: int(x) + 1)
@@ -61,7 +75,7 @@ class PipeTestCase(TestCase):
         )
         self.assertEqual(op.value, 8)
 
-    def test_with_class(self) -> None:
+    def test_with_classes(self) -> None:
         op = (
             PipeValue(3)
             >> Pipe(double)
@@ -102,7 +116,7 @@ class PipeTestCase(TestCase):
             >> Pipe(duplicate_string)
             >> Pipe(int)
             >> Tap(compute, 2000, z=10)
-            >> Pipe(lambda x: x + 1)
+            >> Then(lambda x: x + 1)
             >> Pipe(BasicClass)
             >> Pipe(BasicClass.get_double)
             >> Then[BasicClass, int](lambda x: x.value * 2)
