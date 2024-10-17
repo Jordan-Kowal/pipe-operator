@@ -7,12 +7,13 @@
 ## Python implementation
 
 - [x] Handle functions
-- [x] Handle lambdas
+- [x] Handle lambdas (with `then`)
 - [x] Handle class
 - [ ] Handle methods
 - [ ] Handle property
-- [ ] Get result easily at the end
+- [x] Get result easily at the end
 - [x] Add `tap` action
+- [x] Add `then` action
 - [x] Add `debug` mode
 - [ ] Add `start pdb` mode
 - [ ] Allow override of operator

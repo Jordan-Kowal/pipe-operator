@@ -27,18 +27,20 @@ class Pipe(Generic[TInput, FuncParams, TOutput]):
         *args: FuncParams.args,
         **kwargs: FuncParams.kwargs,
     ) -> None:
-        is_tap = bool(kwargs.pop("_tap", False))
-        if is_lambda(f) and not is_tap:
-            raise TypeError(
-                "[pipe_operator] `Pipe` does not support lambda functions. Use `Then` instead."
-            )
         self.f = f
         self.args = args
         self.kwargs = kwargs
-        self.tap = is_tap
+        self.tap = bool(kwargs.pop("_tap", False))
+        self.raise_if_lambda()
+
+    def raise_if_lambda(self) -> None:
+        if is_lambda(self.f) and not self.tap:
+            raise TypeError(
+                "[pipe_operator] `Pipe` does not support lambda functions. Use `Then` instead."
+            )
 
 
-class PipeValue(Generic[TValue]):
+class PipeStart(Generic[TValue]):
     def __init__(
         self, value: TValue, debug: bool = False, chained: bool = False
     ) -> None:
@@ -49,13 +51,15 @@ class PipeValue(Generic[TValue]):
 
     def __rshift__(
         self, other: Union[Pipe[TValue, FuncParams, TOutput], "Then[TValue, TOutput]"]
-    ) -> "PipeValue[TOutput]":
+    ) -> "PipeStart[TOutput]":
+        if isinstance(other, PipeEnd):
+            return self.value  # type: ignore
         self.result = other.f(self.value, *other.args, **other.kwargs)  # type: ignore
         if self.debug:
             self._print_debug(other.tap)
         if other.tap:
             return self  # type: ignore
-        return PipeValue(self.result, debug=self.debug, chained=True)
+        return PipeStart(self.result, debug=self.debug, chained=True)
 
     def _print_debug(self, is_tap: bool) -> None:
         # Extra print if first call
@@ -68,16 +72,24 @@ class PipeValue(Generic[TValue]):
             print(self.result)
 
 
+class PipeEnd:
+    def __rrshift__(self, other: PipeStart[TValue]) -> TValue:
+        return other.value
+
+
 class Then(Generic[ThenInput, ThenOutput]):
     def __init__(self, f: Callable[[ThenInput], ThenOutput]) -> None:
-        if not is_lambda(f):
-            raise TypeError(
-                "[pipe_operator] `Then` only supports lambda functions. Use `Pipe` instead."
-            )
         self.f = f
         self.args = ()
         self.kwargs = {}  # type: ignore
         self.tap = False
+        self.raise_if_not_lambda()
+
+    def raise_if_not_lambda(self) -> None:
+        if not is_lambda(self.f):
+            raise TypeError(
+                "[pipe_operator] `Then` only supports lambda functions. Use `Pipe` instead."
+            )
 
 
 class Tap(Pipe[TValue, FuncParams, TValue]):

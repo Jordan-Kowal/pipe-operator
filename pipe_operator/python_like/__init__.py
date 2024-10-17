@@ -1,8 +1,9 @@
-from .pipe import Pipe, PipeValue, Tap, Then
+from .pipe import Pipe, PipeEnd, PipeStart, Tap, Then
 
 __all__ = [
-    "PipeValue",
     "Pipe",
-    "Then",
+    "PipeEnd",
+    "PipeStart",
     "Tap",
+    "Then",
 ]

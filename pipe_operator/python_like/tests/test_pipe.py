@@ -1,7 +1,7 @@
 from unittest import TestCase
 from unittest.mock import Mock, patch
 
-from pipe_operator.python_like.pipe import Pipe, PipeValue, Tap, Then
+from pipe_operator.python_like.pipe import Pipe, PipeEnd, PipeStart, Tap, Then
 
 
 def double(x: int) -> int:
@@ -48,46 +48,49 @@ class PipeTestCase(TestCase):
     # ------------------------------
     def test_pipe_does_not_support_lambdas(self) -> None:
         with self.assertRaises(TypeError):
-            _ = PipeValue(3) >> Pipe(lambda x: x + 1)
+            _ = PipeStart(3) >> Pipe(lambda x: x + 1) >> PipeEnd()
 
     def test_then_only_supports_lambdas(self) -> None:
         with self.assertRaises(TypeError):
-            _ = PipeValue(3) >> Then(double)
+            _ = PipeStart(3) >> Then(double) >> PipeEnd()
 
     # ------------------------------
     # Workflows
     # ------------------------------
     def test_with_functions(self) -> None:
-        op = (
-            PipeValue("3")
+        op: int = (
+            PipeStart("3")
             >> Pipe(duplicate_string)
             >> Pipe(int)
             >> Pipe(compute, 30, z=10)
             # >> Pipe(_sum, 4, 5)
+            >> PipeEnd()
         )
-        self.assertEqual(op.value, 73)
+        self.assertEqual(op, 73)
 
     def test_with_then(self) -> None:
         op = (
-            PipeValue("3")
+            PipeStart("3")
             >> Then[str, int](lambda x: int(x) + 1)
             >> Then[int, int](lambda x: double(x))
+            >> PipeEnd()
         )
-        self.assertEqual(op.value, 8)
+        self.assertEqual(op, 8)
 
     def test_with_classes(self) -> None:
         op = (
-            PipeValue(3)
+            PipeStart(3)
             >> Pipe(double)
             >> Pipe(BasicClass)
             >> Pipe(BasicClass.get_double)
+            >> PipeEnd()
         )
-        self.assertEqual(op.value.value, 12)
+        self.assertEqual(op.value, 12)
 
     def test_with_tap(self) -> None:
         mock = Mock()
         op = (
-            PipeValue(3)
+            PipeStart(3)
             >> Tap(lambda x: [x])
             >> Pipe(double)
             >> Tap(str)
@@ -95,24 +98,26 @@ class PipeTestCase(TestCase):
             >> Tap(compute, 2000, z=10)
             >> Tap(lambda x: mock(x))
             >> Pipe(double)
+            >> PipeEnd()
         )
-        self.assertEqual(op.value, 24)
+        self.assertEqual(op, 24)
         mock.assert_called_once_with(12)
 
     def test_debug(self) -> None:
         with patch("builtins.print") as mock_print:
             op = (
-                PipeValue(3, debug=True)
+                PipeStart(3, debug=True)
                 >> Pipe(double)
                 >> Tap(lambda x: mock_print(x))
                 >> Pipe(double)
+                >> PipeEnd()
             )
-            self.assertEqual(op.value, 12)
+            self.assertEqual(op, 12)
         self.assertEqual(mock_print.call_count, 5)
 
     def test_complex(self) -> None:
         op = (
-            PipeValue("3")
+            PipeStart("3")
             >> Pipe(duplicate_string)
             >> Pipe(int)
             >> Tap(compute, 2000, z=10)
@@ -121,5 +126,6 @@ class PipeTestCase(TestCase):
             >> Pipe(BasicClass.get_double)
             >> Then[BasicClass, int](lambda x: x.value * 2)
             # >> Pipe(_sum, 4, 5, 6)
+            >> PipeEnd()
         )
-        self.assertEqual(op.value, 136)
+        self.assertEqual(op, 136)
