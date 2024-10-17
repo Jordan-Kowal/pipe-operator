@@ -11,12 +11,12 @@
 - [x] Handle class
 - [x] Handle methods
 - [ ] Handle property
+- [ ] Handle func with only unknown args
 - [x] Get result easily at the end
 - [x] Add `tap` action
 - [x] Add `then` action
 - [x] Add `debug` mode
 - [ ] Add `start pdb` mode
-- [ ] Allow override of operator
 - [x] Handle typing correctly
 - [ ] Update docstrings
 - [x] Add complex test
