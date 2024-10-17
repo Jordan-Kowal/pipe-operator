@@ -60,9 +60,9 @@ class PipeTestCase(TestCase):
     def test_with_functions(self) -> None:
         op: int = (
             PipeStart("3")
-            >> Pipe(duplicate_string)
-            >> Pipe(int)
-            >> Pipe(compute, 30, z=10)
+            >> Pipe(duplicate_string)  # function
+            >> Pipe(int)  # function
+            >> Pipe(compute, 30, z=10)  # function with args
             # >> Pipe(_sum, 4, 5)
             >> PipeEnd()
         )
@@ -71,8 +71,9 @@ class PipeTestCase(TestCase):
     def test_with_then(self) -> None:
         op = (
             PipeStart("3")
-            >> Then[str, int](lambda x: int(x) + 1)
-            >> Then[int, int](lambda x: double(x))
+            >> Then[str, int](lambda x: int(x) + 1)  # typed then/lambda
+            >> Then[int, int](lambda x: double(x))  # typed then/lambda
+            >> Then(lambda x: x)  # then/lambda
             >> PipeEnd()
         )
         self.assertEqual(op, 8)
@@ -80,23 +81,23 @@ class PipeTestCase(TestCase):
     def test_with_classes(self) -> None:
         op = (
             PipeStart(3)
-            >> Pipe(double)
-            >> Pipe(BasicClass)
-            >> Pipe(BasicClass.get_double)
+            >> Pipe(BasicClass)  # class
+            >> Pipe(BasicClass.get_double)  # classmethod
+            >> Pipe(BasicClass.get_value_method)  # method
             >> PipeEnd()
         )
-        self.assertEqual(op.value, 12)
+        self.assertEqual(op, 6)
 
     def test_with_tap(self) -> None:
         mock = Mock()
         op = (
             PipeStart(3)
-            >> Tap(lambda x: [x])
+            >> Tap(lambda x: [x])  # tap + lambda
             >> Pipe(double)
-            >> Tap(str)
+            >> Tap(str)  # tap + function
             >> Pipe(double)
-            >> Tap(compute, 2000, z=10)
-            >> Tap(lambda x: mock(x))
+            >> Tap(compute, 2000, z=10)  # tap + function with args
+            >> Tap(lambda x: mock(x))  # tap + lambda
             >> Pipe(double)
             >> PipeEnd()
         )
@@ -118,13 +119,15 @@ class PipeTestCase(TestCase):
     def test_complex(self) -> None:
         op = (
             PipeStart("3")
-            >> Pipe(duplicate_string)
-            >> Pipe(int)
-            >> Tap(compute, 2000, z=10)
-            >> Then(lambda x: x + 1)
-            >> Pipe(BasicClass)
-            >> Pipe(BasicClass.get_double)
-            >> Then[BasicClass, int](lambda x: x.value * 2)
+            >> Pipe(duplicate_string)  # function
+            >> Pipe(int)  # function
+            >> Tap(compute, 2000, z=10)  # function with args
+            >> Then(lambda x: x + 1)  # then/lambda
+            >> Pipe(BasicClass)  # class
+            >> Pipe(BasicClass.get_double)  # classmethod
+            >> Tap(BasicClass.increment)  # tap + method
+            >> Pipe(BasicClass.get_value_method)  # method
+            >> Then[int, int](lambda x: x * 2)  # typed then/lambda
             # >> Pipe(_sum, 4, 5, 6)
             >> PipeEnd()
         )

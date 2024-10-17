@@ -9,7 +9,7 @@
 - [x] Handle functions
 - [x] Handle lambdas (with `then`)
 - [x] Handle class
-- [ ] Handle methods
+- [x] Handle methods
 - [ ] Handle property
 - [x] Get result easily at the end
 - [x] Add `tap` action
