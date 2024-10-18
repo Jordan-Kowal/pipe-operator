@@ -3,6 +3,7 @@
 ## AST Implementation
 
 - [ ] Recompute line errors numbers correctly
+- [ ] `then` implementation?
 
 ## Python implementation
 
@@ -16,7 +17,6 @@
 - [x] Add `tap` action
 - [x] Add `then` action
 - [x] Add `debug` mode
-- [ ] Add `start pdb` mode
 - [x] Handle typing correctly
 - [ ] Update docstrings
 - [x] Add complex test

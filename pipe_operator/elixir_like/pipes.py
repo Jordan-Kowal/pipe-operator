@@ -1,6 +1,5 @@
 import ast
 from inspect import getsource, isclass, stack
-import pdb
 from textwrap import dedent
 from typing import Any, Callable, Optional, TypeVar
 
@@ -179,24 +178,3 @@ def tap(value: T, func_or_class: Callable[[T], Any]) -> T:
     """
     func_or_class(value)
     return value
-
-
-def start_pdb(x: T = None) -> T:
-    """
-    Shortcut to start the pdb debugger in the pipe.
-    Using `tap`, it starts the pdb debugger and returns the original value.
-
-    Args:
-        x (T, optional): The value to return. Defaults to None.
-
-    Returns:
-        T: The original value.
-
-    Examples:
-        >>> result = start_pdb(100)
-        # This will trigger the pdb debugger, allowing you to step through the code.
-        # After exiting the debugger, the value `100` will be returned.
-        >>> print(result)
-        100
-    """
-    return tap(x, lambda _: pdb.set_trace())

@@ -1,11 +1,9 @@
-import pdb
 import types
 from typing import no_type_check
 from unittest import TestCase
 from unittest.mock import Mock
 
 from pipe_operator import pipes, tap
-from pipe_operator.elixir_like.pipes import start_pdb
 
 
 def add(a: int, b: int) -> int:
@@ -243,14 +241,6 @@ class PipeOperatorTestCase(TestCase):
         )
         self.assertEqual(op, 29)
 
-    @no_type_check
-    @pipes
-    def test_with_start_pdb(self) -> None:
-        pdb.set_trace = Mock()
-        op = 4 >> add(10) >> start_pdb() >> double >> add(1)
-        self.assertEqual(op, 29)
-        pdb.set_trace.assert_called_once()
-
 
 class TapTestCase(TestCase):
     def test_tap_with_func(self) -> None:
@@ -258,10 +248,3 @@ class TapTestCase(TestCase):
         results = tap(4, mock_func)
         self.assertEqual(results, 4)
         mock_func.assert_called_once_with(4)
-
-
-class StartPdbTestCase(TestCase):
-    def test_start_pdb(self) -> None:
-        pdb.set_trace = Mock()
-        self.assertEqual(start_pdb(4), 4)
-        pdb.set_trace.assert_called_once()

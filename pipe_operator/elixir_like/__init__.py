@@ -1,3 +1,3 @@
-from .pipes import pipes, start_pdb, tap
+from .pipes import pipes, tap
 
-__all__ = ["pipes", "tap", "start_pdb"]
+__all__ = ["pipes", "tap"]
