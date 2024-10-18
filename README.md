@@ -1,38 +1,28 @@
 # Pipe Operator
 
-Elixir's pipe operator in Python
+## Python
 
-- Callable with any number of args >= 1 (Func, Lambda, Class)
-- Handle method/property calls with `_.property` or `_.method()`
-- With or without parenthesis if 1 arg
-  - Except for methods `_.x` (property) and `_.x()` (method)
-- tap "side-effect" utils
-- No `then` because this is basically a lambda call
-- Decorator
-  - works on func, method, or even class
-  - Does not propagate
-  - With or without parenthesis
+Attribute with Then
+_sum(*args) issue, either PipeArgs or Pipe + # type: ignore
 
-## Linters and quality
+- pyright: reportOperatorIssue = "none"
 
-- elixir:
-  - ruff: `# ruff: noqa: F821`
-  - flake8: `# flake8: noqa: F821` ignore = W503, F821
-  - mypy: ignore `operator,call-arg,call-overload,name-defined` OU `name-defined` + @no_type_check
-  - pyright:
-    - reportOperatorIssue = "none"
-    - reportCallIssue = "none"
-    - reportUndefinedVariable = "none"
-- python:
-  - pyright: reportOperatorIssue = "none"
+## Elixir
 
-## How it works
+shortcuts instead of lambdas
+then optional but available
+
+### How it works
 
 - AST changes
 - Operator -> Lambda
 
-## Debug
+### Linters and quality
 
-debug=True
-tap(print)
-start_pdb() (tap(lambda x: pdb.set_trace()))
+- ruff: `# ruff: noqa: F821`
+- flake8: `# flake8: noqa: F821` ignore = W503, F821
+- mypy: ignore `operator,call-arg,call-overload,name-defined` OU `name-defined` + @no_type_check
+- pyright:
+  - reportOperatorIssue = "none"
+  - reportCallIssue = "none"
+  - reportUndefinedVariable = "none"

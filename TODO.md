@@ -1,25 +1,7 @@
 # TODO
 
-## AST Implementation
-
-- [ ] Recompute line errors numbers correctly
-- [x] `then` implementation?
-
-## Python implementation
-
-- [x] Handle functions
-  - [x] Fix pyright issue with unlimited args and 0 required args
-- [x] Handle lambdas (with `then`)
-- [x] Handle class
-- [x] Handle methods
-- [ ] ~~Handle property~~ Done through lambdas
-- [x] Get result easily at the end
-- [x] Add `tap` action
-- [x] Add `then` action
-- [x] Add `debug` mode
-- [x] Handle typing correctly
-- [x] Add complex test
-- [ ] Update docstrings
+- [ ] Elixir: Recompute line errors numbers correctly
+- [ ] Python: Update docstrings
 
 ## Deployment
 

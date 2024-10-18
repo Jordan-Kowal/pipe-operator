@@ -143,7 +143,7 @@ class PipeArgsestCase(TestCase):
             >> Then(lambda x: x + 1)  # then/lambda
             >> Pipe(BasicClass)  # class
             >> Pipe(BasicClass.get_double)  # classmethod
-            >> Tap(BasicClass.increment)  # tap + method
+            >> Tap(BasicClass.increment)  # tap + method that updates original object
             >> Pipe(BasicClass.get_value_method)  # method
             >> Then[int, int](lambda x: x * 2)  # typed then/lambda
             >> PipeArgs(_sum, 4, 5, 6)
