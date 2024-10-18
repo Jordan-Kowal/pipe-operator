@@ -50,9 +50,13 @@ class PipeTestCase(TestCase):
         with self.assertRaises(TypeError):
             _ = PipeStart(3) >> Pipe(lambda x: x + 1) >> PipeEnd()
 
-    def test_then_only_supports_lambdas(self) -> None:
+    def test_then_only_supports_one_arg_lambdas(self) -> None:
         with self.assertRaises(TypeError):
             _ = PipeStart(3) >> Then(double) >> PipeEnd()
+        with self.assertRaises(TypeError):
+            _ = PipeStart(3) >> Then(BasicClass) >> PipeEnd()
+        with self.assertRaises(TypeError):
+            _ = PipeStart(3) >> Then(lambda x, y: x + y) >> PipeEnd()  # type: ignore
 
     # ------------------------------
     # Workflows

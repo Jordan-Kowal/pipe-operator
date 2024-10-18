@@ -3,7 +3,7 @@
 ## AST Implementation
 
 - [ ] Recompute line errors numbers correctly
-- [ ] `then` implementation?
+- [x] `then` implementation?
 
 ## Python implementation
 
@@ -11,7 +11,7 @@
 - [x] Handle lambdas (with `then`)
 - [x] Handle class
 - [x] Handle methods
-- [ ] Handle property
+- [ ] ~~Handle property~~
 - [ ] Handle func with only unknown args
 - [x] Get result easily at the end
 - [x] Add `tap` action

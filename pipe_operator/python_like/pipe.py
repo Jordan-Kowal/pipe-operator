@@ -9,7 +9,7 @@ from typing import (
 
 from typing_extensions import Concatenate, ParamSpec
 
-from pipe_operator.python_like.utils import is_lambda
+from pipe_operator.shared.utils import is_lambda, is_one_arg_lambda
 
 TInput = TypeVar("TInput")
 TOutput = TypeVar("TOutput")
@@ -86,7 +86,7 @@ class Then(Generic[ThenInput, ThenOutput]):
         self.raise_if_not_lambda()
 
     def raise_if_not_lambda(self) -> None:
-        if not is_lambda(self.f):
+        if not is_one_arg_lambda(self.f):
             raise TypeError(
                 "[pipe_operator] `Then` only supports lambda functions. Use `Pipe` instead."
             )

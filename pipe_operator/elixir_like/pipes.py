@@ -10,6 +10,7 @@ from pipe_operator.elixir_like.transformers import (
     PipeTransformer,
 )
 from pipe_operator.elixir_like.utils import OperatorString
+from pipe_operator.shared.utils import is_one_arg_lambda
 
 
 def pipes(
@@ -100,6 +101,7 @@ def pipes(
         >>>         >> add(1)
         >>>         >> _sum(2, 3)
         >>>         >> (lambda a: a * 2)
+        >>>         >> then(lambda a: a + 1)
         >>>         >> f"value is {_}"
         >>>     )
 
@@ -154,6 +156,7 @@ def pipes(
 
 
 T = TypeVar("T")
+R = TypeVar("R")
 
 
 def tap(value: T, func_or_class: Callable[[T], Any]) -> T:
@@ -178,3 +181,29 @@ def tap(value: T, func_or_class: Callable[[T], Any]) -> T:
     """
     func_or_class(value)
     return value
+
+
+def then(value: T, f: Callable[[T], R]) -> R:
+    """
+    Elixir-like `then` function to pass a lambda into the pipe.
+    Simply calls f(value).
+
+    Args:
+        value (T): The value to pass to the function
+        f (Callable[[T], R]): The function/class to call.
+
+    Returns:
+        R: The result of the function call.
+
+    Raises:
+        TypeError: If the function is not a lambda function.
+
+    Examples:
+        >>> then(42, lambda x: x + 1)
+        43
+    """
+    if not is_one_arg_lambda(f):
+        raise TypeError(
+            "[pipe_operator] `Then` only supports lambda functions. Use `Pipe` instead."
+        )
+    return f(value)

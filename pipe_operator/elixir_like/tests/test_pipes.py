@@ -4,6 +4,7 @@ from unittest import TestCase
 from unittest.mock import Mock
 
 from pipe_operator import pipes, tap
+from pipe_operator.elixir_like.pipes import then
 
 
 def add(a: int, b: int) -> int:
@@ -175,9 +176,10 @@ class PipeOperatorTestCase(TestCase):
             >> add(1)
             >> _sum(2, 3)
             >> (lambda a: a * 2)
+            >> then(lambda a: a + 1)
             >> f"value is {_}"
         )
-        self.assertEqual(op, "value is 140")
+        self.assertEqual(op, "value is 141")
 
     # ------------------------------
     # Ways to apply the decorator
@@ -241,10 +243,30 @@ class PipeOperatorTestCase(TestCase):
         )
         self.assertEqual(op, 29)
 
+    @no_type_check
+    @pipes
+    def test_with_then(self) -> None:
+        op = 0 >> add(10) >> then(lambda a: a**2) >> double
+        self.assertEqual(op, 200)
+
 
 class TapTestCase(TestCase):
-    def test_tap_with_func(self) -> None:
+    def test_with_func(self) -> None:
         mock_func = Mock()
         results = tap(4, mock_func)
         self.assertEqual(results, 4)
         mock_func.assert_called_once_with(4)
+
+
+class ThenTestCase(TestCase):
+    def test_with_lambdas(self) -> None:
+        op = then(4, lambda x: x + 1)
+        self.assertEqual(op, 5)
+
+    def test_should_raise_error_if_not_one_arg_lambda(self) -> None:
+        with self.assertRaises(TypeError):
+            then(4, double)
+        with self.assertRaises(TypeError):
+            then(4, BasicClass)
+        with self.assertRaises(TypeError):
+            then(4, lambda x, y: x + y)  # type: ignore
