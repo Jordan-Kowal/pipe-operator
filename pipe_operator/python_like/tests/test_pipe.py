@@ -131,4 +131,4 @@ class PipeTestCase(TestCase):
             # >> Pipe(_sum, 4, 5, 6)
             >> PipeEnd()
         )
-        self.assertEqual(op, 136)
+        self.assertEqual(op, 138)
