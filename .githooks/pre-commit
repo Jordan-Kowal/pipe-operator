@@ -5,24 +5,29 @@ echo "---------- Git hook: pre-commit ----------"
 
 # Ruff (imports, lint, and format)
 echo ""
-echo ">>> [1/4] Running Ruff"
+echo ">>> [1/5] Running Ruff"
 ruff check --select I .
 ruff check .
 ruff format --check .
 
 # Flake8 (lint)
 echo ""
-echo ">>> [2/4] Running Flake8"
+echo ">>> [2/5] Running Flake8"
 flake8 .
 
 # MyPy (type checking)
 echo ""
-echo ">>> [3/4] Running MyPy"
+echo ">>> [3/5] Running MyPy"
 mypy .
 
 # Pyright (type checking)
 echo ""
-echo ">>> [4/4] Running Pyright"
+echo ">>> [4/5] Running Pyright"
 pyright .
+
+# Run tests
+echo ""
+echo ">>> [5/5] Running tests"
+python -m unittest discover .
 
 echo "------------------------------------------"

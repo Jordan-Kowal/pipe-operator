@@ -45,18 +45,18 @@ Run the following command to tell `git` to look for hooks in this folder:
 git config core.hooksPath .githooks
 ```
 
+Pre-commit hooks will run `ruff`, `flake8`, `mypy`, `pyright`, and `unittest` on each commit.
+
 ### Linters
 
-In both the CI and githooks, we use both `ruff` and `flake8`.
-This is mostly to ensure and test how both linters react to the pipe syntax
-and better document in the [README.md](README.md)] the required setups.
-
-The same goes for `mypy`.
+In both the CI and githooks, we use both `ruff` and `flake8`, and both `mypy` and `pyright`.
+This is mostly to ensure that our implementation is compatible with the most common
+linters and type checkers.
 
 ### CI/CD
 
 We use GitHub actions to verify, build, and deploy the application. We currently have:
 
-- [code_quality](.github/workflows/code_quality.yml): runs `ruff`, `flake8`, `mypy`, and `coverage` on Python 3.12
+- [code_quality](.github/workflows/code_quality.yml): runs `ruff`, `flake8`, `mypy`, `pyright`, and `coverage` on Python 3.12
 - [tests](.github/workflows/tests.yml): runs unittests on multiple Python versions (from 3.9 to 3.12)
 - [update_deps](.github/workflows/update_deps.yml): updates the dependencies (as `dependabot` does not support `uv` yet)
