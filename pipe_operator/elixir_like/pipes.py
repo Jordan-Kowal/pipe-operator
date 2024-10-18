@@ -7,7 +7,7 @@ from pipe_operator.elixir_like.transformers import (
     DEFAULT_LAMBDA_VAR,
     DEFAULT_OPERATOR,
     DEFAULT_PLACEHOLDER,
-    PipeTransformer,
+    PipeArgsransformer,
 )
 from pipe_operator.elixir_like.utils import OperatorString
 from pipe_operator.shared.utils import is_one_arg_lambda
@@ -133,7 +133,7 @@ def pipes(
         ]
 
         # Update the AST and execute the new code
-        transformer = PipeTransformer(
+        transformer = PipeArgsransformer(
             operator=operator,
             placeholder=placeholder,
             lambda_var=lambda_var,

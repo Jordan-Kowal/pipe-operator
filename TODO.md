@@ -8,19 +8,18 @@
 ## Python implementation
 
 - [x] Handle functions
+  - [x] Fix pyright issue with unlimited args and 0 required args
 - [x] Handle lambdas (with `then`)
 - [x] Handle class
 - [x] Handle methods
-- [ ] ~~Handle property~~
-- [ ] Handle func with only unknown args
+- [ ] ~~Handle property~~ Done through lambdas
 - [x] Get result easily at the end
 - [x] Add `tap` action
 - [x] Add `then` action
 - [x] Add `debug` mode
 - [x] Handle typing correctly
-- [ ] Update docstrings
 - [x] Add complex test
-- [ ] Fix pyright issue with unlimited args and 0 required args
+- [ ] Update docstrings
 
 ## Deployment
 

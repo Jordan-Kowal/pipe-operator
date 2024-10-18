@@ -1,7 +1,7 @@
 from unittest import TestCase
 from unittest.mock import Mock, patch
 
-from pipe_operator.python_like.pipe import Pipe, PipeEnd, PipeStart, Tap, Then
+from pipe_operator.python_like.pipe import Pipe, PipeArgs, PipeEnd, PipeStart, Tap, Then
 
 
 def double(x: int) -> int:
@@ -42,7 +42,7 @@ class BasicClass:
         return BasicClass(instance.value * 2)
 
 
-class PipeTestCase(TestCase):
+class PipeArgsestCase(TestCase):
     # ------------------------------
     # Settings
     # ------------------------------
@@ -58,6 +58,20 @@ class PipeTestCase(TestCase):
         with self.assertRaises(TypeError):
             _ = PipeStart(3) >> Then(lambda x, y: x + y) >> PipeEnd()  # type: ignore
 
+    def test_pipeargs_only_supports_functions_with_no_required_args(self) -> None:
+        with self.assertRaises(TypeError):
+            _ = PipeStart(3) >> PipeArgs(double) >> PipeEnd()  # type: ignore
+        with self.assertRaises(TypeError):
+            _ = PipeStart(3) >> PipeArgs(BasicClass) >> PipeEnd()  # type: ignore
+        with self.assertRaises(TypeError):
+            _ = (
+                PipeStart(3)
+                >> PipeArgs(lambda x, *_args, **_kwargs: x + 1)  # noqa # type: ignore
+                >> PipeEnd()
+            )
+        op = PipeStart(3) >> PipeArgs(_sum, 4) >> PipeEnd()
+        self.assertEqual(op, 7)
+
     # ------------------------------
     # Workflows
     # ------------------------------
@@ -67,10 +81,10 @@ class PipeTestCase(TestCase):
             >> Pipe(duplicate_string)  # function
             >> Pipe(int)  # function
             >> Pipe(compute, 30, z=10)  # function with args
-            # >> Pipe(_sum, 4, 5)
+            >> PipeArgs(_sum, 5, 10)
             >> PipeEnd()
         )
-        self.assertEqual(op, 73)
+        self.assertEqual(op, 88)
 
     def test_with_then(self) -> None:
         op = (
@@ -132,7 +146,7 @@ class PipeTestCase(TestCase):
             >> Tap(BasicClass.increment)  # tap + method
             >> Pipe(BasicClass.get_value_method)  # method
             >> Then[int, int](lambda x: x * 2)  # typed then/lambda
-            # >> Pipe(_sum, 4, 5, 6)
+            >> PipeArgs(_sum, 4, 5, 6)
             >> PipeEnd()
         )
-        self.assertEqual(op, 138)
+        self.assertEqual(op, 153)

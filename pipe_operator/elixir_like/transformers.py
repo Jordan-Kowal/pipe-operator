@@ -14,7 +14,7 @@ DEFAULT_PLACEHOLDER = "_"
 DEFAULT_LAMBDA_VAR = "Z"
 
 
-class PipeTransformer(ast.NodeTransformer):
+class PipeArgsransformer(ast.NodeTransformer):
     """
     Transform an elixir pipe-like list of instruction into a python-compatible one.
     It handles:
@@ -48,9 +48,9 @@ class PipeTransformer(ast.NodeTransformer):
         >>> source_code = "3 >> Class >> _.attribute >> _.method(4) >> _ + 4 >> double() >> double(4) >> double >> (lambda x: x + 4)"
         >>> tree = ast.parse(source_code)
 
-        Apply the `PipeTransformer` transformer:
+        Apply the `PipeArgsransformer` transformer:
 
-        >>> replacer = PipeTransformer(
+        >>> replacer = PipeArgsransformer(
         >>>     operator=">>",
         >>>     placeholder="_",
         >>>     lambda_var="Z",
