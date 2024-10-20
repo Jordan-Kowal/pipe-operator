@@ -1,16 +1,15 @@
 # TODO
 
-- [ ] Elixir: Recompute line errors numbers correctly
-- [ ] Python: Update docstrings
+- Elixir: Recompute line errors numbers correctly
 
 ## Deployment
 
-- [ ] Maybe rename modules
-- [ ] Project and PIPY setup (<https://github.com/scikit-learn/scikit-learn/blob/main/pyproject.toml>)
-- [ ] CI/CD Deploy
-- [ ] Update README.md and add tags
-- [ ] Changelog
+- Maybe rename modules
+- Project and PIPY setup (<https://github.com/scikit-learn/scikit-learn/blob/main/pyproject.toml>)
+- CI/CD Deploy
+- Update README.md and add tags
+- Changelog
 
 ## Later
 
-- [ ] Replace custom workflow with `dependabot` when `uv` gets supported
+- Replace custom workflow with `dependabot` when `uv` gets supported

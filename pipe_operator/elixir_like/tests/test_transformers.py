@@ -4,7 +4,7 @@ from unittest.mock import MagicMock
 
 from pipe_operator.elixir_like.transformers import (
     NameReplacer,
-    PipeArgsransformer,
+    PipeTransformer,
     ToLambdaTransformer,
 )
 
@@ -15,10 +15,10 @@ def transform_code(code_string: str, transformer: ast.NodeTransformer) -> str:
     return ast.unparse(new_tree)
 
 
-class PipeArgsransformerTestCase(TestCase):
+class PipeTransformerTestCase(TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        cls.transformer = PipeArgsransformer()
+        cls.transformer = PipeTransformer()
         return super().setUpClass()
 
     def test_skip_if_not_rshift(self) -> None:
@@ -119,9 +119,7 @@ class PipeArgsransformerTestCase(TestCase):
         )
 
     def test_with_custom_params(self) -> None:
-        transformer = PipeArgsransformer(
-            placeholder="__", lambda_var="XXX", operator="|"
-        )
+        transformer = PipeTransformer(placeholder="__", lambda_var="XXX", operator="|")
         # The `>>` will not be replaced because we declared `|` as the operator
         source = (
             "3 "
@@ -143,7 +141,7 @@ class PipeArgsransformerTestCase(TestCase):
         )
 
     def test_with_debug_mode(self) -> None:
-        transformer = PipeArgsransformer(debug_mode=True)
+        transformer = PipeTransformer(debug_mode=True)
         source = "3 >> _ + 4 >> double"
         result = transform_code(source, transformer)
         self.assertEqual(

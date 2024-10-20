@@ -14,7 +14,7 @@ DEFAULT_PLACEHOLDER = "_"
 DEFAULT_LAMBDA_VAR = "Z"
 
 
-class PipeArgsransformer(ast.NodeTransformer):
+class PipeTransformer(ast.NodeTransformer):
     """
     Transform an elixir pipe-like list of instruction into a python-compatible one.
     It handles:
@@ -42,26 +42,20 @@ class PipeArgsransformer(ast.NodeTransformer):
         ValueError: If `placeholder` and `lambda_var` are the same.
 
     Examples:
-        To transform a pipe-like list of instructions into a python-compatible one:
-
         >>> import ast
-        >>> source_code = "3 >> Class >> _.attribute >> _.method(4) >> _ + 4 >> double() >> double(4) >> double >> (lambda x: x + 4)"
-        >>> tree = ast.parse(source_code)
-
-        Apply the `PipeArgsransformer` transformer:
-
-        >>> replacer = PipeArgsransformer(
-        >>>     operator=">>",
-        >>>     placeholder="_",
-        >>>     lambda_var="Z",
-        >>>     debug_mode=False
-        >>> )
-        >>> transformed_tree = replacer.visit(tree)
-        >>> ast.fix_missing_locations(transformed_tree)
-
-        Convert the AST back to source code:
-
-        >>> ast.unparse(transformed_tree)
+        >>> def run(source_code: str) -> str:
+        ...     tree = ast.parse(source_code)
+        ...     # Apply the `PipeTransformer` transformer:
+        ...     replacer = PipeTransformer(
+        ...         operator=">>", placeholder="_", lambda_var="Z", debug_mode=False
+        ...     )
+        ...     transformed_tree = replacer.visit(tree)
+        ...     ast.fix_missing_locations(transformed_tree)
+        ...     # Convert the AST back to source code:
+        ...     return ast.unparse(transformed_tree)
+        >>> run(
+        ...     "3 >> Class >> _.attribute >> _.method(4) >> _ + 4 >> double() >> double(4) >> double >> (lambda x: x + 4)"
+        ... )
         "(lambda x: x + 4)(double(double(double((lambda Z: Z + 4)(Class(3).attribute.method(4))), 4)))"
     """
 
@@ -261,26 +255,21 @@ class ToLambdaTransformer(ast.NodeTransformer):
         ValueError: If `placeholder` and `var_name` are the same.
 
     Examples:
-        To transformer operations into lambdas:
-
         >>> import ast
-        >>> source_code = "1_000 >> _ + 3 >> double >> [_, 1, 2, [_, _]]"
-        >>> tree = ast.parse(source_code)
-
-        Apply the `LambdaTransformer` transformer:
-
-        >>> replacer = LambdaTransformer(
-        >>>     ast.NodeTransformer(),
-        >>>     excluded_operator=ast.RShift,
-        >>>     placeholder="_",
-        >>>     var_name="Z",
-        >>> )
-        >>> transformed_tree = replacer.visit(tree)
-        >>> ast.fix_missing_locations(transformed_tree)
-
-        Convert the AST back to source code:
-
-        >>> ast.unparse(transformed_tree)
+        >>> def run(source_code: str) -> str:
+        ...     tree = ast.parse(source_code)
+        ...     # Apply the `LambdaTransformer` transformer:
+        ...     replacer = LambdaTransformer(
+        ...         ast.NodeTransformer(),
+        ...         excluded_operator=ast.RShift,
+        ...         placeholder="_",
+        ...         var_name="Z",
+        ...     )
+        ...     transformed_tree = replacer.visit(tree)
+        ...     ast.fix_missing_locations(transformed_tree)
+        ...     # Convert the AST back to source code:
+        ...     return ast.unparse(transformed_tree)
+        >>> run("1_000 >> _ + 3 >> double >> [_, 1, 2, [_, _]]")
         "1000 >> (lambda Z: Z + 3) >> double >> (lambda Z: [Z, 1, 2, [Z, Z]])"
     """
 
@@ -382,21 +371,16 @@ class NameReplacer(ast.NodeTransformer):
         ValueError: If `target` and `replacement` are the same.
 
     Examples:
-        To replace all occurrences of `_` with `Z` in a Python expression:
-
         >>> import ast
-        >>> source_code = "1000 + _ + func(_) + _"
-        >>> tree = ast.parse(source_code)
-
-        Apply the `NameReplacer` transformer:
-
-        >>> replacer = NameReplacer(target="_", replacement="Z")
-        >>> transformed_tree = replacer.visit(tree)
-        >>> ast.fix_missing_locations(transformed_tree)
-
-        Convert the AST back to source code:
-
-        >>> ast.unparse(transformed_tree)
+        >>> def run(source_code: str) -> str:
+        ...     tree = ast.parse(source_code)
+        ...     # Apply the `NameReplacer` transformer:
+        ...     replacer = NameReplacer(target="_", replacement="Z")
+        ...     transformed_tree = replacer.visit(tree)
+        ...     ast.fix_missing_locations(transformed_tree)
+        ...     # Convert the AST back to source code:
+        ...     return ast.unparse(transformed_tree)
+        >>> run("1000 + _ + func(_) + _")
         "1000 + Z + func(Z) + Z"
     """
 

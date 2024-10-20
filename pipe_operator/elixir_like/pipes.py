@@ -7,7 +7,7 @@ from pipe_operator.elixir_like.transformers import (
     DEFAULT_LAMBDA_VAR,
     DEFAULT_OPERATOR,
     DEFAULT_PLACEHOLDER,
-    PipeArgsransformer,
+    PipeTransformer,
 )
 from pipe_operator.elixir_like.utils import OperatorString
 from pipe_operator.shared.utils import is_one_arg_lambda
@@ -51,64 +51,56 @@ def pipes(
         Callable: The decorated function.
 
     Examples:
-        Define functions and classes for our pipes to use:
-
+        >>> # Defines a bunch of functions/classes for our example:
         >>> def add(a: int, b: int) -> int:
-        >>>     return a + b
-
+        ...     return a + b
         >>> def double(a: int) -> int:
-        >>>     return 2 * a
-
+        ...     return 2 * a
         >>> def _sum(*args: int) -> int:
-        >>>     return sum(args)
-
+        ...     return sum(args)
         >>> class BasicClass:
-        >>>     def __init__(self, value: int) -> None:
-        >>>         self.value = value
-
-        >>>     @property
-        >>>     def get_value_property(self) -> int:
-        >>>         return self.value
-
-        >>>     def get_value_method(self) -> int:
-        >>>         return self.value
-
-        >>>     def get_value_plus_arg(self, value: int) -> int:
-        >>>         return self.value + value
-
-        Defines a decorated function that uses the pipe-like syntax.
-        This is a complex case, but it shows how to use the decorator:
-
+        ...     def __init__(self, value: int) -> None:
+        ...         self.value = value
+        ...
+        ...     @property
+        ...     def get_value_property(self) -> int:
+        ...         return self.value
+        ...
+        ...     def get_value_method(self) -> int:
+        ...         return self.value
+        ...
+        ...     def get_value_plus_arg(self, value: int) -> int:
+        ...         return self.value + value
+        >>> # Defines a decorated function that uses the pipe-like syntax.
+        >>> # This is a complex case, but it shows how to use the decorator:
         >>> @pipes
-        >>> def run() -> None:
-        >>>     return (
-        >>>         1
-        >>>         >> BasicClass
-        >>>         >> _.value
-        >>>         >> BasicClass()
-        >>>         >> _.get_value_property
-        >>>         >> BasicClass()
-        >>>         >> _.get_value_method()
-        >>>         >> BasicClass()
-        >>>         >> _.get_value_plus_arg(10)
-        >>>         >> 10 + _ - 5
-        >>>         >> {_, 1, 2, 3}
-        >>>         >> [x for x in _ if x > 4]
-        >>>         >> (lambda x: x[0])
-        >>>         >> double
-        >>>         >> tap(double)
-        >>>         >> double()
-        >>>         >> add(1)
-        >>>         >> _sum(2, 3)
-        >>>         >> (lambda a: a * 2)
-        >>>         >> then(lambda a: a + 1)
-        >>>         >> f"value is {_}"
-        >>>     )
-
-        Call the decorated function:
-
+        ... def run() -> None:
+        ...     return (
+        ...         1
+        ...         >> BasicClass
+        ...         >> _.value
+        ...         >> BasicClass()
+        ...         >> _.get_value_property
+        ...         >> BasicClass()
+        ...         >> _.get_value_method()
+        ...         >> BasicClass()
+        ...         >> _.get_value_plus_arg(10)
+        ...         >> 10 + _ - 5
+        ...         >> {_, 1, 2, 3}
+        ...         >> [x for x in _ if x > 4]
+        ...         >> (lambda x: x[0])
+        ...         >> double
+        ...         >> tap(double)
+        ...         >> double()
+        ...         >> add(1)
+        ...         >> _sum(2, 3)
+        ...         >> (lambda a: a * 2)
+        ...         >> then(lambda a: a + 1)
+        ...         >> f"value is {_}"
+        ...     )
+        >>> # Call the decorated function:
         >>> run()
-        value is 140
+        "value is 140"
     """
 
     def wrapper(func_or_class: Callable) -> Callable:
@@ -133,7 +125,7 @@ def pipes(
         ]
 
         # Update the AST and execute the new code
-        transformer = PipeArgsransformer(
+        transformer = PipeTransformer(
             operator=operator,
             placeholder=placeholder,
             lambda_var=lambda_var,
