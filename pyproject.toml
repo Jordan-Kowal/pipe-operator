@@ -69,7 +69,7 @@ warn_unused_ignores = true
 disable_error_code = "attr-defined,import-untyped"
 
 [[tool.mypy.overrides]]
-module = "*/test_pipes"
+module = "*/elixir_flow/tests/test_pipe"
 disable_error_code = "attr-defined,import-untyped,name-defined"
 
 # ------------------------------
@@ -86,7 +86,7 @@ quote-style = "double"
 docstring-code-format = true
 
 [tool.ruff.lint.per-file-ignores]
-"*/test_pipes.py" = ["F821"]
+"*/elixir_flow/tests/test_pipe.py" = ["F821"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["pipe_operator"]
