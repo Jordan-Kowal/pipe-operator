@@ -1,7 +1,7 @@
 from unittest import TestCase
 from unittest.mock import Mock, patch
 
-from pipe_operator.python_like.pipe import Pipe, PipeArgs, PipeEnd, PipeStart, Tap, Then
+from pipe_operator.python_flow.pipe import Pipe, PipeArgs, PipeEnd, PipeStart, Tap, Then
 
 
 def double(x: int) -> int:

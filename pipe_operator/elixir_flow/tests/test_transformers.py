@@ -2,7 +2,7 @@ import ast
 from unittest import TestCase
 from unittest.mock import MagicMock
 
-from pipe_operator.elixir_like.transformers import (
+from pipe_operator.elixir_flow.transformers import (
     NameReplacer,
     PipeTransformer,
     ToLambdaTransformer,

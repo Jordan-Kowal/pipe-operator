@@ -1,7 +1,8 @@
-from .pipe import Pipe, PipeEnd, PipeStart, Tap, Then
+from .pipe import Pipe, PipeArgs, PipeEnd, PipeStart, Tap, Then
 
 __all__ = [
     "Pipe",
+    "PipeArgs",
     "PipeEnd",
     "PipeStart",
     "Tap",

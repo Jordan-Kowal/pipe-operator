@@ -1,4 +1,14 @@
-from .elixir_like import pipes, tap, then
-from .python_like import Pipe, PipeEnd, PipeStart, Tap, Then
+from .elixir_flow import elixir_pipe, tap, then
+from .python_flow import Pipe, PipeArgs, PipeEnd, PipeStart, Tap, Then
 
-__all__ = ["pipes", "tap", "then", "Pipe", "PipeEnd", "PipeStart", "Tap", "Then"]
+__all__ = [
+    "elixir_pipe",
+    "tap",
+    "then",
+    "Pipe",
+    "PipeArgs",
+    "PipeEnd",
+    "PipeStart",
+    "Tap",
+    "Then",
+]

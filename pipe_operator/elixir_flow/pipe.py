@@ -4,17 +4,17 @@ from itertools import takewhile
 from textwrap import dedent
 from typing import Any, Callable, Optional, TypeVar
 
-from pipe_operator.elixir_like.transformers import (
+from pipe_operator.elixir_flow.transformers import (
     DEFAULT_LAMBDA_VAR,
     DEFAULT_OPERATOR,
     DEFAULT_PLACEHOLDER,
     PipeTransformer,
 )
-from pipe_operator.elixir_like.utils import OperatorString
+from pipe_operator.elixir_flow.utils import OperatorString
 from pipe_operator.shared.utils import is_one_arg_lambda
 
 
-def pipes(
+def elixir_pipe(
     func: Optional[Callable] = None,
     operator: OperatorString = DEFAULT_OPERATOR,
     placeholder: str = DEFAULT_PLACEHOLDER,
@@ -74,7 +74,7 @@ def pipes(
         ...         return self.value + value
         >>> # Defines a decorated function that uses the pipe-like syntax.
         >>> # This is a complex case, but it shows how to use the decorator:
-        >>> @pipes
+        >>> @elixir_pipe
         ... def run() -> None:
         ...     return (
         ...         1
@@ -106,7 +106,7 @@ def pipes(
 
     def wrapper(func_or_class: Callable) -> Callable:
         if isclass(func_or_class):
-            # [2] because we are at pipes() > wrapper()
+            # [2] because we are at elixir_pipe() > wrapper()
             decorator_frame = stack()[2]
             ctx = decorator_frame[0].f_locals
             first_line_number = decorator_frame[2]
@@ -126,14 +126,14 @@ def pipes(
                 node.col_offset += source_indent  # noqa # type: ignore
                 node.end_col_offset += source_indent  # type: ignore
 
-        # Remove the @pipes decorator and @pipes() decorators from the AST to avoid recursive calls
+        # Remove the @elixir_pipe decorator and @elixir_pipe() decorators from the AST to avoid recursive calls
         tree.body[0].decorator_list = [  # type: ignore
             d
             for d in tree.body[0].decorator_list  # type: ignore
             if isinstance(d, ast.Call)
-            and d.func.id != "pipes"  # type: ignore
+            and d.func.id != "elixir_pipe"  # type: ignore
             or isinstance(d, ast.Name)
-            and d.id != "pipes"
+            and d.id != "elixir_pipe"
         ]
 
         # Update the AST and execute the new code
@@ -152,7 +152,7 @@ def pipes(
         exec(code, ctx)
         return ctx[tree.body[0].name]
 
-    # If decorator called without parenthesis `@pipes`
+    # If decorator called without parenthesis `@elixir_pipe`
     if func and callable(func):
         return wrapper(func)
 

@@ -3,8 +3,7 @@ from typing import no_type_check
 from unittest import TestCase
 from unittest.mock import Mock
 
-from pipe_operator import pipes, tap
-from pipe_operator.elixir_like.pipes import then
+from pipe_operator.elixir_flow.pipe import elixir_pipe, tap, then
 
 
 def add(a: int, b: int) -> int:
@@ -43,7 +42,7 @@ class BasicClass:
 
 class ClassWithDecoratedMethod(BasicClass):
     @no_type_check
-    @pipes
+    @elixir_pipe
     def compute_score(self) -> int:
         return (
             self.value
@@ -56,7 +55,7 @@ class ClassWithDecoratedMethod(BasicClass):
         )
 
 
-@pipes
+@elixir_pipe
 class DecoratedClass(BasicClass):
     @no_type_check
     def compute_score(self) -> int:
@@ -77,14 +76,14 @@ class PipeOperatorTestCase(TestCase):
     # ------------------------------
 
     @no_type_check
-    @pipes
+    @elixir_pipe
     def test_class_calls(self) -> None:
         op = 1 >> BasicClass >> _.value >> BasicClass()
         self.assertIsInstance(op, BasicClass)
         self.assertEqual(op.value, 1)
 
     @no_type_check
-    @pipes
+    @elixir_pipe
     def test_attribute_calls(self) -> None:
         op = 33 >> BasicClass >> _.value
         self.assertEqual(op, 33)
@@ -92,7 +91,7 @@ class PipeOperatorTestCase(TestCase):
         self.assertEqual(op, 33)
 
     @no_type_check
-    @pipes
+    @elixir_pipe
     def test_method_calls(self) -> None:
         op = 33 >> BasicClass >> _.get_value_method()
         self.assertEqual(op, 33)
@@ -100,7 +99,7 @@ class PipeOperatorTestCase(TestCase):
         self.assertEqual(op, 43)
 
     @no_type_check
-    @pipes
+    @elixir_pipe
     def test_binary_operators(self) -> None:
         x = 50
         op = (
@@ -117,19 +116,19 @@ class PipeOperatorTestCase(TestCase):
         self.assertEqual(op, 80304)
 
     @no_type_check
-    @pipes
+    @elixir_pipe
     def test_f_strings(self) -> None:
         op = 50 >> f"value is {_}" >> f"And now is '{_}'"
         self.assertEqual(op, "And now is 'value is 50'")
 
     @no_type_check
-    @pipes
+    @elixir_pipe
     def test_struct_creations(self) -> None:
         op = 1 >> {1, _, 3} >> [_, {4}] >> {"value": _} >> (_, "other value in tuple")
         self.assertEqual(op, ({"value": [{1, 3}, {4}]}, "other value in tuple"))
 
     @no_type_check
-    @pipes
+    @elixir_pipe
     def test_comprehensions(self) -> None:
         op = (
             10
@@ -142,19 +141,19 @@ class PipeOperatorTestCase(TestCase):
         self.assertEqual(list(op), [(9, 10), (10, 11)])
 
     @no_type_check
-    @pipes
+    @elixir_pipe
     def test_function_calls(self) -> None:
         op = 1 >> double >> double() >> add(1) >> _sum(2, 3)
         self.assertEqual(op, 10)
 
     @no_type_check
-    @pipes
+    @elixir_pipe
     def test_lambda_calls(self) -> None:
         op = 2 >> (lambda a: a**2) >> (lambda a: a**2)
         self.assertEqual(op, 16)
 
     @no_type_check
-    @pipes
+    @elixir_pipe
     def test_complex(self) -> None:
         op = (
             1
@@ -186,21 +185,21 @@ class PipeOperatorTestCase(TestCase):
     # ------------------------------
 
     @no_type_check
-    @pipes
+    @elixir_pipe
     def test_decorated_method(self) -> None:
         instance = ClassWithDecoratedMethod(1)
         op = instance.compute_score()
         self.assertEqual(op, 928)
 
     @no_type_check
-    @pipes
+    @elixir_pipe
     def test_decorated_class(self) -> None:
         instance = DecoratedClass(1)
         op = instance.compute_score()
         self.assertEqual(op, 928)
 
     @no_type_check
-    @pipes
+    @elixir_pipe
     def test_does_not_propagate(self) -> None:
         # rshift uses the `>>` operator, and it should behave normally
         result = rshift(1000, 4)
@@ -209,14 +208,14 @@ class PipeOperatorTestCase(TestCase):
         self.assertEqual(result, 62)
 
     @no_type_check
-    @pipes()
+    @elixir_pipe()
     def test_can_be_called_with_parenthesis(self) -> None:
         foo = 10
         op = 33 >> double >> add(10) >> _ + foo
         self.assertEqual(op, 86)
 
     @no_type_check
-    @pipes(placeholder="__", lambda_var="foo", operator="|", debug=True)
+    @elixir_pipe(placeholder="__", lambda_var="foo", operator="|", debug=True)
     def test_can_be_called_with_custom_params(self) -> None:
         print = Mock()
         foo = 10
@@ -230,7 +229,7 @@ class PipeOperatorTestCase(TestCase):
     # ------------------------------
 
     @no_type_check
-    @pipes
+    @elixir_pipe
     def test_with_tap(self) -> None:
         op = (
             4
@@ -244,7 +243,7 @@ class PipeOperatorTestCase(TestCase):
         self.assertEqual(op, 29)
 
     @no_type_check
-    @pipes
+    @elixir_pipe
     def test_with_then(self) -> None:
         op = 0 >> add(10) >> then(lambda a: a**2) >> double
         self.assertEqual(op, 200)

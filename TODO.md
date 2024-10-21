@@ -2,7 +2,6 @@
 
 ## Deployment
 
-- Maybe rename modules
 - Update README.md and add tags
 - Changelog
 - CI/CD Deploy
