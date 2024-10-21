@@ -1,7 +1,5 @@
 # TODO
 
-- Elixir: Recompute line errors numbers correctly
-
 ## Deployment
 
 - Maybe rename modules

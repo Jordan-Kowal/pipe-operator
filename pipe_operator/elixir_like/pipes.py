@@ -1,5 +1,6 @@
 import ast
 from inspect import getsource, isclass, stack
+from itertools import takewhile
 from textwrap import dedent
 from typing import Any, Callable, Optional, TypeVar
 
@@ -106,13 +107,24 @@ def pipes(
     def wrapper(func_or_class: Callable) -> Callable:
         if isclass(func_or_class):
             # [2] because we are at pipes() > wrapper()
-            ctx = stack()[2][0].f_locals
+            decorator_frame = stack()[2]
+            ctx = decorator_frame[0].f_locals
+            first_line_number = decorator_frame[2]
         else:
             ctx = func_or_class.__globals__
+            first_line_number = func_or_class.__code__.co_firstlineno
 
         # Extract AST
         source = getsource(func_or_class)
         tree = ast.parse(dedent(source))
+
+        # Increment line/column numbers
+        ast.increment_lineno(tree, first_line_number - 1)
+        source_indent = sum([1 for _ in takewhile(str.isspace, source)]) + 1
+        for node in ast.walk(tree):
+            if hasattr(node, "col_offset"):
+                node.col_offset += source_indent  # noqa # type: ignore
+                node.end_col_offset += source_indent  # type: ignore
 
         # Remove the @pipes decorator and @pipes() decorators from the AST to avoid recursive calls
         tree.body[0].decorator_list = [  # type: ignore
