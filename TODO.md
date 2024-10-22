@@ -2,8 +2,8 @@
 
 ## Deployment
 
-- Update README.md and add tags
-- Changelog
+- Update README.md
+- Add tags to readme
 - CI/CD Deploy
 
 ## Later
