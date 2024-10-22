@@ -81,7 +81,7 @@ class PipeArgsestCase(TestCase):
             >> Pipe(duplicate_string)  # function
             >> Pipe(int)  # function
             >> Pipe(compute, 30, z=10)  # function with args
-            >> PipeArgs(_sum, 5, 10)
+            >> PipeArgs(_sum, 5, 10)  # pipe args
             >> PipeEnd()
         )
         self.assertEqual(op, 88)
@@ -136,7 +136,7 @@ class PipeArgsestCase(TestCase):
 
     def test_complex(self) -> None:
         op = (
-            PipeStart("3")
+            PipeStart("3")  # start
             >> Pipe(duplicate_string)  # function
             >> Pipe(int)  # function
             >> Tap(compute, 2000, z=10)  # function with args
@@ -146,7 +146,7 @@ class PipeArgsestCase(TestCase):
             >> Tap(BasicClass.increment)  # tap + method that updates original object
             >> Pipe(BasicClass.get_value_method)  # method
             >> Then[int, int](lambda x: x * 2)  # typed then/lambda
-            >> PipeArgs(_sum, 4, 5, 6)
-            >> PipeEnd()
+            >> PipeArgs(_sum, 4, 5, 6)  # pipe args
+            >> PipeEnd()  # end
         )
         self.assertEqual(op, 153)
