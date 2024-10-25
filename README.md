@@ -1,5 +1,11 @@
 # ✨ Pipe Operator ✨
 
+![Code quality](https://github.com/Jordan-Kowal/pipe-operator/actions/workflows/code_quality.yml/badge.svg?branch=main)
+![Tests](https://github.com/Jordan-Kowal/pipe-operator/actions/workflows/tests.yml/badge.svg?branch=main)
+![Tag](https://badgen.net/badge/tag/1.0.0/orange)
+![Python](https://badgen.net/badge/python/3.9%20|%203.10%20|%203.11%20|%203.12)
+![Licence](https://badgen.net/badge/licence/MIT)
+
 - [✨ Pipe Operator ✨](#-pipe-operator-)
   - [⚡ Quick start](#-quick-start)
   - [🧰 How to use](#-how-to-use)
