@@ -1,9 +1,11 @@
-# Pipe Operator
+# ✨ Pipe Operator ✨
 
 `pipe_operator` allows you to use an elixir pipe-like syntax in python.
 This module provides 2 vastly different implementations, each with its own pros and cons.
 
-The **pythonic** implementation, which is **entirely compatible with linters and type-checkers**,
+## ⚡ Quick start
+
+The 🐍 **pythonic** implementation, which is **entirely compatible with linters and type-checkers**,
 but a bit more verbose than the original pipe operator:
 
 ```python
@@ -25,7 +27,7 @@ result = (
 )
 ```
 
-And the **elixir-like** implementation, whose syntax greatly resembles the original pipe operator,
+And the 🍹 **elixir-like** implementation, whose syntax greatly resembles the original pipe operator,
 but has major issues with linters and type-checkers.
 
 ```python
@@ -54,7 +56,7 @@ def workflow(value):
 workflow(3)
 ```
 
-## How to use
+## 🧰 How to use
 
 As simple as `pip install pipe_operator`.
 Then either import the **pythonic** or the **elixir** implementations
@@ -64,7 +66,7 @@ from pipe_operator.elixir_flow import elixir_pipe, tap, then
 from pipe_operator.python_flow import Pipe, PipeArgs, PipeEnd, PipeStart, Tap, Then
 ```
 
-## Pythonic implementation
+## 🐍 Pythonic implementation
 
 ### Overview
 
@@ -95,7 +97,7 @@ you should use `PipeArgs` instead.
 **pyright:** `pyright` seems to have trouble dealing with our `>>` in some specific cases. As such,
 we advise you set `reportOperatorIssue = "none"` in your `pyright` config.
 
-## Elixir-like implementation
+## 🍹 Elixir-like implementation
 
 ### Overview
 
@@ -168,7 +170,7 @@ the followings:
 - `ruff`: Disable the `F821` error
 - `flake8`: Disable the `F821` error
 
-## Useful links
+## 🔗 Useful links
 
 - [Want to contribute?](CONTRIBUTING.md)
 - [See what's new!](CHANGELOG.md)
