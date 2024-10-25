@@ -190,5 +190,3 @@ the followings:
 - [Want to contribute?](CONTRIBUTING.md)
 - [See what's new!](CHANGELOG.md)
 - Originally forked from [robinhilliard/pipes](https://github.com/robinhilliard/pipes)
-- [View it on PyPi](https://pypi.org/project/pipe-operator/)
-- [View it on GitHub](https://github.com/Jordan-Kowal/pipe-operator)
