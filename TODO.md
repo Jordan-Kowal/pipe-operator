@@ -3,15 +3,9 @@
 ## Deployment
 
 - Add tags to readme
-  - build status
   - code coverage
-  - version
-  - Licence
-  - Python versions
-  - Downloads
-  - Code quality
-
-- CI/CD Deploy
+- CI/CD Deploy + tag
+- Upgrade version script
 
 ## Later
 
