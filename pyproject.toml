@@ -28,10 +28,10 @@ classifiers = [
 ]
 
 [project.urls]
-Source = "https://github.com/Jordan-Kowal/pipe-operator"
-Issues = "https://github.com/Jordan-Kowal/pipe-operator/issues"
 Changelog = "https://github.com/Jordan-Kowal/pipe-operator/blob/main/CHANGELOG.md"
+Issues = "https://github.com/Jordan-Kowal/pipe-operator/issues"
 "Release notes" = "https://github.com/Jordan-Kowal/pipe-operator/releases"
+Source = "https://github.com/Jordan-Kowal/pipe-operator"
 
 [build-system]
 requires = ["setuptools>=42", "wheel"]

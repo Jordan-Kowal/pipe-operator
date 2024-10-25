@@ -2,6 +2,7 @@
 
 ![Code quality](https://github.com/Jordan-Kowal/pipe-operator/actions/workflows/code_quality.yml/badge.svg?branch=main)
 ![Tests](https://github.com/Jordan-Kowal/pipe-operator/actions/workflows/tests.yml/badge.svg?branch=main)
+![Build](https://github.com/Jordan-Kowal/pipe-operator/actions/workflows/publish_package.yml/badge.svg?branch=main)
 ![Coverage](https://badgen.net/badge/coverage/%3E90%25/pink)
 ![Tag](https://badgen.net/badge/tag/1.0.0/orange)
 ![Python](https://badgen.net/badge/python/3.9%20|%203.10%20|%203.11%20|%203.12)
@@ -192,3 +193,5 @@ the followings:
 - [Want to contribute?](CONTRIBUTING.md)
 - [See what's new!](CHANGELOG.md)
 - Originally forked from [robinhilliard/pipes](https://github.com/robinhilliard/pipes)
+- [View it on PyPi](https://pypi.org/project/pipe-operator/)
+- [View it on GitHub](https://github.com/Jordan-Kowal/pipe-operator)
