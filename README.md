@@ -1,7 +1,7 @@
 # ✨ Pipe Operator ✨
 
-![Code quality](https://github.com/Jordan-Kowal/pipe-operator/actions/workflows/code_quality.yml/badge.svg?event=release)
-![Tests](https://github.com/Jordan-Kowal/pipe-operator/actions/workflows/tests.yml/badge.svg?event=release)
+![Code quality](https://github.com/Jordan-Kowal/pipe-operator/actions/workflows/code_quality.yml/badge.svg?branch=main)
+![Tests](https://github.com/Jordan-Kowal/pipe-operator/actions/workflows/tests.yml/badge.svg?branch=main)
 ![Build](https://github.com/Jordan-Kowal/pipe-operator/actions/workflows/publish_package.yml/badge.svg?event=release)
 ![Coverage](https://badgen.net/badge/coverage/%3E90%25/pink)
 ![Tag](https://badgen.net/badge/tag/1.0.1/orange)
@@ -10,6 +10,7 @@
 
 - [✨ Pipe Operator ✨](#-pipe-operator-)
   - [⚡ Quick start](#-quick-start)
+  - [📕 Overview](#-overview)
   - [🐍 Pythonic implementation](#-pythonic-implementation)
     - [Available classes](#available-classes)
     - [Limitations](#limitations)
@@ -26,18 +27,22 @@ This module provides 2 vastly different implementations, each with its own pros 
 ## ⚡ Quick start
 
 As simple as `pip install pipe_operator`.
-Then either import the 🐍 **pythonic** or the 🍹 **elixir** implementations
+Then either import the 🐍 **pythonic classes** or the 🍹 **elixir functions**
 
 ```python
-from pipe_operator.elixir_flow import elixir_pipe, tap, then
-from pipe_operator.python_flow import Pipe, PipeArgs, PipeEnd, PipeStart, Tap, Then
+# Pythonic classes
+from pipe_operator import Pipe, PipeArgs, PipeEnd, PipeStart, Tap, Then
+# Elixir functions
+from pipe_operator import elixir_pipe, tap, then
 ```
+
+## 📕 Overview
 
 You can use the 🐍 **pythonic** implementation, which is **entirely compatible with linters and type-checkers**,
 but a bit more verbose than the original pipe operator:
 
 ```python
-from pipe_operator.python_flow import Pipe, PipeArgs, PipeEnd, PipeStart, Tap, Then
+from pipe_operator import Pipe, PipeArgs, PipeEnd, PipeStart, Tap, Then
 
 result = (
     PipeStart("3")                        # starts the pipe
@@ -59,7 +64,7 @@ Or the 🍹 **elixir-like** implementation, whose syntax greatly resembles the o
 but has major issues with linters and type-checkers.
 
 ```python
-from pipe_operator.elixir_flow import elixir_pipe, tap, then
+from pipe_operator import elixir_pipe, tap, then
 
 @elixir_pipe
 def workflow(value):
@@ -88,7 +93,7 @@ workflow(3)
 
 ### Available classes
 
-In the `python_flow` submodule, we expose the following classes:
+In the 🐍 **pythonic implementation**, we expose the following classes:
 
 | Class       | Description                                                           | Examples                                  |
 | ----------- | --------------------------------------------------------------------- | ----------------------------------------- |
@@ -116,7 +121,7 @@ we advise you set `reportOperatorIssue = "none"` in your `pyright` config.
 
 ### Overview
 
-In the `elixir_flow` submodule, we expose 3 items:
+In the 🍹 **elixir-like implementation**, we expose 3 functions:
 
 - `elixir_pipe`: a decorator that enables the use of "pipe" in our function
 - `tap`: a function to trigger a side-effect and return the original value

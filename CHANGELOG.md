@@ -9,7 +9,8 @@
 
 ## Next - TBD
 
-- 🔧 Fixed [README.md](README.md) GitHub action badges to use the **release** events
+- ✨ Classes and functions can now be imported directly, without going through submodules
+- 🔧 Fixed [README.md](README.md) "Build" badge to use the **release** events
 
 ## 1.0.1 - 2024-10-25
 
