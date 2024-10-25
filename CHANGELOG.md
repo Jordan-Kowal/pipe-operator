@@ -1,20 +1,16 @@
 # Changelog
 
-## 1.0.1
+## 1.0.1 - 2024-10-25
 
-Updated dev dependencies
+- 🔧 Updated dev dependencies
 
-## 1.0.0
+## 1.0.0 - 2024-10-25
 
-Official release of the `pipe_operator` library.
-See the [README](README.md) for more information.
+✨ Official release of the `pipe_operator` library ✨
 
 ## Template
 
-### 🚀 Features
-
-### ✨ Improvements
-
-### 🐞 Bugfixes
-
-### 🔧 Others
+- 🚀 Features
+- ✨ Improvements
+- 🐞 Bugfixes
+- 🔧 Others
