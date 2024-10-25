@@ -2,7 +2,7 @@
 
 ## Deployment
 
-- CI/CD Deploy + tag
+- CI/CD Deploy + link
 - Upgrade version script
 
 ## Later

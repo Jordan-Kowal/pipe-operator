@@ -1,0 +1,42 @@
+name: Publish package
+
+on:
+  workflow_dispatch:
+  release:
+    types: [created]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12" # Cached by github (https://github.com/actions/runner-images/blob/main/images/ubuntu/Ubuntu2204-Readme.md#python)
+          cache: "pip"
+          cache-dependency-path: |
+            ./uv.lock
+
+      - name: Cache venv
+        id: cache-venv
+        uses: actions/cache@v3
+        with:
+          path: .venv
+          key: python-3-12-venv-${{ hashFiles('./uv.lock') }}
+
+      - name: Install dependencies
+        if: ${{ steps.cache-venv.outputs.cache-hit != 'true' }}
+        run: |
+          python -m pip install --upgrade pip
+          pip install uv
+          uv sync --frozen
+
+      - name: Build and publish
+        env:
+          TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
+          TWINE_PASSWORD: ${{ secrets.PYPI_API_KEY }}
+        run: |
+          python -m build
+          twine upload dist/*
