@@ -28,6 +28,7 @@ pyright .
 # Run tests
 echo ""
 echo ">>> [5/5] Running tests"
-python -m unittest discover .
+coverage run -m unittest discover .
+coverage report --fail-under=90
 
 echo "------------------------------------------"

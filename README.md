@@ -2,6 +2,7 @@
 
 ![Code quality](https://github.com/Jordan-Kowal/pipe-operator/actions/workflows/code_quality.yml/badge.svg?branch=main)
 ![Tests](https://github.com/Jordan-Kowal/pipe-operator/actions/workflows/tests.yml/badge.svg?branch=main)
+![Coverage](https://badgen.net/badge/coverage/%3E90%25/pink)
 ![Tag](https://badgen.net/badge/tag/1.0.0/orange)
 ![Python](https://badgen.net/badge/python/3.9%20|%203.10%20|%203.11%20|%203.12)
 ![Licence](https://badgen.net/badge/licence/MIT)

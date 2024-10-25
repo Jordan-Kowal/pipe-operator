@@ -2,8 +2,6 @@
 
 ## Deployment
 
-- Add tags to readme
-  - code coverage
 - CI/CD Deploy + tag
 - Upgrade version script
 
