@@ -10,7 +10,6 @@
 
 - [✨ Pipe Operator ✨](#-pipe-operator-)
   - [⚡ Quick start](#-quick-start)
-  - [🧰 How to use](#-how-to-use)
   - [🐍 Pythonic implementation](#-pythonic-implementation)
     - [Available classes](#available-classes)
     - [Limitations](#limitations)
@@ -26,7 +25,15 @@ This module provides 2 vastly different implementations, each with its own pros 
 
 ## ⚡ Quick start
 
-The 🐍 **pythonic** implementation, which is **entirely compatible with linters and type-checkers**,
+As simple as `pip install pipe_operator`.
+Then either import the 🐍 **pythonic** or the 🍹 **elixir** implementations
+
+```python
+from pipe_operator.elixir_flow import elixir_pipe, tap, then
+from pipe_operator.python_flow import Pipe, PipeArgs, PipeEnd, PipeStart, Tap, Then
+```
+
+You can use the 🐍 **pythonic** implementation, which is **entirely compatible with linters and type-checkers**,
 but a bit more verbose than the original pipe operator:
 
 ```python
@@ -48,7 +55,7 @@ result = (
 )
 ```
 
-And the 🍹 **elixir-like** implementation, whose syntax greatly resembles the original pipe operator,
+Or the 🍹 **elixir-like** implementation, whose syntax greatly resembles the original pipe operator,
 but has major issues with linters and type-checkers.
 
 ```python
@@ -75,16 +82,6 @@ def workflow(value):
     return results
 
 workflow(3)
-```
-
-## 🧰 How to use
-
-As simple as `pip install pipe_operator`.
-Then either import the **pythonic** or the **elixir** implementations
-
-```python
-from pipe_operator.elixir_flow import elixir_pipe, tap, then
-from pipe_operator.python_flow import Pipe, PipeArgs, PipeEnd, PipeStart, Tap, Then
 ```
 
 ## 🐍 Pythonic implementation
