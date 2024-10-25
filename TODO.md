@@ -2,7 +2,6 @@
 
 ## Deployment
 
-- Update README.md
 - Add tags to readme
 - CI/CD Deploy
 

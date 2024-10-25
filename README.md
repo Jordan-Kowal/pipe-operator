@@ -3,7 +3,7 @@
 `pipe_operator` allows you to use an elixir pipe-like syntax in python.
 This module provides 2 vastly different implementations, each with its own pros and cons.
 
-The **Pythonic** implementation, which is **entirely compatible with linters and type-checkers**,
+The **pythonic** implementation, which is **entirely compatible with linters and type-checkers**,
 but a bit more verbose than the original pipe operator:
 
 ```python
@@ -25,7 +25,7 @@ result = (
 )
 ```
 
-And the **Elixir-like** implementation, whose syntax greatly resembles the original pipe operator,
+And the **elixir-like** implementation, whose syntax greatly resembles the original pipe operator,
 but has major issues with linters and type-checkers.
 
 ```python
@@ -68,7 +68,16 @@ from pipe_operator.python_flow import Pipe, PipeArgs, PipeEnd, PipeStart, Tap, T
 
 ### Overview
 
-Table
+In the `python_flow` submodule, we expose the following classes:
+
+| Class       | Description                                                           | Examples                                  |
+| ----------- | --------------------------------------------------------------------- | ----------------------------------------- |
+| `PipeStart` | The start of the pipe                                                 | `PipeStart("3")`                          |
+| `Pipe`      | Used to call almost any functions or classes, or methods              | `Pipe(int)`, `Pipe(my_func, 2000, z=10)`  |
+| `PipeArgs`  | Same as `Pipe` but for function with no positional/keyword parameters | `PipeArgs(func, 1, 2)`                    |
+| `Then`      | Same as `Pipe`, but for 1-arg lambda functions                        | `Then(lambda x: x.attribute)`             |
+| `Tap`       | Used to trigger a side effect (meaning it returns the original value) | `Tap(print)`, `Tap(lambda x: x.method())` |
+| `PipeEnd`   | The end of the pipe, to extract the raw final result                  | `PipeEnd()`                               |
 
 ### Limitations
 
@@ -90,32 +99,77 @@ we advise you set `reportOperatorIssue = "none"` in your `pyright` config.
 
 ### Overview
 
-Table
+In the `elixir_flow` submodule, we expose 3 items:
+
+- `elixir_pipe`: a decorator that enables the use of "pipe" in our function
+- `tap`: a function to trigger a side-effect and return the original value
+- `then`: (optional) the proper way to pass lambdas into the pipe
+
+The `elixir_pipe` decorator can take arguments allowing you to customize
+
+```python
+# Those are the default args
+@elixir_pipe(placeholder="_", lambda_var="_pipe_x", operator=">>", debug=False)
+def my_function()
+    ...
+```
+
+- `placeholder`: The expected variable used in shortcut like `_.property`
+- `lambda_var`: The variable named used internally when we generate lambda function. You'll likely never change this
+- `operator`: The operator used in the pipe
+- `debug`: If true, will print the output after each pipe operation
+
+### Operations and shortcuts
+
+Initially, all operations can be supported through the base operations,
+with `lambdas` allowing you to perform any other operations. To make lambda usage cleaner,
+you can write them into `then` calls as well.
+
+| Operation                 | Input                    | Output                 |
+| ------------------------- | ------------------------ | ---------------------- |
+| function calls            | `a >> b(...)`            | `b(a, ...)`            |
+| class calls               | `a >> B(...)`            | `B(a, ...)`            |
+| calls without parenthesis | `a >> b`                 | `b(a)`                 |
+| lambda calls              | `a >> (lambda x: x + 4)` | `(lambda x: x + 4)(a)` |
+
+However, we've also added shortcuts, based on the `placeholder` argument, allowing you
+to skip the lambda declaration and directly perform the following operations:
+
+| Operation                   | Input                            | Output                                     |
+| --------------------------- | -------------------------------- | ------------------------------------------ |
+| method calls                | `a >> _.method(...)`             | `a.method(...)`                            |
+| property calls              | `a >> _.property`                | `a.property`                               |
+| binary operators            | `a >> _ + 3`                     | `(lambda Z: Z + 3)(a)`                     |
+| f-strings                   | `a >> f"{_}"`                    | `(lambda Z: f"{Z}")(a)`                    |
+| list/set/... creations      | `a >> [_, 1, 2]`                 | `(lambda Z: [Z, 1, 2])(a)`                 |
+| list/set/... comprehensions | `a >> [x + _ for x in range(_)]` | `(lambda Z: [x + Z for x in range(Z)])(a)` |
 
 ### How it works
 
-decorator allows you to use
-No recursion
-AST rewrite
-See table
-shortcuts / then
+Here's quick rundown of how it works. Feel free to inspect the source code or the tests.
+Once you've decorated your function and run the code:
+
+- We pull the AST from the original function
+- We remove our own decorator, to avoid recursion and impacting other functions
+- We then rewrite the AST, following a specific set of rules (as shown in the table below)
+- And finally we execute the re-written AST
+
+Eventually, `a >> b(...) >> c(...)` becomes `c(b(a, ...), ...)`.
 
 ### Limitations
 
-Lots of issues with type-checkers and linters
+Sadly, this implementation comes short when dealing with linters (like `ruff` or `flake8`)
+and type-checkers (like `mypy` or `pyright`). Because these are static code analyzers, they inspect
+the original code, and not your AST-modified version. To bypass the errors, you'll need to disable
+the followings:
+
+- `mypy`: Either ignore `operator,call-arg,call-overload,name-defined`, or ignore just `name-defined` and use the `@no_type_check` decorator
+- `pyright`: Set `reportOperatorIssue`, `reportCallIssue`, `reportUndefinedVariable` to `none`
+- `ruff`: Disable the `F821` error
+- `flake8`: Disable the `F821` error
 
 ## Useful links
 
 - [Want to contribute?](CONTRIBUTING.md)
 - [See what's new!](CHANGELOG.md)
 - Originally forked from [robinhilliard/pipes](https://github.com/robinhilliard/pipes)
-
-###### Linters and quality
-
-- ruff: `# ruff: noqa: F821`
-- flake8: `# flake8: noqa: F821` ignore = W503, F821
-- mypy: ignore `operator,call-arg,call-overload,name-defined` OU `name-defined` + @no_type_check
-- pyright:
-  - reportOperatorIssue = "none"
-  - reportCallIssue = "none"
-  - reportUndefinedVariable = "none"
