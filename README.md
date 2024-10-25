@@ -1,5 +1,18 @@
 # ✨ Pipe Operator ✨
 
+- [✨ Pipe Operator ✨](#-pipe-operator-)
+  - [⚡ Quick start](#-quick-start)
+  - [🧰 How to use](#-how-to-use)
+  - [🐍 Pythonic implementation](#-pythonic-implementation)
+    - [Available classes](#available-classes)
+    - [Limitations](#limitations)
+  - [🍹 Elixir-like implementation](#-elixir-like-implementation)
+    - [Overview](#overview)
+    - [Operations and shortcuts](#operations-and-shortcuts)
+    - [How it works](#how-it-works)
+    - [Linters and type-checkers issues](#linters-and-type-checkers-issues)
+  - [🔗 Useful links](#-useful-links)
+
 `pipe_operator` allows you to use an elixir pipe-like syntax in python.
 This module provides 2 vastly different implementations, each with its own pros and cons.
 
@@ -68,7 +81,7 @@ from pipe_operator.python_flow import Pipe, PipeArgs, PipeEnd, PipeStart, Tap, T
 
 ## 🐍 Pythonic implementation
 
-### Overview
+### Available classes
 
 In the `python_flow` submodule, we expose the following classes:
 
@@ -85,9 +98,6 @@ In the `python_flow` submodule, we expose the following classes:
 
 **property:** Properties cannot be called directly. You must resort to the use of `Then(lambda x: x.my_property)`.
 This will work just fine and ensure type-safety throughout the pipe.
-
-**verbosity:** To make the implementation linter and type-checker compliant,
-we had to implement various classes to be used in the pipe.
 
 **functions without positional/keyword parameters:** While they are technically supported by the `Pipe` class,
 your type-checker will not handle them properly, because the `Pipe` class expect the function to have
@@ -158,7 +168,7 @@ Once you've decorated your function and run the code:
 
 Eventually, `a >> b(...) >> c(...)` becomes `c(b(a, ...), ...)`.
 
-### Limitations
+### Linters and type-checkers issues
 
 Sadly, this implementation comes short when dealing with linters (like `ruff` or `flake8`)
 and type-checkers (like `mypy` or `pyright`). Because these are static code analyzers, they inspect
