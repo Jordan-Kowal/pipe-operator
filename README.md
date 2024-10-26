@@ -183,7 +183,7 @@ Eventually, `a >> b(...) >> c(...)` becomes `c(b(a, ...), ...)`.
 Sadly, this implementation comes short when dealing with linters (like `ruff` or `flake8`)
 and type-checkers (like `mypy` or `pyright`). Because these are static code analyzers, they inspect
 the original code, and not your AST-modified version. To bypass the errors, you'll need to disable
-the followings:
+the following:
 
 - `mypy`: Either ignore `operator,call-arg,call-overload,name-defined`, or ignore just `name-defined` and use the `@no_type_check` decorator
 - `pyright`: Set `reportOperatorIssue`, `reportCallIssue`, `reportUndefinedVariable` to `none`
