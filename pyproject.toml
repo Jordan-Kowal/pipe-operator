@@ -2,7 +2,7 @@
 name = "pipe_operator"
 version = "1.0.2"
 requires-python = ">=3.9"
-description = " Elixir's pipe operator in Python"
+description = "Elixir's pipe operator in Python"
 dependencies = ["typing-extensions>=4.12.2"]
 readme = "README.md"
 authors = [{ name = "Jordan Kowal", email = "kowaljordan@gmail.com" }]

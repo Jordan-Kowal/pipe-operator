@@ -9,6 +9,9 @@
 
 ## Next - TBD
 
+- 🔧 Fixed typo in project description
+- 🔧 Added missing GitHub action in [CHANGELOG.md](CHANGELOG.md)
+
 ## 1.0.2 - 2024-10-25
 
 - ✨ Classes and functions can now be imported directly, without going through submodules

@@ -58,5 +58,6 @@ linters and type checkers.
 We use GitHub actions to verify, build, and deploy the application. We currently have:
 
 - [code_quality](.github/workflows/code_quality.yml): runs `ruff`, `flake8`, `mypy`, `pyright`, and `coverage` on Python 3.12
+- [publish_package](.github/workflows/publish_package.yml): Deploys the package on PyPi
 - [tests](.github/workflows/tests.yml): runs unittests on multiple Python versions (from 3.9 to 3.12)
 - [update_deps](.github/workflows/update_deps.yml): updates the dependencies (as `dependabot` does not support `uv` yet)
