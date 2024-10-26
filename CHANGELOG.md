@@ -12,6 +12,7 @@
 - 🔧 Fixed typo in project description
 - 🔧 Fixed typo in GitHub action step names
 - 🔧 Added missing GitHub action in [CHANGELOG.md](CHANGELOG.md)
+- 🔧 Moved `coverage` config into [pyproject.toml](pyproject.toml)
 
 ## 1.0.2 - 2024-10-25
 

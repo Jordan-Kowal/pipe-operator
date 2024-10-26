@@ -91,3 +91,12 @@ docstring-code-format = true
 [tool.ruff.lint.isort]
 known-first-party = ["pipe_operator"]
 force-sort-within-sections = true
+
+# ------------------------------
+# COVERAGE
+# ------------------------------
+[tool.coverage.run]
+omit = ["*/__init__.py", "*/tests/*"]
+
+[tool.coverage.report]
+exclude_lines = ["pragma: no cover", "if TYPE_CHECKING:"]
