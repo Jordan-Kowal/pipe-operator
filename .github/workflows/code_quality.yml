@@ -55,7 +55,7 @@ jobs:
           path: .venv
           key: python-3-12-venv-${{ hashFiles('./uv.lock') }}
 
-      - name: Run ruff
+      - name: Run flake8
         run: |
           . .venv/bin/activate
           flake8 .
