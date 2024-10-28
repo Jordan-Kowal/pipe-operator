@@ -364,7 +364,7 @@ wheels = [
 
 [[package]]
 name = "keyring"
-version = "25.4.1"
+version = "25.5.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "importlib-metadata", marker = "python_full_version < '3.12'" },
@@ -375,9 +375,9 @@ dependencies = [
     { name = "pywin32-ctypes", marker = "sys_platform == 'win32'" },
     { name = "secretstorage", marker = "sys_platform == 'linux'" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/a5/1c/2bdbcfd5d59dc6274ffb175bc29aa07ecbfab196830e0cfbde7bd861a2ea/keyring-25.4.1.tar.gz", hash = "sha256:b07ebc55f3e8ed86ac81dd31ef14e81ace9dd9c3d4b5d77a6e9a2016d0d71a1b", size = 62491 }
+sdist = { url = "https://files.pythonhosted.org/packages/f6/24/64447b13df6a0e2797b586dad715766d756c932ce8ace7f67bd384d76ae0/keyring-25.5.0.tar.gz", hash = "sha256:4c753b3ec91717fe713c4edd522d625889d8973a349b0e582622f49766de58e6", size = 62675 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/83/25/e6d59e5f0a0508d0dca8bb98c7f7fd3772fc943ac3f53d5ab18a218d32c0/keyring-25.4.1-py3-none-any.whl", hash = "sha256:5426f817cf7f6f007ba5ec722b1bcad95a75b27d780343772ad76b17cb47b0bf", size = 38946 },
+    { url = "https://files.pythonhosted.org/packages/32/c9/353c156fa2f057e669106e5d6bcdecf85ef8d3536ce68ca96f18dc7b6d6f/keyring-25.5.0-py3-none-any.whl", hash = "sha256:e67f8ac32b04be4714b42fe84ce7dad9c40985b9ca827c592cc303e7c26d9741", size = 39096 },
 ]
 
 [[package]]
@@ -516,7 +516,7 @@ dependencies = [
     { name = "typing-extensions" },
 ]
 
-[package.dev-dependencies]
+[package.dependency-groups]
 dev = [
     { name = "build" },
     { name = "coverage" },
@@ -530,7 +530,7 @@ dev = [
 [package.metadata]
 requires-dist = [{ name = "typing-extensions", specifier = ">=4.12.2" }]
 
-[package.metadata.requires-dev]
+[package.metadata.dependency-groups]
 dev = [
     { name = "build", specifier = ">=1.2.2.post1" },
     { name = "coverage", specifier = ">=7.6.3" },
