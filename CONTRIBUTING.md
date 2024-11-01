@@ -45,7 +45,7 @@ Run the following command to tell `git` to look for hooks in this folder:
 git config core.hooksPath .githooks
 ```
 
-Pre-commit hooks will run `ruff`, `flake8`, `mypy`, `pyright`, and `unittest` on each commit.
+Pre-commit hooks will run `ruff`, `flake8`, `mypy`, `pyright`, and `coverage` on each commit.
 
 ### Linters
 

@@ -10,8 +10,9 @@
 ## Next - TBD
 
 - 🔧 Fixed typo in project description
-- 🔧 Fixed typo in GitHub action step names
+- 🔧 Fixed typo in GitHub action step names and added comments
 - 🔧 Added missing GitHub action in [CHANGELOG.md](CHANGELOG.md)
+- 🔧 Updated [CONTRIBUTING.md](CONTRIBUTING.md) documentation
 - 🔧 Moved `coverage` config into [pyproject.toml](pyproject.toml)
 
 ## 1.0.2 - 2024-10-25

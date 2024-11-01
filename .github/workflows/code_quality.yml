@@ -2,6 +2,7 @@ name: Code Quality
 
 on:
   workflow_call:
+  # The "on push" event is necessary for the README badges
   push:
     branches: ['main']
   pull_request:
