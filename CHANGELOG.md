@@ -7,15 +7,17 @@
 - 🐞 Bugfixes
 - 🔧 Others
 
-## Next - TBD
+## 1.0.3 - 2024-11-02
 
+- ✨ Official support for Python `3.13`
 - 🔧 Fixed typo in project description
 - 🔧 Fixed typo in GitHub action step names and added comments
 - 🔧 Added missing GitHub action in [CHANGELOG.md](CHANGELOG.md)
+- 🔧 Updated [README.md](README.md) with a **Performances** block
 - 🔧 Updated [CONTRIBUTING.md](CONTRIBUTING.md) documentation
 - 🔧 Moved `coverage` config into [pyproject.toml](pyproject.toml)
 
-## 1.0.2 - 2024-10-25
+## 1.0.3 - 2024-10-25
 
 - ✨ Classes and functions can now be imported directly, without going through submodules
 - 🔧 Fixed [README.md](README.md) "Build" badge to use the **release** events

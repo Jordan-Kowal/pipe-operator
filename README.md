@@ -4,7 +4,7 @@
 ![Tests](https://github.com/Jordan-Kowal/pipe-operator/actions/workflows/tests.yml/badge.svg?branch=main)
 ![Build](https://github.com/Jordan-Kowal/pipe-operator/actions/workflows/publish_package.yml/badge.svg?event=release)
 ![Coverage](https://badgen.net/badge/coverage/%3E90%25/pink)
-![Tag](https://badgen.net/badge/tag/1.0.2/orange)
+![Tag](https://badgen.net/badge/tag/1.0.3/orange)
 ![Python](https://badgen.net/badge/python/3.9%20|%203.10%20|%203.11%20|%203.12)
 ![Licence](https://badgen.net/badge/licence/MIT)
 
@@ -19,6 +19,7 @@
     - [Operations and shortcuts](#operations-and-shortcuts)
     - [How it works](#how-it-works)
     - [Linters and type-checkers issues](#linters-and-type-checkers-issues)
+    - [Performance](#performance)
   - [🔗 Useful links](#-useful-links)
 
 `pipe_operator` allows you to use an elixir pipe-like syntax in python.
@@ -189,6 +190,13 @@ the following:
 - `pyright`: Set `reportOperatorIssue`, `reportCallIssue`, `reportUndefinedVariable` to `none`
 - `ruff`: Disable the `F821` error
 - `flake8`: Disable the `F821` error
+
+### Performances
+
+In terms of performances, this implementation should add very little overhead.
+The decorator and AST rewrite are run **only once at compile time**, and while it does
+generate a few extra lambda functions, it also removes the need for intermediate
+variables.
 
 ## 🔗 Useful links
 
