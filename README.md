@@ -5,7 +5,7 @@
 ![Build](https://github.com/Jordan-Kowal/pipe-operator/actions/workflows/publish_package.yml/badge.svg?event=release)
 ![Coverage](https://badgen.net/badge/coverage/%3E90%25/pink)
 ![Tag](https://badgen.net/badge/tag/1.0.3/orange)
-![Python](https://badgen.net/badge/python/3.9%20|%203.10%20|%203.11%20|%203.12)
+![Python](https://badgen.net/badge/python/3.9%20|%203.10%20|%203.11%20|%203.12|%203.13)
 ![Licence](https://badgen.net/badge/licence/MIT)
 
 - [✨ Pipe Operator ✨](#-pipe-operator-)
@@ -19,7 +19,7 @@
     - [Operations and shortcuts](#operations-and-shortcuts)
     - [How it works](#how-it-works)
     - [Linters and type-checkers issues](#linters-and-type-checkers-issues)
-    - [Performance](#performance)
+    - [Performances](#performances)
   - [🔗 Useful links](#-useful-links)
 
 `pipe_operator` allows you to use an elixir pipe-like syntax in python.
