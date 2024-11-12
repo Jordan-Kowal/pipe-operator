@@ -64,7 +64,7 @@ jobs:
           path: .venv
           key: python-${{ matrix.python-version }}-venv-${{ hashFiles('./uv.lock') }}
 
-      - name: Run mypy
+      - name: Run tests
         run: |
           . .venv/bin/activate
           python -m unittest discover .

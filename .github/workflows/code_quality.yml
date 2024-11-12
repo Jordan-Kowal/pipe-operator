@@ -159,7 +159,7 @@ jobs:
           path: .venv
           key: python-3-12-venv-${{ hashFiles('./uv.lock') }}
 
-      - name: Run mypy
+      - name: Run coverage
         run: |
           . .venv/bin/activate
           coverage run -m unittest discover .
