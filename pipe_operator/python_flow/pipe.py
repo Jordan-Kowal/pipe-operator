@@ -67,6 +67,8 @@ class PipeStart(Generic[TValue]):
         153
     """
 
+    __slots__ = ("value", "debug", "result", "chained")
+
     def __init__(
         self, value: TValue, debug: bool = False, chained: bool = False
     ) -> None:
@@ -151,6 +153,8 @@ class Pipe(Generic[TInput, FuncParams, TOutput]):
         45
     """
 
+    __slots__ = ("f", "args", "kwargs", "tap")
+
     def __init__(
         self,
         f: Callable[Concatenate[TInput, FuncParams], TOutput],
@@ -191,6 +195,8 @@ class PipeArgs(Generic[FuncParams, TOutput]):
         16
     """
 
+    __slots__ = ("f", "args", "kwargs", "tap")
+
     def __init__(
         self,
         f: Callable[FuncParams, TOutput],
@@ -230,6 +236,8 @@ class PipeEnd:
         2
     """
 
+    __slots__ = ()
+
     def __rrshift__(self, other: PipeStart[TValue]) -> TValue:
         # Never called, but needed for typechecking
         return other.value
@@ -255,6 +263,8 @@ class Then(Generic[TInput, TOutput]):
         ... )
         3
     """
+
+    __slots__ = ("f", "args", "kwargs", "tap")
 
     def __init__(self, f: Callable[[TInput], TOutput]) -> None:
         self.f = f

@@ -8,7 +8,6 @@
 
 - Use better `TypeAlias`
 - Add custom errors/exceptions for piping
-- Try using `__slots__` for improved performance
 - Add pipe support for Threading
 - Add pipe support for Async
 - Add pipe support for Multiprocessing?

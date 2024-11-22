@@ -7,6 +7,10 @@
 - 🐞 Bugfixes
 - 🔧 Others
 
+## Next - TBD
+
+- ✨ Added `__slots__` to python implementation for improved performances
+
 ## 1.0.3 - 2024-11-02
 
 - ✨ Official support for Python `3.13`
