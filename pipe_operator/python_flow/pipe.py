@@ -85,8 +85,8 @@ class PipeStart(Generic[TValue]):
         Implements the `>>` operator to enable our pipe workflow.
 
         3 possible cases based on what `other` is:
-            `Pipe/PipeArgs/Then`    -->     Classic pipe workflow where we return a new PipeStart with the result.
-            `Tap`                   -->     Side effect where we call the function and a new PipeStart with the original value.
+            `Pipe/PipeArgs/Then`    -->     Classic pipe workflow where we return the updated PipeStart with the result.
+            `Tap`                   -->     Side effect where we call the function and return the unchanged PipeStart.
             `PipeEnd`               -->     Simply returns the raw value.
 
         Return can actually be of 3 types, also based on what `other` is:
@@ -103,7 +103,9 @@ class PipeStart(Generic[TValue]):
             self._print_data(other.tap)
         if other.tap:
             return self  # type: ignore
-        return PipeStart(self.result, debug=self.debug, chained=True)
+        # Performance: update self instead of creating a new PipeStart
+        self.value, self.result, self.chained = self.result, None, True  # type: ignore
+        return self  # type: ignore
 
     def _print_data(self, is_tap: bool) -> None:
         """Will either its value, its result, or both."""
