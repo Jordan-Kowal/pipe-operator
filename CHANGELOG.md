@@ -9,13 +9,13 @@
 
 ## TBD
 
-- ✨ Keep same `PipeStart` object throughout the pipe for improved performances
+- ✨ [Python] Keep same `PipeStart` object throughout the pipe for improved performances
 
 ## 1.0.4 - 2024-11-22
 
-- ✨ Added `__slots__` to python implementation for improved performances
-- ✨ Added custom `PipeError` exception class for better error handling
-- 🐞 Fixed error message for the `then` function (elixir's implementation)
+- ✨ [Python] Added `__slots__` to classes for improved performances
+- ✨ [Python] Added custom `PipeError` exception class for better error handling
+- 🐞 [Elixir] Fixed error message for the `then` function
 
 ## 1.0.3 - 2024-11-02
 
