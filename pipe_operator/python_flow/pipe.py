@@ -2,6 +2,7 @@ from typing import (
     Any,
     Callable,
     Generic,
+    List,
     Optional,
     TypeVar,
     Union,
@@ -68,15 +69,18 @@ class PipeStart(Generic[TValue]):
         153
     """
 
-    __slots__ = ("value", "debug", "result", "chained")
+    __slots__ = ("value", "debug", "result", "chained", "history")
 
     def __init__(
         self, value: TValue, debug: bool = False, chained: bool = False
     ) -> None:
         self.value = value
         self.debug = debug
+        self.history: List[Any] = []
         self.result: Optional[Any] = None
         self.chained = chained
+        if self.debug:
+            self.history.append(value)
 
     def __rshift__(
         self, other: Union["Pipe[TValue, FuncParams, TOutput]", "Then[TValue, TOutput]"]
@@ -99,23 +103,26 @@ class PipeStart(Generic[TValue]):
         if isinstance(other, PipeEnd):
             return self.value  # type: ignore
         self.result = other.f(self.value, *other.args, **other.kwargs)  # type: ignore
-        if self.debug:
-            self._print_data(other.tap)
+        self._handle_debug(other.tap)
         if other.tap:
             return self  # type: ignore
         # Performance: update self instead of creating a new PipeStart
         self.value, self.result, self.chained = self.result, None, True  # type: ignore
         return self  # type: ignore
 
-    def _print_data(self, is_tap: bool) -> None:
-        """Will either its value, its result, or both."""
+    def _handle_debug(self, is_tap: bool) -> None:
+        """Will either its value, its result, or both. Debug mode only."""
+        if not self.debug:
+            return
         # Extra print if first call
         if not self.chained:
             print(self.value)
         # Then print either the value or the result
         if is_tap:
+            self.history.append(self.value)
             print(self.value)
         else:
+            self.history.append(self.result)
             print(self.result)
 
 

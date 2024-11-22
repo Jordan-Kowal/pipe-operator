@@ -125,15 +125,29 @@ class PipeArgsestCase(TestCase):
 
     def test_debug(self) -> None:
         with patch("builtins.print") as mock_print:
-            op = (
+            instance = (
                 PipeStart(3, debug=True)
                 >> Pipe(double)
                 >> Tap(lambda x: mock_print(x))
                 >> Pipe(double)
-                >> PipeEnd()
             )
+            op = instance >> PipeEnd()
             self.assertEqual(op, 12)
+            self.assertListEqual(instance.history, [3, 6, 6, 12])
         self.assertEqual(mock_print.call_count, 5)
+
+    def test_not_debug(self) -> None:
+        with patch("builtins.print") as mock_print:
+            instance = (
+                PipeStart(3)
+                >> Pipe(double)
+                >> Tap(lambda x: mock_print(x))
+                >> Pipe(double)
+            )
+            op = instance >> PipeEnd()
+            self.assertEqual(op, 12)
+            self.assertListEqual(instance.history, [])
+        self.assertEqual(mock_print.call_count, 1)  # The one from `Tap`
 
     def test_complex(self) -> None:
         op = (
