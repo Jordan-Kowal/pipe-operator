@@ -7,7 +7,7 @@
 - 🐞 Bugfixes
 - 🔧 Others
 
-## Next - TBD
+## 1.0.4 - 2024-11-22
 
 - ✨ Added `__slots__` to python implementation for improved performances
 - ✨ Added custom `PipeError` exception class for better error handling
