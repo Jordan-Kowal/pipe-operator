@@ -11,6 +11,7 @@ from pipe_operator.elixir_flow.transformers import (
     PipeTransformer,
 )
 from pipe_operator.elixir_flow.utils import OperatorString
+from pipe_operator.shared.exceptions import PipeError
 from pipe_operator.shared.utils import is_one_arg_lambda
 
 
@@ -200,14 +201,12 @@ def then(value: T, f: Callable[[T], R]) -> R:
         R: The result of the function call.
 
     Raises:
-        TypeError: If the function is not a lambda function.
+        PipeError: If the function is not a lambda function.
 
     Examples:
         >>> then(42, lambda x: x + 1)
         43
     """
     if not is_one_arg_lambda(f):
-        raise TypeError(
-            "[pipe_operator] `Then` only supports lambda functions. Use `Pipe` instead."
-        )
+        raise PipeError("`then` only supports 1-arg lambda functions")
     return f(value)

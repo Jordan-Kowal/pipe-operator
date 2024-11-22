@@ -7,6 +7,7 @@ from pipe_operator.elixir_flow.utils import (
     node_is_supported_operation,
     string_to_ast_BinOp,
 )
+from pipe_operator.shared.exceptions import PipeError
 
 
 class UtilsTestCase(TestCase):
@@ -16,7 +17,7 @@ class UtilsTestCase(TestCase):
         self.assertEqual(string_to_ast_BinOp("/"), ast.Div)
         self.assertEqual(string_to_ast_BinOp("+"), ast.Add)
         # Expect crash if not a valid operator
-        with self.assertRaises(ValueError):
+        with self.assertRaises(PipeError):
             string_to_ast_BinOp("x")  # type: ignore
 
     def test_node_contains_name(self) -> None:

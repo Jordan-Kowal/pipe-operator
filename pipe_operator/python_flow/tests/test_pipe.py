@@ -2,6 +2,7 @@ from unittest import TestCase
 from unittest.mock import Mock, patch
 
 from pipe_operator.python_flow.pipe import Pipe, PipeArgs, PipeEnd, PipeStart, Tap, Then
+from pipe_operator.shared.exceptions import PipeError
 
 
 def double(x: int) -> int:
@@ -47,23 +48,23 @@ class PipeArgsestCase(TestCase):
     # Settings
     # ------------------------------
     def test_pipe_does_not_support_lambdas(self) -> None:
-        with self.assertRaises(TypeError):
+        with self.assertRaises(PipeError):
             _ = PipeStart(3) >> Pipe(lambda x: x + 1) >> PipeEnd()
 
     def test_then_only_supports_one_arg_lambdas(self) -> None:
-        with self.assertRaises(TypeError):
+        with self.assertRaises(PipeError):
             _ = PipeStart(3) >> Then(double) >> PipeEnd()
-        with self.assertRaises(TypeError):
+        with self.assertRaises(PipeError):
             _ = PipeStart(3) >> Then(BasicClass) >> PipeEnd()
-        with self.assertRaises(TypeError):
+        with self.assertRaises(PipeError):
             _ = PipeStart(3) >> Then(lambda x, y: x + y) >> PipeEnd()  # type: ignore
 
     def test_pipeargs_only_supports_functions_with_no_required_args(self) -> None:
-        with self.assertRaises(TypeError):
+        with self.assertRaises(PipeError):
             _ = PipeStart(3) >> PipeArgs(double) >> PipeEnd()  # type: ignore
-        with self.assertRaises(TypeError):
+        with self.assertRaises(PipeError):
             _ = PipeStart(3) >> PipeArgs(BasicClass) >> PipeEnd()  # type: ignore
-        with self.assertRaises(TypeError):
+        with self.assertRaises(PipeError):
             _ = (
                 PipeStart(3)
                 >> PipeArgs(lambda x, *_args, **_kwargs: x + 1)  # noqa # type: ignore

@@ -8,6 +8,7 @@ from pipe_operator.elixir_flow.utils import (
     node_is_supported_operation,
     string_to_ast_BinOp,
 )
+from pipe_operator.shared.exceptions import PipeError
 
 DEFAULT_OPERATOR: OperatorString = ">>"
 DEFAULT_PLACEHOLDER = "_"
@@ -39,7 +40,7 @@ class PipeTransformer(ast.NodeTransformer):
         debug_mode (bool): If true, will print the output after each pipe operation. Defaults to `False`.
 
     Raises:
-        ValueError: If `placeholder` and `lambda_var` are the same.
+        PipeError: If `placeholder` and `lambda_var` are the same.
 
     Examples:
         >>> import ast
@@ -157,8 +158,8 @@ class PipeTransformer(ast.NodeTransformer):
         """Rewrites operations like `_ + 3` as `(lambda Z: Z + 3)`."""
         if not node_contains_name(node.right, self.placeholder):
             name = node.right.__class__.__name__
-            raise RuntimeError(
-                f"[pipe_operator] `{name}` operation requires the `{self.placeholder}` variable at least once"
+            raise PipeError(
+                f"`{name}` operation requires the `{self.placeholder}` variable at least once"
             )
         return self.lambda_transformer.visit(node)
 
@@ -252,7 +253,7 @@ class ToLambdaTransformer(ast.NodeTransformer):
             Defaults to `DEFAULT_LAMBDA_VAR`.
 
     Raises:
-        ValueError: If `placeholder` and `var_name` are the same.
+        PipeError: If `placeholder` and `var_name` are the same.
 
     Examples:
         >>> import ast
@@ -368,7 +369,7 @@ class NameReplacer(ast.NodeTransformer):
         replacement (str): The id to replace with. Defaults to `DEFAULT_LAMBDA_VAR`.
 
     Raises:
-        ValueError: If `target` and `replacement` are the same.
+        PipeError: If `target` and `replacement` are the same.
 
     Examples:
         >>> import ast
@@ -388,9 +389,7 @@ class NameReplacer(ast.NodeTransformer):
         self, target: str = DEFAULT_PLACEHOLDER, replacement: str = DEFAULT_LAMBDA_VAR
     ) -> None:
         if target == replacement:
-            raise ValueError(
-                "[pipe_operator] `target` and `replacement` must be different"
-            )
+            raise PipeError("`target` and `replacement` must be different")
         self.target = target
         self.replacement = replacement
         super().__init__()

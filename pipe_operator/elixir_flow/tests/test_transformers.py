@@ -7,6 +7,7 @@ from pipe_operator.elixir_flow.transformers import (
     PipeTransformer,
     ToLambdaTransformer,
 )
+from pipe_operator.shared.exceptions import PipeError
 
 
 def transform_code(code_string: str, transformer: ast.NodeTransformer) -> str:
@@ -84,7 +85,7 @@ class PipeTransformerTestCase(TestCase):
         self.assertEqual(result, "(lambda Z: (Z, 3))(3)")
 
     def test_crash_on_direct_operation_missing_placeholder(self) -> None:
-        with self.assertRaises(RuntimeError):
+        with self.assertRaises(PipeError):
             source = "3 >> __ + 4"
             transform_code(source, self.transformer)
 
@@ -281,5 +282,5 @@ class NameReplacerTestCase(TestCase):
         self.assertEqual(result, expected_result)
 
     def test_error_if_target_and_replacement_are_the_same(self) -> None:
-        with self.assertRaises(ValueError):
+        with self.assertRaises(PipeError):
             NameReplacer("_", "_")
