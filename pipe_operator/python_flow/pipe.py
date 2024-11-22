@@ -9,6 +9,7 @@ from typing import (
 
 from typing_extensions import Concatenate, ParamSpec
 
+from pipe_operator.shared.exceptions import PipeError
 from pipe_operator.shared.utils import (
     function_needs_parameters,
     is_lambda,
@@ -132,7 +133,7 @@ class Pipe(Generic[TInput, FuncParams, TOutput]):
         kwargs (FuncParams.kwargs): All kwargs that will be passed to the function `f`.
 
     Raises:
-        TypeError: If `f` is a lambda function AND the tap flag is not set.
+        PipeError: If `f` is a lambda function AND the tap flag is not set.
 
     Examples:
         >>> class BasicClass:
@@ -170,8 +171,8 @@ class Pipe(Generic[TInput, FuncParams, TOutput]):
     def check_f(self) -> None:
         """f must not be a lambda, except if it's a tap function."""
         if is_lambda(self.f) and not self.tap:
-            raise TypeError(
-                "[pipe_operator] `Pipe` does not support lambda functions. Use `Then` instead."
+            raise PipeError(
+                "`Pipe` does not support lambda functions. Use `Then` instead."
             )
 
 
@@ -186,7 +187,7 @@ class PipeArgs(Generic[FuncParams, TOutput]):
         kwargs (FuncParams.kwargs): All kwargs that will be passed to the function `f`.
 
     Raises:
-        TypeError: If the `f` is a lambda function or if it has positional/keyword parameters.
+        PipeError: If the `f` is a lambda function or if it has positional/keyword parameters.
 
     Examples:
         >>> def _sum(*args: int) -> int:
@@ -212,12 +213,12 @@ class PipeArgs(Generic[FuncParams, TOutput]):
     def check_f(self) -> None:
         """f must not be a lambda and have no position/keyword parameters."""
         if is_lambda(self.f) and not self.tap:
-            raise TypeError(
-                "[pipe_operator] `PipeArgs` does not support lambda functions. Use `Then` instead."
+            raise PipeError(
+                "`PipeArgs` does not support lambda functions. Use `Then` instead."
             )
         if function_needs_parameters(self.f):
-            raise TypeError(
-                "[pipe_operator] `PipeArgs` does not support functions with parameters. Use `Pipe` instead."
+            raise PipeError(
+                "`PipeArgs` does not support functions with parameters. Use `Pipe` instead."
             )
 
     def __rrshift__(self, other: PipeStart) -> PipeStart[TOutput]:
@@ -252,7 +253,7 @@ class Then(Generic[TInput, TOutput]):
         f (Callable[[TInput], TOutput]): The function that will be called in the pipe.
 
     Raises:
-        TypeError: If `f` is not a 1-arg lambda function.
+        PipeError: If `f` is not a 1-arg lambda function.
 
     Examples:
         >>> (
@@ -276,8 +277,8 @@ class Then(Generic[TInput, TOutput]):
     def check_f(self) -> None:
         """f must be a 1-arg lambda function."""
         if not is_one_arg_lambda(self.f):
-            raise TypeError(
-                "[pipe_operator] `Then` only supports 1-arg lambda functions. Use `Pipe` instead."
+            raise PipeError(
+                "`Then` only supports 1-arg lambda functions. Use `Pipe` instead."
             )
 
     def __rrshift__(self, other: PipeStart) -> PipeStart[TOutput]:

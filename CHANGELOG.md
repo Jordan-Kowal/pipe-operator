@@ -10,6 +10,8 @@
 ## Next - TBD
 
 - ✨ Added `__slots__` to python implementation for improved performances
+- ✨ Added custom `PipeError` exception class for better error handling
+- 🐞 Fixed error message for the `then` function (elixir's implementation)
 
 ## 1.0.3 - 2024-11-02
 

@@ -1,6 +1,8 @@
 import ast
 from typing import Dict, Literal, Type
 
+from pipe_operator.shared.exceptions import PipeError
+
 OperatorString = Literal[
     "+", "-", "*", "/", "%", "**", "<<", ">>", "|", "^", "&", "//", "@"
 ]
@@ -39,8 +41,8 @@ SUPPORTED_DIRECT_OPERATIONS = (
 def string_to_ast_BinOp(value: OperatorString) -> Type[ast.operator]:
     """Tries converting a string to a BinOp."""
     if value not in AST_STRING_MAP:
-        raise ValueError(
-            f'[pipe_operator] Invalid pipe operator: "{value}". It should be one of: {AST_STRING_KEYS}'
+        raise PipeError(
+            f'Invalid pipe operator: "{value}". It should be one of: {AST_STRING_KEYS}'
         )
     return AST_STRING_MAP[value]
 

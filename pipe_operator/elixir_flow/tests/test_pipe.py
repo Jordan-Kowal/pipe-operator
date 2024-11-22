@@ -4,6 +4,7 @@ from unittest import TestCase
 from unittest.mock import Mock
 
 from pipe_operator.elixir_flow.pipe import elixir_pipe, tap, then
+from pipe_operator.shared.exceptions import PipeError
 
 
 def add(a: int, b: int) -> int:
@@ -263,9 +264,9 @@ class ThenTestCase(TestCase):
         self.assertEqual(op, 5)
 
     def test_should_raise_error_if_not_one_arg_lambda(self) -> None:
-        with self.assertRaises(TypeError):
+        with self.assertRaises(PipeError):
             then(4, double)
-        with self.assertRaises(TypeError):
+        with self.assertRaises(PipeError):
             then(4, BasicClass)
-        with self.assertRaises(TypeError):
+        with self.assertRaises(PipeError):
             then(4, lambda x, y: x + y)  # type: ignore
