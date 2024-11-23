@@ -1,14 +1,15 @@
 import time
 from unittest import TestCase
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 
-from pipe_operator.python_flow.pipe import (
+from pipe_operator.python_flow.base import (
     Pipe,
     PipeArgs,
     PipeEnd,
     PipeStart,
-    Tap,
-    Then,
+)
+from pipe_operator.python_flow.extras import Tap, Then
+from pipe_operator.python_flow.threads import (
     ThreadPipe,
     ThreadWait,
 )
@@ -55,19 +56,11 @@ class BasicClass:
 
 class PipeTestCase(TestCase):
     # ------------------------------
-    # Settings
+    # Errors
     # ------------------------------
     def test_pipe_does_not_support_lambdas(self) -> None:
         with self.assertRaises(PipeError):
             _ = PipeStart(3) >> Pipe(lambda x: x + 1) >> PipeEnd()
-
-    def test_then_only_supports_one_arg_lambdas(self) -> None:
-        with self.assertRaises(PipeError):
-            _ = PipeStart(3) >> Then(double) >> PipeEnd()
-        with self.assertRaises(PipeError):
-            _ = PipeStart(3) >> Then(BasicClass) >> PipeEnd()
-        with self.assertRaises(PipeError):
-            _ = PipeStart(3) >> Then(lambda x, y: x + y) >> PipeEnd()  # type: ignore
 
     def test_pipeargs_only_supports_functions_with_no_required_args(self) -> None:
         with self.assertRaises(PipeError):
@@ -97,16 +90,6 @@ class PipeTestCase(TestCase):
         )
         self.assertEqual(op, 88)
 
-    def test_with_then(self) -> None:
-        op = (
-            PipeStart("3")
-            >> Then[str, int](lambda x: int(x) + 1)  # typed then/lambda
-            >> Then[int, int](lambda x: double(x))  # typed then/lambda
-            >> Then(lambda x: x)  # then/lambda
-            >> PipeEnd()
-        )
-        self.assertEqual(op, 8)
-
     def test_with_classes(self) -> None:
         op = (
             PipeStart(3)
@@ -117,86 +100,9 @@ class PipeTestCase(TestCase):
         )
         self.assertEqual(op, 6)
 
-    def test_with_tap(self) -> None:
-        mock = Mock()
-        op = (
-            PipeStart(3)
-            >> Tap(lambda x: [x])  # tap + lambda
-            >> Pipe(double)
-            >> Tap(str)  # tap + function
-            >> Pipe(double)
-            >> Tap(compute, 2000, z=10)  # tap + function with args
-            >> Tap(lambda x: mock(x))  # tap + lambda
-            >> Pipe(double)
-            >> PipeEnd()
-        )
-        self.assertEqual(op, 24)
-        mock.assert_called_once_with(12)
-
     # ------------------------------
-    # Thread workflows
+    # Debug
     # ------------------------------
-    def test_with_threads_without_join(self) -> None:
-        start = time.perf_counter()
-        op = (
-            PipeStart(3)
-            >> ThreadPipe("t1", lambda _: time.sleep(0.2))
-            >> ThreadPipe("t2", lambda _: time.sleep(0.2))
-            >> PipeEnd()
-        )
-        delta = time.perf_counter() - start
-        # We did not wait for the threads to finish
-        self.assertTrue(delta < 0.1)
-        self.assertEqual(op, 3)
-
-    def test_with_threads_with_some_joins(self) -> None:
-        start = time.perf_counter()
-        op = (
-            PipeStart(3)
-            >> ThreadPipe("t1", lambda _: time.sleep(0.1))
-            >> ThreadPipe("t2", lambda _: time.sleep(0.2))
-            >> ThreadWait(["t1"])
-            >> PipeEnd()
-        )
-        delta = time.perf_counter() - start
-        # We waited for the 1s thread only
-        self.assertTrue(delta > 0.1)
-        self.assertTrue(delta < 0.2)
-        self.assertEqual(op, 3)
-
-    def test_with_threads_with_join_all(self) -> None:
-        start = time.perf_counter()
-        op = (
-            PipeStart(3)
-            >> ThreadPipe("t1", lambda _: time.sleep(0.1))
-            >> ThreadPipe("t2", lambda _: time.sleep(0.2))
-            >> ThreadWait()
-            >> PipeEnd()
-        )
-        delta = time.perf_counter() - start
-        # We waited for all threads
-        self.assertTrue(delta > 0.2)
-        self.assertTrue(delta < 0.3)
-        self.assertEqual(op, 3)
-
-    def test_with_threads_with_unknown_thread_id(self) -> None:
-        with self.assertRaises(PipeError):
-            _ = (
-                PipeStart(3)
-                >> ThreadPipe("t1", lambda _: time.sleep(0.2))
-                >> ThreadWait(["t2"])
-                >> PipeEnd()
-            )
-
-    def test_with_threads_with_duplicated_thread_id(self) -> None:
-        with self.assertRaises(PipeError):
-            _ = (
-                PipeStart(3)
-                >> ThreadPipe("t1", lambda _: time.sleep(0.2))
-                >> ThreadPipe("t1", lambda _: time.sleep(0.2))
-                >> PipeEnd()
-            )
-
     def test_debug(self) -> None:
         with patch("builtins.print") as mock_print:
             instance = (
