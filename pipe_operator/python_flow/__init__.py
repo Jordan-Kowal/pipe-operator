@@ -1,4 +1,4 @@
-from .pipe import Pipe, PipeArgs, PipeEnd, PipeStart, Tap, Then
+from .pipe import Pipe, PipeArgs, PipeEnd, PipeStart, Tap, Then, ThreadPipe, ThreadWait
 
 __all__ = [
     "Pipe",
@@ -7,4 +7,6 @@ __all__ = [
     "PipeStart",
     "Tap",
     "Then",
+    "ThreadPipe",
+    "ThreadWait",
 ]

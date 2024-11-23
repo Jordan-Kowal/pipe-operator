@@ -1,7 +1,17 @@
+import time
 from unittest import TestCase
 from unittest.mock import Mock, patch
 
-from pipe_operator.python_flow.pipe import Pipe, PipeArgs, PipeEnd, PipeStart, Tap, Then
+from pipe_operator.python_flow.pipe import (
+    Pipe,
+    PipeArgs,
+    PipeEnd,
+    PipeStart,
+    Tap,
+    Then,
+    ThreadPipe,
+    ThreadWait,
+)
 from pipe_operator.shared.exceptions import PipeError
 
 
@@ -43,7 +53,7 @@ class BasicClass:
         return BasicClass(instance.value * 2)
 
 
-class PipeArgsestCase(TestCase):
+class PipeTestCase(TestCase):
     # ------------------------------
     # Settings
     # ------------------------------
@@ -123,6 +133,70 @@ class PipeArgsestCase(TestCase):
         self.assertEqual(op, 24)
         mock.assert_called_once_with(12)
 
+    # ------------------------------
+    # Thread workflows
+    # ------------------------------
+    def test_with_threads_without_join(self) -> None:
+        start = time.perf_counter()
+        op = (
+            PipeStart(3)
+            >> ThreadPipe("t1", lambda _: time.sleep(0.2))
+            >> ThreadPipe("t2", lambda _: time.sleep(0.2))
+            >> PipeEnd()
+        )
+        delta = time.perf_counter() - start
+        # We did not wait for the threads to finish
+        self.assertTrue(delta < 0.1)
+        self.assertEqual(op, 3)
+
+    def test_with_threads_with_some_joins(self) -> None:
+        start = time.perf_counter()
+        op = (
+            PipeStart(3)
+            >> ThreadPipe("t1", lambda _: time.sleep(0.1))
+            >> ThreadPipe("t2", lambda _: time.sleep(0.2))
+            >> ThreadWait(["t1"])
+            >> PipeEnd()
+        )
+        delta = time.perf_counter() - start
+        # We waited for the 1s thread only
+        self.assertTrue(delta > 0.1)
+        self.assertTrue(delta < 0.2)
+        self.assertEqual(op, 3)
+
+    def test_with_threads_with_join_all(self) -> None:
+        start = time.perf_counter()
+        op = (
+            PipeStart(3)
+            >> ThreadPipe("t1", lambda _: time.sleep(0.1))
+            >> ThreadPipe("t2", lambda _: time.sleep(0.2))
+            >> ThreadWait()
+            >> PipeEnd()
+        )
+        delta = time.perf_counter() - start
+        # We waited for all threads
+        self.assertTrue(delta > 0.2)
+        self.assertTrue(delta < 0.3)
+        self.assertEqual(op, 3)
+
+    def test_with_threads_with_unknown_thread_id(self) -> None:
+        with self.assertRaises(PipeError):
+            _ = (
+                PipeStart(3)
+                >> ThreadPipe("t1", lambda _: time.sleep(0.2))
+                >> ThreadWait(["t2"])
+                >> PipeEnd()
+            )
+
+    def test_with_threads_with_duplicated_thread_id(self) -> None:
+        with self.assertRaises(PipeError):
+            _ = (
+                PipeStart(3)
+                >> ThreadPipe("t1", lambda _: time.sleep(0.2))
+                >> ThreadPipe("t1", lambda _: time.sleep(0.2))
+                >> PipeEnd()
+            )
+
     def test_debug(self) -> None:
         with patch("builtins.print") as mock_print:
             instance = (
@@ -149,11 +223,18 @@ class PipeArgsestCase(TestCase):
             self.assertListEqual(instance.history, [])
         self.assertEqual(mock_print.call_count, 1)  # The one from `Tap`
 
+    # ------------------------------
+    # Complex workflow
+    # ------------------------------
     def test_complex(self) -> None:
+        start = time.perf_counter()
+
         op = (
             PipeStart("3")  # start
             >> Pipe(duplicate_string)  # function
+            >> ThreadPipe("t1", lambda _: time.sleep(0.2))  # thread
             >> Pipe(int)  # function
+            >> ThreadPipe("t2", double)  # thread
             >> Tap(compute, 2000, z=10)  # function with args
             >> Then(lambda x: x + 1)  # then/lambda
             >> Pipe(BasicClass)  # class
@@ -162,6 +243,11 @@ class PipeArgsestCase(TestCase):
             >> Pipe(BasicClass.get_value_method)  # method
             >> Then[int, int](lambda x: x * 2)  # typed then/lambda
             >> PipeArgs(_sum, 4, 5, 6)  # pipe args
+            >> ThreadWait()  # thread join
             >> PipeEnd()  # end
         )
+
+        delta = time.perf_counter() - start
+        self.assertTrue(delta > 0.2)
+        self.assertTrue(delta < 0.3)
         self.assertEqual(op, 153)
