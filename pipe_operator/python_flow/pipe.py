@@ -31,12 +31,13 @@ class PipeStart(Generic[TValue]):
     """
     The required starting point for the pipe workflow.
     It handles the `>>` operator to allow a fully working pipe workflow with
-    various elements like `Pipe`, `PipeArgs`, `Then, `Tap`, and `PipeEnd`.
+    various elements like: `Pipe`, `PipeArgs`, `Then, `Tap`, `ThreadPipe`, `ThreadWait`, and `PipeEnd`.
 
     Args:
         value (TValue): The starting value of the pipe.
 
     Examples:
+        >>> import time
         >>> def duplicate_string(x: str) -> str:
         ...     return f"{x}{x}"
         >>> def compute(x: int, y: int, z: int = 0) -> int:
@@ -59,7 +60,9 @@ class PipeStart(Generic[TValue]):
         >>> (
         ...     PipeStart("3")
         ...     >> Pipe(duplicate_string)
+        ...     >> ThreadPipe("t1", lambda _: time.sleep(0.2))
         ...     >> Pipe(int)
+        ...     >> ThreadPipe("t2", double)
         ...     >> Tap(compute, 2000, z=10)
         ...     >> Then(lambda x: x + 1)
         ...     >> Pipe(BasicClass)  # class
@@ -67,7 +70,10 @@ class PipeStart(Generic[TValue]):
         ...     >> Tap(BasicClass.increment)
         ...     >> Pipe(BasicClass.get_value_method)
         ...     >> Then[int, int](lambda x: x * 2)
+        ...     >> ThreadPipe("t1", lambda _: time.sleep(0.1))
+        ...     >> ThreadWait(["t1"])
         ...     >> PipeArgs(_sum, 4, 5, 6)
+        ...     >> ThreadWait()
         ...     >> PipeEnd()
         ... )
         153
@@ -91,15 +97,17 @@ class PipeStart(Generic[TValue]):
         """
         Implements the `>>` operator to enable our pipe workflow.
 
-        3 possible cases based on what `other` is:
-            `Pipe/PipeArgs/Then`    -->     Classic pipe workflow where we return the updated PipeStart with the result.
-            `Tap`                   -->     Side effect where we call the function and return the unchanged PipeStart.
-            `PipeEnd`               -->     Simply returns the raw value.
+        Multiple possible cases based on what `other` is:
+            `Pipe/PipeArgs/Then`            -->     Classic pipe workflow where we return the updated PipeStart with the result.
+            `Tap`                           -->     Side effect where we call the function and return the unchanged PipeStart.
+            `ThreadPipe`                    -->     Like `Tap`, but in a separate thread.
+            `ThreadWait`                    -->     Blocks the pipe until some threads finish.
+            `PipeEnd`                       -->     Simply returns the raw value.
 
         Return can actually be of 3 types, also based on what `other` is:
-            `Pipe/PipeArgs/Then`    -->     `PipeStart[TOutput]`
-            `Tap`                   -->     `PipeStart[TValue]`
-            `PipeEnd`               -->     `TValue`
+            `Pipe/PipeArgs/Then`            -->     `PipeStart[TOutput]`
+            `Tap/ThreadPipe/ThreadWait`     -->     `PipeStart[TValue]`
+            `PipeEnd`                       -->     `TValue`
 
         It is not indicated in the type annotations to avoid conflicts with type-checkers.
         """
@@ -375,16 +383,16 @@ class ThreadPipe(Pipe[TInput, FuncParams, TInput]):
     Pipe-able element that runs the given instructions in a separate thread.
     Much like `Tap`, it performs a side-effect and does not impact the original value.
     Useful for performing async/parallel actions.
-
     Can be used alongside `ThreadWait` to wait for specific/all threads to finish.
 
     Args:
-        thread_id (str): A unique identifier (within this pipe) for the thread.
-        f (Callable[Concatenate[TInput, FuncParams], object]): The function that will be called in the pipe.
+        thread_id (str): A unique identifier (within this pipe) for the thread. Useful for `ThreadWait`.
+        f (Callable[Concatenate[TInput, FuncParams], object]): The function that will be called in the thread.
         args (FuncParams.args): All args (except the first) that will be passed to the function `f`.
         kwargs (FuncParams.kwargs): All kwargs that will be passed to the function `f`.
 
     Examples:
+        >>> import time
         >>> (
         ...     PipeStart(3)
         ...     >> ThreadPipe("t1", lambda _: time.sleep(0.1))
@@ -420,6 +428,7 @@ class ThreadWait:
         thread_ids (Optional[List[str]]): A list of thread identifiers to wait for. If not provided, all threads will be waited for.
 
     Examples:
+        >>> import time
         >>> (
         ...     PipeStart(3)
         ...     >> ThreadPipe("t1", lambda _: time.sleep(0.1))
