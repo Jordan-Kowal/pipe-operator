@@ -6,12 +6,11 @@ from typing import (
     Generic,
     List,
     Optional,
-    TypeAlias,
     TypeVar,
     Union,
 )
 
-from typing_extensions import Concatenate, ParamSpec
+from typing_extensions import Concatenate, ParamSpec, TypeAlias
 
 from pipe_operator.shared.exceptions import PipeError
 from pipe_operator.shared.utils import (
