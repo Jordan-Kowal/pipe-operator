@@ -12,6 +12,7 @@
 - 🚀 [Python] Added thread support with `ThreadPipe` and `ThreadWait`. See [README.md](README.md) for more details.
 - ✨ [Python] Keep same `PipeStart` object throughout the pipe for improved performances
 - ✨ [Python] Added the `PipeStart.history` attribute to keep track of all its values (only in debug mode)
+- 🔧 [Python] Split logic into smaller modules: [base.py](pipe_operator/python_flow/base.py), [extras.py](pipe_operator/python_flow/extras.py), [threads.py](pipe_operator/python_flow/threads.py)
 
 ## 1.0.4 - 2024-11-22
 
