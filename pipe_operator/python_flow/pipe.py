@@ -1,9 +1,12 @@
+from threading import Thread
 from typing import (
     Any,
     Callable,
+    Dict,
     Generic,
     List,
     Optional,
+    TypeAlias,
     TypeVar,
     Union,
 )
@@ -21,6 +24,8 @@ TInput = TypeVar("TInput")
 TOutput = TypeVar("TOutput")
 TValue = TypeVar("TValue")
 FuncParams = ParamSpec("FuncParams")
+
+ThreadId: TypeAlias = Union[str, int]
 
 
 class PipeStart(Generic[TValue]):
@@ -69,17 +74,16 @@ class PipeStart(Generic[TValue]):
         153
     """
 
-    __slots__ = ("value", "debug", "result", "chained", "history")
+    __slots__ = ("value", "debug", "result", "history", "threads")
 
-    def __init__(
-        self, value: TValue, debug: bool = False, chained: bool = False
-    ) -> None:
+    def __init__(self, value: TValue, debug: bool = False) -> None:
         self.value = value
         self.debug = debug
         self.history: List[Any] = []
         self.result: Optional[Any] = None
-        self.chained = chained
+        self.threads: Dict[ThreadId, Thread] = {}
         if self.debug:
+            print(self.value)
             self.history.append(value)
 
     def __rshift__(
@@ -100,30 +104,57 @@ class PipeStart(Generic[TValue]):
 
         It is not indicated in the type annotations to avoid conflicts with type-checkers.
         """
+        # ====> [EXIT] PipeEnd: returns the raw value
         if isinstance(other, PipeEnd):
             return self.value  # type: ignore
-        self.result = other.f(self.value, *other.args, **other.kwargs)  # type: ignore
-        self._handle_debug(other.tap)
-        if other.tap:
+
+        # ====> [EXIT] ThreadWait: waits for some threads to finish, then returns the value
+        if isinstance(other, ThreadWait):
+            threads = self._get_threads(other.thread_ids)
+            for thread in threads:
+                thread.join()
             return self  # type: ignore
-        # Performance: update self instead of creating a new PipeStart
-        self.value, self.result, self.chained = self.result, None, True  # type: ignore
+
+        # ====> [EXIT] ThreadPipe: calls the function in a separate thread
+        if isinstance(other, ThreadPipe):
+            args = (self.value, *other.args)
+            thread = Thread(target=other.f, args=args, kwargs=other.kwargs)
+            if other.thread_id in self.threads:
+                raise PipeError(f"Thread ID {other.thread_id} already exists")
+            self.threads[other.thread_id] = thread
+            thread.start()
+            self._handle_debug()
+            return self  # type: ignore
+
+        # ====> Executes the instruction asynchronously
+        self.result = other.f(self.value, *other.args, **other.kwargs)  # type: ignore
+
+        # ====> [EXIT] Tap: returns unchanged PipeStart
+        if other.is_tap:
+            self.result = None
+            self._handle_debug()
+            return self  # type: ignore
+
+        # ====> [EXIT] Otherwise, returns the updated PipeStart
+        self.value, self.result = self.result, None  # type: ignore
+        self._handle_debug()
         return self  # type: ignore
 
-    def _handle_debug(self, is_tap: bool) -> None:
-        """Will either its value, its result, or both. Debug mode only."""
+    def _handle_debug(self) -> None:
+        """Will print and append to history. Debug mode only."""
         if not self.debug:
             return
-        # Extra print if first call
-        if not self.chained:
-            print(self.value)
-        # Then print either the value or the result
-        if is_tap:
-            self.history.append(self.value)
-            print(self.value)
-        else:
-            self.history.append(self.result)
-            print(self.result)
+        print(self.value)
+        self.history.append(self.value)
+
+    def _get_threads(self, thread_ids: Optional[List[str]] = None) -> List[Thread]:
+        """Returns a list of threads, filtered by thread_ids if provided."""
+        if thread_ids is None:
+            return list(self.threads.values())
+        for thread_id in thread_ids:
+            if thread_id not in self.threads:
+                raise PipeError(f"Unknown thread_id: {thread_id}")
+        return [self.threads[tid] for tid in thread_ids]
 
 
 class Pipe(Generic[TInput, FuncParams, TOutput]):
@@ -142,7 +173,7 @@ class Pipe(Generic[TInput, FuncParams, TOutput]):
         kwargs (FuncParams.kwargs): All kwargs that will be passed to the function `f`.
 
     Raises:
-        PipeError: If `f` is a lambda function AND the tap flag is not set.
+        PipeError: If `f` is a lambda function AND it is neither a `tap` nor a `thread`.
 
     Examples:
         >>> class BasicClass:
@@ -163,7 +194,7 @@ class Pipe(Generic[TInput, FuncParams, TOutput]):
         45
     """
 
-    __slots__ = ("f", "args", "kwargs", "tap")
+    __slots__ = ("f", "args", "kwargs", "is_tap", "is_thread")
 
     def __init__(
         self,
@@ -174,14 +205,15 @@ class Pipe(Generic[TInput, FuncParams, TOutput]):
         self.f = f
         self.args = args
         self.kwargs = kwargs
-        self.tap = bool(kwargs.pop("_tap", False))
+        self.is_tap = bool(kwargs.pop("_tap", False))
+        self.is_thread = bool(kwargs.pop("_thread", False))
         self.check_f()
 
     def check_f(self) -> None:
-        """f must not be a lambda, except if it's a tap function."""
-        if is_lambda(self.f) and not self.tap:
+        """f must not be a lambda, except if it's a is_tap or is_thread function."""
+        if is_lambda(self.f) and not (self.is_tap or self.is_thread):
             raise PipeError(
-                "`Pipe` does not support lambda functions. Use `Then` instead."
+                "`Pipe` does not support lambda functions except in 'tap' or 'thread' mode. Use `Then` instead."
             )
 
 
@@ -196,7 +228,7 @@ class PipeArgs(Generic[FuncParams, TOutput]):
         kwargs (FuncParams.kwargs): All kwargs that will be passed to the function `f`.
 
     Raises:
-        PipeError: If the `f` is a lambda function or if it has positional/keyword parameters.
+        PipeError: If the `f` is a lambda function (and is not a tap or thread) or if it has positional/keyword parameters.
 
     Examples:
         >>> def _sum(*args: int) -> int:
@@ -205,7 +237,7 @@ class PipeArgs(Generic[FuncParams, TOutput]):
         16
     """
 
-    __slots__ = ("f", "args", "kwargs", "tap")
+    __slots__ = ("f", "args", "kwargs", "is_tap", "is_thread")
 
     def __init__(
         self,
@@ -216,14 +248,15 @@ class PipeArgs(Generic[FuncParams, TOutput]):
         self.f = f
         self.args = args
         self.kwargs = kwargs
-        self.tap = bool(kwargs.pop("_tap", False))
+        self.is_tap = bool(kwargs.pop("_tap", False))
+        self.is_thread = bool(kwargs.pop("_thread", False))
         self.check_f()
 
     def check_f(self) -> None:
         """f must not be a lambda and have no position/keyword parameters."""
-        if is_lambda(self.f) and not self.tap:
+        if is_lambda(self.f) and not (self.is_tap or self.is_thread):
             raise PipeError(
-                "`PipeArgs` does not support lambda functions. Use `Then` instead."
+                "`PipeArgs` does not support lambda functions except in 'tap' or 'thread' mode. Use `Then` instead."
             )
         if function_needs_parameters(self.f):
             raise PipeError(
@@ -274,13 +307,14 @@ class Then(Generic[TInput, TOutput]):
         3
     """
 
-    __slots__ = ("f", "args", "kwargs", "tap")
+    __slots__ = ("f", "args", "kwargs", "is_tap", "is_thread")
 
     def __init__(self, f: Callable[[TInput], TOutput]) -> None:
         self.f = f
         self.args = ()
         self.kwargs = {}  # type: ignore
-        self.tap = False
+        self.is_tap = False
+        self.is_thread = False
         self.check_f()
 
     def check_f(self) -> None:
@@ -335,3 +369,72 @@ class Tap(Pipe[TInput, FuncParams, TInput]):
     def __rrshift__(self, other: PipeStart) -> PipeStart[TInput]:
         # Never called, but needed for typechecking
         return other.__rshift__(self)
+
+
+class ThreadPipe(Pipe[TInput, FuncParams, TInput]):
+    """
+    Pipe-able element that runs the given instructions in a separate thread.
+    Much like `Tap`, it performs a side-effect and does not impact the original value.
+    Useful for performing async/parallel actions.
+
+    Can be used alongside `ThreadWait` to wait for specific/all threads to finish.
+
+    Args:
+        thread_id (str): A unique identifier (within this pipe) for the thread.
+        f (Callable[Concatenate[TInput, FuncParams], object]): The function that will be called in the pipe.
+        args (FuncParams.args): All args (except the first) that will be passed to the function `f`.
+        kwargs (FuncParams.kwargs): All kwargs that will be passed to the function `f`.
+
+    Examples:
+        >>> (
+        ...     PipeStart(3)
+        ...     >> ThreadPipe("t1", lambda _: time.sleep(0.1))
+        ...     >> ThreadWait(["t1"])
+        ...     >> PipeEnd()
+        ... )
+        3
+    """
+
+    __slots__ = Pipe.__slots__ + ("thread_id",)
+
+    def __init__(
+        self,
+        thread_id: ThreadId,
+        f: Callable[Concatenate[TInput, FuncParams], object],
+        *args: FuncParams.args,
+        **kwargs: FuncParams.kwargs,
+    ) -> None:
+        self.thread_id = thread_id
+        kwargs["_thread"] = True
+        super().__init__(f, *args, **kwargs)  # type: ignore
+
+    def __rrshift__(self, other: PipeStart) -> PipeStart[TInput]:
+        # Never called, but needed for typechecking
+        return other.__rshift__(self)
+
+
+class ThreadWait:
+    """
+    Pipe-able element used to wait for thread(s) (from `ThreadPipe`) to finish.
+
+    Args:
+        thread_ids (Optional[List[str]]): A list of thread identifiers to wait for. If not provided, all threads will be waited for.
+
+    Examples:
+        >>> (
+        ...     PipeStart(3)
+        ...     >> ThreadPipe("t1", lambda _: time.sleep(0.1))
+        ...     >> ThreadWait(["t1"])
+        ...     >> PipeEnd()
+        ... )
+        3
+    """
+
+    __slots__ = ("thread_ids",)
+
+    def __init__(self, thread_ids: Optional[List[str]] = None) -> None:
+        self.thread_ids = thread_ids
+
+    def __rrshift__(self, other: PipeStart[TValue]) -> PipeStart[TValue]:
+        # Never called, but needed for typechecking
+        return other

@@ -7,10 +7,11 @@
 - 🐞 Bugfixes
 - 🔧 Others
 
-## TBD
+## 1.1.0 - TBD
 
+- 🚀 [Python] Added thread support with `ThreadPipe` and `ThreadWait`. See [README.md](README.md) for more details.
 - ✨ [Python] Keep same `PipeStart` object throughout the pipe for improved performances
-- ✨ [Python]  the `PipeStart.history` attribute to keep track of all its values (only in debug mode)
+- ✨ [Python] Added the `PipeStart.history` attribute to keep track of all its values (only in debug mode)
 
 ## 1.0.4 - 2024-11-22
 
