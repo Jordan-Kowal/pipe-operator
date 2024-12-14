@@ -21,6 +21,7 @@
     - [Linters and type-checkers issues](#linters-and-type-checkers-issues)
     - [Performances](#performances)
   - [🔗 Useful links](#-useful-links)
+  - [⏳ Stats](#-stats)
 
 `pipe_operator` allows you to use an elixir pipe-like syntax in python.
 This module provides 2 vastly different implementations, each with its own pros and cons.
@@ -207,3 +208,7 @@ variables.
 - [Want to contribute?](CONTRIBUTING.md)
 - [See what's new!](CHANGELOG.md)
 - Originally forked from [robinhilliard/pipes](https://github.com/robinhilliard/pipes)
+
+## ⏳ Stats
+
+![Alt](https://repobeats.axiom.co/api/embed/4f71a7872457e4196720a7ca1b72ddfa25051420.svg "Repobeats analytics image")
