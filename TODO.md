@@ -7,7 +7,4 @@
 
 ## Python implementation
 
-- Add pipe support for Async
-  - Async call
-  - Background task
 - Add pipe support for Multiprocessing?
