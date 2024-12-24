@@ -7,6 +7,4 @@
 
 ## Python implementation
 
-- Aliases
-- Add pipe support for Async
 - Add pipe support for Multiprocessing?
