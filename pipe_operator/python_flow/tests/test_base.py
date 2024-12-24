@@ -1,7 +1,9 @@
+import asyncio
 import time
 from unittest import TestCase
 from unittest.mock import patch
 
+from pipe_operator.python_flow.asynchronous import AsyncPipe
 from pipe_operator.python_flow.base import (
     Pipe,
     PipeArgs,
@@ -14,6 +16,11 @@ from pipe_operator.python_flow.threads import (
     ThreadWait,
 )
 from pipe_operator.shared.exceptions import PipeError
+
+
+async def async_add_one(value: int) -> int:
+    await asyncio.sleep(0.1)
+    return value + 1
 
 
 def double(x: int) -> int:
@@ -61,6 +68,10 @@ class PipeTestCase(TestCase):
     def test_pipe_does_not_support_lambdas(self) -> None:
         with self.assertRaises(PipeError):
             _ = PipeStart(3) >> Pipe(lambda x: x + 1) >> PipeEnd()
+
+    def test_pipe_does_not_support_async_functions(self) -> None:
+        with self.assertRaises(PipeError):
+            _ = PipeStart(3) >> Pipe(async_add_one) >> PipeEnd()
 
     def test_pipeargs_only_supports_functions_with_no_required_args(self) -> None:
         with self.assertRaises(PipeError):
@@ -140,6 +151,7 @@ class PipeTestCase(TestCase):
             >> Pipe(duplicate_string)  # function
             >> ThreadPipe("t1", lambda _: time.sleep(0.2))  # thread
             >> Pipe(int)  # function
+            >> AsyncPipe(async_add_one)  # async
             >> ThreadPipe("t2", double)  # thread
             >> Tap(compute, 2000, z=10)  # function with args
             >> Then(lambda x: x + 1)  # then/lambda
@@ -156,4 +168,4 @@ class PipeTestCase(TestCase):
         delta = time.perf_counter() - start
         self.assertTrue(delta > 0.2)
         self.assertTrue(delta < 0.3)
-        self.assertEqual(op, 153)
+        self.assertEqual(op, 157)
