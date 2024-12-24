@@ -35,7 +35,7 @@ TaskId: TypeAlias = Union[str, int]
 
 class AsyncPipe(Pipe[TInput, FuncParams, TOutput]):
     """
-    Pipe-able element to run async functions (through asyncio).
+    Pipe-able element to run and wait for async functions (through asyncio).
     Similar to the regular `Pipe` but for async functions.
 
     Args:
