@@ -1,3 +1,4 @@
+import asyncio
 from threading import Thread
 from typing import (
     TYPE_CHECKING,
@@ -16,6 +17,7 @@ from typing_extensions import Concatenate, ParamSpec, TypeAlias
 from pipe_operator.shared.exceptions import PipeError
 from pipe_operator.shared.utils import (
     function_needs_parameters,
+    is_async_function,
     is_lambda,
 )
 
@@ -42,6 +44,10 @@ class PipeStart(Generic[TValue]):
 
     Examples:
         >>> import time
+        >>> import asyncio
+        >>> async def async_add_one(value: int) -> int:
+        ...     await asyncio.sleep(0.1)
+        ...     return value + 1
         >>> def duplicate_string(x: str) -> str:
         ...     return f"{x}{x}"
         >>> def compute(x: int, y: int, z: int = 0) -> int:
@@ -66,6 +72,7 @@ class PipeStart(Generic[TValue]):
         ...     >> Pipe(duplicate_string)
         ...     >> ThreadPipe("t1", lambda _: time.sleep(0.2))
         ...     >> Pipe(int)
+        ...     >> AsyncPipe(async_add_one)
         ...     >> ThreadPipe("t2", double)
         ...     >> Tap(compute, 2000, z=10)
         ...     >> Then(lambda x: x + 1)
@@ -80,7 +87,7 @@ class PipeStart(Generic[TValue]):
         ...     >> ThreadWait()
         ...     >> PipeEnd()
         ... )
-        153
+        157
     """
 
     __slots__ = ("value", "debug", "result", "history", "threads")
@@ -115,6 +122,7 @@ class PipeStart(Generic[TValue]):
 
         It is not indicated in the type annotations to avoid conflicts with type-checkers.
         """
+        from pipe_operator.python_flow.asynchronous import AsyncPipe
         from pipe_operator.python_flow.threads import ThreadPipe, ThreadWait
 
         # ====> [EXIT] PipeEnd: returns the raw value
@@ -139,8 +147,11 @@ class PipeStart(Generic[TValue]):
             self._handle_debug()
             return self  # type: ignore
 
-        # ====> Executes the instruction asynchronously
-        self.result = other.f(self.value, *other.args, **other.kwargs)  # type: ignore
+        # ====> Executes the instructions
+        if isinstance(other, AsyncPipe):
+            self.result = asyncio.run(other.f(self.value, *other.args, **other.kwargs))  # noqa: # type: ignore
+        else:
+            self.result = other.f(self.value, *other.args, **other.kwargs)  # type: ignore
 
         # ====> [EXIT] Tap: returns unchanged PipeStart
         if other.is_tap:
@@ -149,7 +160,7 @@ class PipeStart(Generic[TValue]):
             return self  # type: ignore
 
         # ====> [EXIT] Otherwise, returns the updated PipeStart
-        self.value, self.result = self.result, None  # type: ignore
+        self.value, self.result = self.result, None
         self._handle_debug()
         return self  # type: ignore
 
@@ -207,7 +218,7 @@ class Pipe(Generic[TInput, FuncParams, TOutput]):
         45
     """
 
-    __slots__ = ("f", "args", "kwargs", "is_tap", "is_thread")
+    __slots__ = ("f", "args", "kwargs", "is_tap", "is_thread", "is_async")
 
     def __init__(
         self,
@@ -220,6 +231,7 @@ class Pipe(Generic[TInput, FuncParams, TOutput]):
         self.kwargs = kwargs
         self.is_tap = bool(kwargs.pop("_tap", False))
         self.is_thread = bool(kwargs.pop("_thread", False))
+        self.is_async = bool(kwargs.pop("_async", False))
         self.check_f()
 
     def check_f(self) -> None:
@@ -227,6 +239,10 @@ class Pipe(Generic[TInput, FuncParams, TOutput]):
         if is_lambda(self.f) and not (self.is_tap or self.is_thread):
             raise PipeError(
                 "`Pipe` does not support lambda functions except in 'tap' or 'thread' mode. Use `Then` instead."
+            )
+        if is_async_function(self.f) and not self.is_async:
+            raise PipeError(
+                "`Pipe` does not support async functions. Use `AsyncPipe` instead."
             )
 
 
@@ -250,7 +266,7 @@ class PipeArgs(Generic[FuncParams, TOutput]):
         16
     """
 
-    __slots__ = ("f", "args", "kwargs", "is_tap", "is_thread")
+    __slots__ = ("f", "args", "kwargs", "is_tap", "is_thread", "is_async")
 
     def __init__(
         self,
@@ -263,6 +279,7 @@ class PipeArgs(Generic[FuncParams, TOutput]):
         self.kwargs = kwargs
         self.is_tap = bool(kwargs.pop("_tap", False))
         self.is_thread = bool(kwargs.pop("_thread", False))
+        self.is_async = bool(kwargs.pop("_async", False))
         self.check_f()
 
     def check_f(self) -> None:
@@ -271,6 +288,7 @@ class PipeArgs(Generic[FuncParams, TOutput]):
             raise PipeError(
                 "`PipeArgs` does not support lambda functions except in 'tap' or 'thread' mode. Use `Then` instead."
             )
+
         if function_needs_parameters(self.f):
             raise PipeError(
                 "`PipeArgs` does not support functions with parameters. Use `Pipe` instead."

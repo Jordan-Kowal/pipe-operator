@@ -33,7 +33,7 @@ Then either import the 🐍 **pythonic classes** or the 🍹 **elixir functions*
 
 ```python
 # Pythonic classes
-from pipe_operator import Pipe, PipeArgs, PipeEnd, PipeStart, Tap, Then, ThreadPipe, ThreadWait
+from pipe_operator import AsyncPipe, Pipe, PipeArgs, PipeEnd, PipeStart, Tap, Then, ThreadPipe, ThreadWait
 # Elixir functions
 from pipe_operator import elixir_pipe, tap, then
 ```
@@ -44,11 +44,12 @@ You can use the 🐍 **pythonic** implementation, which is **entirely compatible
 but a bit more verbose than the original pipe operator:
 
 ```python
-from pipe_operator import Pipe, PipeArgs, PipeEnd, PipeStart, Tap, Then, ThreadPipe, ThreadWait
+from pipe_operator import AsyncPipe, Pipe, PipeArgs, PipeEnd, PipeStart, Tap, Then, ThreadPipe, ThreadWait
 
 result = (
     PipeStart("3")                          # starts the pipe
     >> Pipe(int)                            # function with 1-arg
+    >> AsyncPipe(async_func)                # async
     >> Pipe(my_func, 2000, z=10)            # function with multiple args
     >> Tap(print)                           # side effect
     >> Then(lambda x: x + 1)                # lambda
@@ -108,6 +109,7 @@ In the 🐍 **pythonic implementation**, we expose the following classes:
 | `Tap`        | Used to trigger a side effect (meaning it returns the original value) | `Tap(print)`, `Tap(lambda x: x.method())` |
 | `ThreadPipe` | Used to call a function in a thread                                   | `ThreadPipe("t1", do_something)()`        |
 | `ThreadWait` | Used to wait for multiple (or all)threads to finish                   | `ThreadWait()`, `ThreadWait(["id1"])`     |
+| `AsyncPipe`  | Used to call and wait for async functions (from asyncio)              | `AsyncPipe(async_func)`                               |
 | `PipeEnd`    | The end of the pipe, to extract the raw final result                  | `PipeEnd()`                               |
 
 ### Limitations
