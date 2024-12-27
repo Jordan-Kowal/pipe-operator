@@ -8,3 +8,6 @@
 ## Python implementation
 
 - Add pipe support for Multiprocessing?
+
+then rework
+async exclude typing

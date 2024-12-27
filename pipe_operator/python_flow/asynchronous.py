@@ -1,4 +1,3 @@
-import inspect
 from typing import (
     Awaitable,
     Callable,
@@ -8,8 +7,9 @@ from typing import (
 
 from typing_extensions import Concatenate, ParamSpec, TypeAlias
 
-from pipe_operator.python_flow.base import Pipe, PipeStart
+from pipe_operator.python_flow.base import PipeStart, _BasePipe
 from pipe_operator.shared.exceptions import PipeError
+from pipe_operator.shared.utils import is_async_function
 
 TInput = TypeVar("TInput")
 TOutput = TypeVar("TOutput")
@@ -19,7 +19,7 @@ FuncParams = ParamSpec("FuncParams")
 TaskId: TypeAlias = Union[str, int]
 
 
-class AsyncPipe(Pipe[TInput, FuncParams, TOutput]):
+class AsyncPipe(_BasePipe[TInput, FuncParams, TOutput]):
     """
     Pipe-able element to run and wait for async functions (through asyncio).
     Similar to the regular `Pipe` but for async functions.
@@ -47,16 +47,16 @@ class AsyncPipe(Pipe[TInput, FuncParams, TOutput]):
         *args: FuncParams.args,
         **kwargs: FuncParams.kwargs,
     ) -> None:
-        kwargs["_async"] = True
+        """Overrides typing for `f` to allow async functions."""
         super().__init__(f, *args, **kwargs)  # type: ignore
 
-    def check_f(self) -> None:
-        super().check_f()
-        if not inspect.iscoroutinefunction(self.f):
+    def validate_f(self) -> None:
+        """f must be an async function."""
+        if not is_async_function(self.f):
             raise PipeError(
                 "`AsyncPipe` only supports async functions. Use `Pipe` for regular functions."
             )
 
-    def __rrshift__(self, other: "PipeStart") -> PipeStart[TOutput]:
-        # Never called, but needed for typechecking
+    def __rrshift__(self, other: PipeStart[TInput]) -> PipeStart[TOutput]:
+        """Delegates to `PipeStart.__rshift__`"""
         return other.__rshift__(self)

@@ -8,17 +8,17 @@ from typing import (
 
 from typing_extensions import Concatenate, ParamSpec, TypeAlias
 
-from pipe_operator.python_flow.base import Pipe, PipeStart
+from pipe_operator.python_flow.base import PipeStart, _BasePipe
+from pipe_operator.shared.exceptions import PipeError
+from pipe_operator.shared.utils import is_async_function
 
 TInput = TypeVar("TInput")
-TOutput = TypeVar("TOutput")
-TValue = TypeVar("TValue")
 FuncParams = ParamSpec("FuncParams")
 
 ThreadId: TypeAlias = Union[str, int]
 
 
-class ThreadPipe(Pipe[TInput, FuncParams, TInput]):
+class ThreadPipe(_BasePipe[TInput, FuncParams, TInput]):
     """
     Pipe-able element that runs the given instructions in a separate thread.
     Much like `Tap`, it performs a side-effect and does not impact the original value.
@@ -31,6 +31,9 @@ class ThreadPipe(Pipe[TInput, FuncParams, TInput]):
         args (FuncParams.args): All args (except the first) that will be passed to the function `f`.
         kwargs (FuncParams.kwargs): All kwargs that will be passed to the function `f`.
 
+    Raises:
+        PipeError: If `f` is an async function.
+
     Examples:
         >>> import time
         >>> (
@@ -42,7 +45,7 @@ class ThreadPipe(Pipe[TInput, FuncParams, TInput]):
         3
     """
 
-    __slots__ = Pipe.__slots__ + ("thread_id",)
+    __slots__ = _BasePipe.__slots__ + ("thread_id",)
 
     def __init__(
         self,
@@ -52,12 +55,16 @@ class ThreadPipe(Pipe[TInput, FuncParams, TInput]):
         **kwargs: FuncParams.kwargs,
     ) -> None:
         self.thread_id = thread_id
-        kwargs["_thread"] = True
         super().__init__(f, *args, **kwargs)  # type: ignore
 
-    def __rrshift__(self, other: "PipeStart") -> PipeStart[TInput]:
-        # Never called, but needed for typechecking
-        return other.__rshift__(self)
+    def __rrshift__(self, other: PipeStart[TInput]) -> PipeStart[TInput]:
+        """Returns the unchanged PipeStart."""
+        return other
+
+    def validate_f(self) -> None:
+        """f cannot be an async function."""
+        if is_async_function(self.f):
+            raise PipeError("`ThreadPipe` does not support async functions.`")
 
 
 class ThreadWait:
@@ -83,6 +90,6 @@ class ThreadWait:
     def __init__(self, thread_ids: Optional[List[str]] = None) -> None:
         self.thread_ids = thread_ids
 
-    def __rrshift__(self, other: PipeStart[TValue]) -> PipeStart[TValue]:
-        # Never called, but needed for typechecking
+    def __rrshift__(self, other: PipeStart[TInput]) -> PipeStart[TInput]:
+        """Returns the unchanged PipeStart."""
         return other

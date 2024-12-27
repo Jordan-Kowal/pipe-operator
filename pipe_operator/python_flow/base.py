@@ -1,3 +1,4 @@
+from abc import ABC, abstractmethod
 import asyncio
 from threading import Thread
 from typing import (
@@ -21,6 +22,7 @@ from pipe_operator.shared.utils import (
 )
 
 if TYPE_CHECKING:
+    from pipe_operator.python_flow.asynchronous import AsyncPipe
     from pipe_operator.python_flow.extras import Then
 
 
@@ -102,26 +104,31 @@ class PipeStart(Generic[TValue]):
             self.history.append(value)
 
     def __rshift__(
-        self, other: Union["Pipe[TValue, FuncParams, TOutput]", "Then[TValue, TOutput]"]
+        self,
+        other: Union[
+            "Pipe[TValue, FuncParams, TOutput]",
+            "Then[TValue, TOutput]",
+            "AsyncPipe[TValue, FuncParams, TOutput]",
+        ],
     ) -> "PipeStart[TOutput]":
         """
         Implements the `>>` operator to enable our pipe workflow.
 
         Multiple possible cases based on what `other` is:
-            `Pipe/Then`            -->     Classic pipe workflow where we return the updated PipeStart with the result.
-            `Tap`                           -->     Side effect where we call the function and return the unchanged PipeStart.
-            `ThreadPipe`                    -->     Like `Tap`, but in a separate thread.
+            `Pipe/Then/AsyncPipe`           -->     Classic pipe workflow where we return the updated PipeStart with the result.
+            `Tap/ThreadPipe`                -->     Side effect where we call the function and return the unchanged PipeStart.
             `ThreadWait`                    -->     Blocks the pipe until some threads finish.
             `PipeEnd`                       -->     Simply returns the raw value.
 
         Return can actually be of 3 types, also based on what `other` is:
-            `Pipe/Then`            -->     `PipeStart[TOutput]`
+            `Pipe/Then/AsyncPipe`           -->     `PipeStart[TOutput]`
             `Tap/ThreadPipe/ThreadWait`     -->     `PipeStart[TValue]`
             `PipeEnd`                       -->     `TValue`
 
         It is not indicated in the type annotations to avoid conflicts with type-checkers.
         """
         from pipe_operator.python_flow.asynchronous import AsyncPipe
+        from pipe_operator.python_flow.extras import Tap
         from pipe_operator.python_flow.threads import ThreadPipe, ThreadWait
 
         # ====> [EXIT] PipeEnd: returns the raw value
@@ -137,8 +144,10 @@ class PipeStart(Generic[TValue]):
 
         # ====> [EXIT] ThreadPipe: calls the function in a separate thread
         if isinstance(other, ThreadPipe):
-            args = (self.value, *other.args)
-            thread = Thread(target=other.f, args=args, kwargs=other.kwargs)
+            other_args = other.args or []  # type: ignore
+            other_kwargs = other.kwargs or {}  # type: ignore
+            args = (self.value, *other_args)
+            thread = Thread(target=other.f, args=args, kwargs=other_kwargs)
             if other.thread_id in self.threads:
                 raise PipeError(f"Thread ID {other.thread_id} already exists")
             self.threads[other.thread_id] = thread
@@ -148,18 +157,18 @@ class PipeStart(Generic[TValue]):
 
         # ====> Executes the instructions
         if isinstance(other, AsyncPipe):
-            self.result = asyncio.run(other.f(self.value, *other.args, **other.kwargs))  # noqa: # type: ignore
+            self.result = asyncio.run(other.f(self.value, *other.args, **other.kwargs))  # type: ignore
         else:
             self.result = other.f(self.value, *other.args, **other.kwargs)  # type: ignore
 
         # ====> [EXIT] Tap: returns unchanged PipeStart
-        if other.is_tap:
+        if isinstance(other, Tap):
             self.result = None
             self._handle_debug()
             return self  # type: ignore
 
         # ====> [EXIT] Otherwise, returns the updated PipeStart
-        self.value, self.result = self.result, None
+        self.value, self.result = self.result, None  # type: ignore
         self._handle_debug()
         return self  # type: ignore
 
@@ -180,7 +189,50 @@ class PipeStart(Generic[TValue]):
         return [self.threads[tid] for tid in thread_ids]
 
 
-class Pipe(Generic[TInput, FuncParams, TOutput]):
+class PipeEnd:
+    """
+    Pipe-able element to call as the last element in the pipe.
+    During the `>>` operation, it will extract the value from the `PipeStart` and return it.
+    This allows us to receive the raw output rather than a `PipeStart` wrapper.
+
+    Examples:
+        >>> (PipeStart("1") >> Then(lambda x: int(x) + 1) >> PipeEnd())
+        2
+    """
+
+    __slots__ = ()
+
+    def __rrshift__(self, other: PipeStart[TValue]) -> TValue:
+        # Never called, but needed for typechecking
+        return other.value
+
+
+class _BasePipe(ABC, Generic[TInput, FuncParams, TOutput]):
+    """Base class for classic pipe-able elements that defines expected functions."""
+
+    __slots__ = ("f", "args", "kwargs")
+
+    def __init__(
+        self,
+        f: Callable[Concatenate[TInput, FuncParams], TOutput],
+        *args: FuncParams.args,
+        **kwargs: FuncParams.kwargs,
+    ) -> None:
+        self.f = f
+        self.args = args
+        self.kwargs = kwargs
+        self.validate_f()
+
+    @abstractmethod
+    def __rrshift__(self, other: PipeStart[TInput]) -> PipeStart[TOutput]:
+        """Handles the `>>` operator against a PipeStart instance."""
+
+    @abstractmethod
+    def validate_f(self) -> None:
+        """Implements validation for the `f` function."""
+
+
+class Pipe(_BasePipe[TInput, FuncParams, TOutput]):
     """
     Pipe-able element for most already-defined functions/classes/methods.
     Functions should at least take 1 argument.
@@ -192,7 +244,7 @@ class Pipe(Generic[TInput, FuncParams, TOutput]):
         kwargs (FuncParams.kwargs): All kwargs that will be passed to the function `f`.
 
     Raises:
-        PipeError: If `f` is a lambda function AND it is neither a `tap` nor a `thread`.
+        PipeError: If `f` is a lambda or an async function.
 
     Examples:
         >>> class BasicClass:
@@ -213,47 +265,17 @@ class Pipe(Generic[TInput, FuncParams, TOutput]):
         45
     """
 
-    __slots__ = ("f", "args", "kwargs", "is_tap", "is_thread", "is_async")
+    def __rrshift__(self, other: PipeStart[TInput]) -> PipeStart[TOutput]:
+        """Delegates to `PipeStart.__rshift__`"""
+        return other.__rshift__(self)
 
-    def __init__(
-        self,
-        f: Callable[Concatenate[TInput, FuncParams], TOutput],
-        *args: FuncParams.args,
-        **kwargs: FuncParams.kwargs,
-    ) -> None:
-        self.f = f
-        self.args = args
-        self.kwargs = kwargs
-        self.is_tap = bool(kwargs.pop("_tap", False))
-        self.is_thread = bool(kwargs.pop("_thread", False))
-        self.is_async = bool(kwargs.pop("_async", False))
-        self.check_f()
-
-    def check_f(self) -> None:
-        """f must not be a lambda, except if it's a is_tap or is_thread function."""
-        if is_lambda(self.f) and not (self.is_tap or self.is_thread):
+    def validate_f(self) -> None:
+        """f cannot be a lambda nor an async function."""
+        if is_lambda(self.f):
             raise PipeError(
-                "`Pipe` does not support lambda functions except in 'tap' or 'thread' mode. Use `Then` instead."
+                "`Pipe` does not support lambda functions except. Use `Then` instead."
             )
-        if is_async_function(self.f) and not self.is_async:
+        if is_async_function(self.f):
             raise PipeError(
                 "`Pipe` does not support async functions. Use `AsyncPipe` instead."
             )
-
-
-class PipeEnd:
-    """
-    Pipe-able element to call as the last element in the pipe.
-    During the `>>` operation, it will extract the value from the `PipeStart` and return it.
-    This allows us to receive the raw output rather than a `PipeStart` wrapper.
-
-    Examples:
-        >>> (PipeStart("1") >> Then(lambda x: int(x) + 1) >> PipeEnd())
-        2
-    """
-
-    __slots__ = ()
-
-    def __rrshift__(self, other: PipeStart[TValue]) -> TValue:
-        # Never called, but needed for typechecking
-        return other.value
