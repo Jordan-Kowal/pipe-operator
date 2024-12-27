@@ -6,13 +6,14 @@
 - ✨ Improvements
 - 🐞 Bugfixes
 - 🔧 Others
+- 💥 Breaking
 
 ## TBD
 
-- `AsyncPipe`
-- `_BasePipe`
-- Reworked `check_f`
-- Removed `PipeArgs`
+- 💥 [Python] Removed `PipeArgs` to reduce complexity, as it can easily be replaced with `Then` or `Pipe`
+- 🚀 [Python] Added `AsyncPipe` to handle (and wait for) async function calls from asyncio
+- 🔧 [Python] Added a private `_BasePipe` class as the foundation for most pipe-able classes
+- 🔧 [Python] Reworked typing and function validation of most pipe-able elements to be more explicit
 
 ## 1.1.0 - 2024-11-23
 

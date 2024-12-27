@@ -51,6 +51,8 @@ class ThenTestCase(TestCase):
             _ = PipeStart(3) >> Then(BasicClass) >> PipeEnd()
         with self.assertRaises(PipeError):
             _ = PipeStart(3) >> Then(lambda x, y: x + y) >> PipeEnd()  # type: ignore
+        with self.assertRaises(PipeError):
+            _ = PipeStart(3) >> Then(async_add_one) >> PipeEnd()
 
 
 class TapTestCase(TestCase):
