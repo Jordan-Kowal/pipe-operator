@@ -49,7 +49,7 @@ from pipe_operator import AsyncPipe, Pipe, PipeEnd, PipeStart, Tap, Then, Thread
 result = (
     PipeStart("3")                          # starts the pipe
     >> Pipe(int)                            # function with 1-arg
-    >> AsyncPipe(async_func)                # async
+    >> AsyncPipe(async_func)                # async (waited for)
     >> Pipe(my_func, 2000, z=10)            # function with multiple args
     >> Tap(print)                           # side effect
     >> Then(lambda x: x + 1)                # lambda

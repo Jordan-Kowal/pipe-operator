@@ -8,6 +8,4 @@
 ## Python implementation
 
 - Add pipe support for Multiprocessing?
-
-then rework
-async exclude typing
+- Improve typing (better detect sync vs async, lambdas, etc.)

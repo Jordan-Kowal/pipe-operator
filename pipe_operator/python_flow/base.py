@@ -144,10 +144,8 @@ class PipeStart(Generic[TValue]):
 
         # ====> [EXIT] ThreadPipe: calls the function in a separate thread
         if isinstance(other, ThreadPipe):
-            other_args = other.args or []  # type: ignore
-            other_kwargs = other.kwargs or {}  # type: ignore
-            args = (self.value, *other_args)
-            thread = Thread(target=other.f, args=args, kwargs=other_kwargs)
+            args = (self.value, *other.args)
+            thread = Thread(target=other.f, args=args, kwargs=other.kwargs)  # type: ignore
             if other.thread_id in self.threads:
                 raise PipeError(f"Thread ID {other.thread_id} already exists")
             self.threads[other.thread_id] = thread
@@ -208,7 +206,7 @@ class PipeEnd:
 
 
 class _BasePipe(ABC, Generic[TInput, FuncParams, TOutput]):
-    """Base class for classic pipe-able elements that defines expected functions."""
+    """Base class for pipe-able elements."""
 
     __slots__ = ("f", "args", "kwargs")
 
