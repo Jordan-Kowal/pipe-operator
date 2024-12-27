@@ -1,17 +1,3 @@
-# import asyncio
-
-
-# async def main() -> int:
-#     print("hello")
-#     await asyncio.sleep(2)
-#     print("world")
-#     return 33
-
-
-# value = asyncio.run(main())
-# print(value)
-
-
 import inspect
 from typing import (
     Awaitable,
