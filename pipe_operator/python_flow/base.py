@@ -11,6 +11,7 @@ from typing import (
     Optional,
     TypeVar,
     Union,
+    overload,
 )
 
 from typing_extensions import Concatenate, ParamSpec, TypeAlias
@@ -23,7 +24,8 @@ from pipe_operator.shared.utils import (
 
 if TYPE_CHECKING:
     from pipe_operator.python_flow.asynchronous import AsyncPipe
-    from pipe_operator.python_flow.extras import Then
+    from pipe_operator.python_flow.extras import Tap, Then
+    from pipe_operator.python_flow.threads import ThreadPipe, ThreadWait
 
 
 TInput = TypeVar("TInput")
@@ -103,14 +105,45 @@ class PipeStart(Generic[TValue]):
             print(self.value)
             self.history.append(value)
 
+    @overload
+    def __rshift__(
+        self, other: "Pipe[TValue, FuncParams, TOutput]"
+    ) -> "PipeStart[TOutput]": ...
+
+    @overload
+    def __rshift__(self, other: "Then[TValue, TOutput]") -> "PipeStart[TOutput]": ...
+
+    @overload
+    def __rshift__(self, other: "Tap[TValue, Any]") -> "PipeStart[TValue]": ...
+
+    @overload
+    def __rshift__(
+        self, other: "ThreadPipe[TValue, FuncParams]"
+    ) -> "PipeStart[TValue]": ...
+
+    @overload
+    def __rshift__(self, other: "ThreadWait") -> "PipeStart[TValue]": ...
+
+    @overload
+    def __rshift__(
+        self, other: "AsyncPipe[TValue, FuncParams, TOutput]"
+    ) -> "PipeStart[TOutput]": ...
+
+    @overload
+    def __rshift__(self, other: "PipeEnd") -> "TValue": ...
+
     def __rshift__(
         self,
         other: Union[
+            "AsyncPipe[TValue, FuncParams, TOutput]",
             "Pipe[TValue, FuncParams, TOutput]",
             "Then[TValue, TOutput]",
-            "AsyncPipe[TValue, FuncParams, TOutput]",
+            "Tap[TValue, Any]",
+            "ThreadPipe[TValue, FuncParams]",
+            "ThreadWait",
+            "PipeEnd",
         ],
-    ) -> "PipeStart[TOutput]":
+    ) -> Union["PipeStart[TOutput]", "PipeStart[TValue]", "TValue"]:
         """
         Implements the `>>` operator to enable our pipe workflow.
 
@@ -133,14 +166,14 @@ class PipeStart(Generic[TValue]):
 
         # ====> [EXIT] PipeEnd: returns the raw value
         if isinstance(other, PipeEnd):
-            return self.value  # type: ignore
+            return self.value
 
         # ====> [EXIT] ThreadWait: waits for some threads to finish, then returns the value
         if isinstance(other, ThreadWait):
             threads = self._get_threads(other.thread_ids)
             for thread in threads:
                 thread.join()
-            return self  # type: ignore
+            return self
 
         # ====> [EXIT] ThreadPipe: calls the function in a separate thread
         if isinstance(other, ThreadPipe):
@@ -151,7 +184,7 @@ class PipeStart(Generic[TValue]):
             self.threads[other.thread_id] = thread
             thread.start()
             self._handle_debug()
-            return self  # type: ignore
+            return self
 
         # ====> Executes the instructions
         if isinstance(other, AsyncPipe):
@@ -163,12 +196,12 @@ class PipeStart(Generic[TValue]):
         if isinstance(other, Tap):
             self.result = None
             self._handle_debug()
-            return self  # type: ignore
+            return self
 
         # ====> [EXIT] Otherwise, returns the updated PipeStart
         self.value, self.result = self.result, None  # type: ignore
         self._handle_debug()
-        return self  # type: ignore
+        return self
 
     def _handle_debug(self) -> None:
         """Will print and append to history. Debug mode only."""
@@ -200,10 +233,6 @@ class PipeEnd:
 
     __slots__ = ()
 
-    def __rrshift__(self, other: PipeStart[TValue]) -> TValue:
-        # Never called, but needed for typechecking
-        return other.value
-
 
 class _BasePipe(ABC, Generic[TInput, FuncParams, TOutput]):
     """Base class for pipe-able elements."""
@@ -220,10 +249,6 @@ class _BasePipe(ABC, Generic[TInput, FuncParams, TOutput]):
         self.args = args
         self.kwargs = kwargs
         self.validate_f()
-
-    @abstractmethod
-    def __rrshift__(self, other: PipeStart[TInput]) -> PipeStart[TOutput]:
-        """Handles the `>>` operator against a PipeStart instance."""
 
     @abstractmethod
     def validate_f(self) -> None:
@@ -262,10 +287,6 @@ class Pipe(_BasePipe[TInput, FuncParams, TOutput]):
         ... )
         45
     """
-
-    def __rrshift__(self, other: PipeStart[TInput]) -> PipeStart[TOutput]:
-        """Delegates to `PipeStart.__rshift__`"""
-        return other.__rshift__(self)
 
     def validate_f(self) -> None:
         """f cannot be a lambda nor an async function."""

@@ -8,7 +8,7 @@ from typing import (
 
 from typing_extensions import Concatenate, ParamSpec, TypeAlias
 
-from pipe_operator.python_flow.base import PipeStart, _BasePipe
+from pipe_operator.python_flow.base import _BasePipe
 from pipe_operator.shared.exceptions import PipeError
 from pipe_operator.shared.utils import is_async_function
 
@@ -57,10 +57,6 @@ class ThreadPipe(_BasePipe[TInput, FuncParams, TInput]):
         self.thread_id = thread_id
         super().__init__(f, *args, **kwargs)  # type: ignore
 
-    def __rrshift__(self, other: PipeStart[TInput]) -> PipeStart[TInput]:
-        """Returns the unchanged PipeStart."""
-        return other
-
     def validate_f(self) -> None:
         """f cannot be an async function."""
         if is_async_function(self.f):
@@ -89,7 +85,3 @@ class ThreadWait:
 
     def __init__(self, thread_ids: Optional[List[str]] = None) -> None:
         self.thread_ids = thread_ids
-
-    def __rrshift__(self, other: PipeStart[TInput]) -> PipeStart[TInput]:
-        """Returns the unchanged PipeStart."""
-        return other
