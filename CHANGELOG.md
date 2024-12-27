@@ -7,6 +7,13 @@
 - 🐞 Bugfixes
 - 🔧 Others
 
+## TBD
+
+- `AsyncPipe`
+- `_BasePipe`
+- Reworked `check_f`
+- Removed `PipeArgs`
+
 ## 1.1.0 - 2024-11-23
 
 - 🚀 [Python] Added thread support with `ThreadPipe` and `ThreadWait`. See [README.md](README.md) for more details.

@@ -6,7 +6,6 @@ from unittest.mock import patch
 from pipe_operator.python_flow.asynchronous import AsyncPipe
 from pipe_operator.python_flow.base import (
     Pipe,
-    PipeArgs,
     PipeEnd,
     PipeStart,
 )
@@ -73,20 +72,6 @@ class PipeTestCase(TestCase):
         with self.assertRaises(PipeError):
             _ = PipeStart(3) >> Pipe(async_add_one) >> PipeEnd()
 
-    def test_pipeargs_only_supports_functions_with_no_required_args(self) -> None:
-        with self.assertRaises(PipeError):
-            _ = PipeStart(3) >> PipeArgs(double) >> PipeEnd()  # type: ignore
-        with self.assertRaises(PipeError):
-            _ = PipeStart(3) >> PipeArgs(BasicClass) >> PipeEnd()  # type: ignore
-        with self.assertRaises(PipeError):
-            _ = (
-                PipeStart(3)
-                >> PipeArgs(lambda x, *_args, **_kwargs: x + 1)  # noqa # type: ignore
-                >> PipeEnd()
-            )
-        op = PipeStart(3) >> PipeArgs(_sum, 4) >> PipeEnd()
-        self.assertEqual(op, 7)
-
     # ------------------------------
     # Workflows
     # ------------------------------
@@ -96,7 +81,7 @@ class PipeTestCase(TestCase):
             >> Pipe(duplicate_string)  # function
             >> Pipe(int)  # function
             >> Pipe(compute, 30, z=10)  # function with args
-            >> PipeArgs(_sum, 5, 10)  # pipe args
+            >> Pipe(_sum, 5, 10)  # pipe args # type: ignore
             >> PipeEnd()
         )
         self.assertEqual(op, 88)
@@ -160,7 +145,7 @@ class PipeTestCase(TestCase):
             >> Tap(BasicClass.increment)  # tap + method that updates original object
             >> Pipe(BasicClass.get_value_method)  # method
             >> Then[int, int](lambda x: x * 2)  # typed then/lambda
-            >> PipeArgs(_sum, 4, 5, 6)  # pipe args
+            >> Then[int, int](lambda x: _sum(x, 4, 5, 6))  # typed then/lambda
             >> ThreadWait()  # thread join
             >> PipeEnd()  # end
         )

@@ -16,7 +16,6 @@ from typing_extensions import Concatenate, ParamSpec, TypeAlias
 
 from pipe_operator.shared.exceptions import PipeError
 from pipe_operator.shared.utils import (
-    function_needs_parameters,
     is_async_function,
     is_lambda,
 )
@@ -37,7 +36,7 @@ class PipeStart(Generic[TValue]):
     """
     The required starting point for the pipe workflow.
     It handles the `>>` operator to allow a fully working pipe workflow with
-    various elements like: `Pipe`, `PipeArgs`, `Then, `Tap`, `ThreadPipe`, `ThreadWait`, and `PipeEnd`.
+    various elements like: `Pipe`, `AsyncPipe`, `Then, `Tap`, `ThreadPipe`, `ThreadWait`, and `PipeEnd`.
 
     Args:
         value (TValue): The starting value of the pipe.
@@ -83,7 +82,7 @@ class PipeStart(Generic[TValue]):
         ...     >> Then[int, int](lambda x: x * 2)
         ...     >> ThreadPipe("t1", lambda _: time.sleep(0.1))
         ...     >> ThreadWait(["t1"])
-        ...     >> PipeArgs(_sum, 4, 5, 6)
+        ...     >> Then(lambda x: _sum(x, 4, 5, 6))
         ...     >> ThreadWait()
         ...     >> PipeEnd()
         ... )
@@ -109,14 +108,14 @@ class PipeStart(Generic[TValue]):
         Implements the `>>` operator to enable our pipe workflow.
 
         Multiple possible cases based on what `other` is:
-            `Pipe/PipeArgs/Then`            -->     Classic pipe workflow where we return the updated PipeStart with the result.
+            `Pipe/Then`            -->     Classic pipe workflow where we return the updated PipeStart with the result.
             `Tap`                           -->     Side effect where we call the function and return the unchanged PipeStart.
             `ThreadPipe`                    -->     Like `Tap`, but in a separate thread.
             `ThreadWait`                    -->     Blocks the pipe until some threads finish.
             `PipeEnd`                       -->     Simply returns the raw value.
 
         Return can actually be of 3 types, also based on what `other` is:
-            `Pipe/PipeArgs/Then`            -->     `PipeStart[TOutput]`
+            `Pipe/Then`            -->     `PipeStart[TOutput]`
             `Tap/ThreadPipe/ThreadWait`     -->     `PipeStart[TValue]`
             `PipeEnd`                       -->     `TValue`
 
@@ -185,11 +184,7 @@ class Pipe(Generic[TInput, FuncParams, TOutput]):
     """
     Pipe-able element for most already-defined functions/classes/methods.
     Functions should at least take 1 argument.
-
-    Note:
-        Supports functions with no positional/keyword parameters, but `PipeArgs` should be preferred.
-        Does not support lambdas, use `Then` instead.
-        Does not support property calls, use `Then` with a custom lambda instead.
+    For property calls, functions with no positional/keyword parameters, and lambdas, use `Then` instead.
 
     Args:
         f (Callable[Concatenate[TInput, FuncParams], TOutput]): The function that will be called in the pipe.
@@ -244,59 +239,6 @@ class Pipe(Generic[TInput, FuncParams, TOutput]):
             raise PipeError(
                 "`Pipe` does not support async functions. Use `AsyncPipe` instead."
             )
-
-
-class PipeArgs(Generic[FuncParams, TOutput]):
-    """
-    Pipe-able element for functions that takes no positional/keyword parameters.
-    While `Pipe` would work, this one provides better type-checking.
-
-    Args:
-        f (Callable[FuncParams, TOutput]): The function that will be called in the pipe.
-        args (FuncParams.args): All args that will be passed to the function `f`.
-        kwargs (FuncParams.kwargs): All kwargs that will be passed to the function `f`.
-
-    Raises:
-        PipeError: If the `f` is a lambda function (and is not a tap or thread) or if it has positional/keyword parameters.
-
-    Examples:
-        >>> def _sum(*args: int) -> int:
-        ...     return sum(args)
-        >>> (PipeStart(1) >> PipeArgs(_sum, 5, 10) >> PipeEnd())
-        16
-    """
-
-    __slots__ = ("f", "args", "kwargs", "is_tap", "is_thread", "is_async")
-
-    def __init__(
-        self,
-        f: Callable[FuncParams, TOutput],
-        *args: FuncParams.args,
-        **kwargs: FuncParams.kwargs,
-    ) -> None:
-        self.f = f
-        self.args = args
-        self.kwargs = kwargs
-        self.is_tap = bool(kwargs.pop("_tap", False))
-        self.is_thread = bool(kwargs.pop("_thread", False))
-        self.is_async = bool(kwargs.pop("_async", False))
-        self.check_f()
-
-    def check_f(self) -> None:
-        """f must not be a lambda and have no position/keyword parameters."""
-        if is_lambda(self.f) and not (self.is_tap or self.is_thread):
-            raise PipeError(
-                "`PipeArgs` does not support lambda functions except in 'tap' or 'thread' mode. Use `Then` instead."
-            )
-
-        if function_needs_parameters(self.f):
-            raise PipeError(
-                "`PipeArgs` does not support functions with parameters. Use `Pipe` instead."
-            )
-
-    def __rrshift__(self, other: PipeStart) -> PipeStart[TOutput]:
-        # Never called, but needed for typechecking
-        return other.__rshift__(self)  # type: ignore
 
 
 class PipeEnd:

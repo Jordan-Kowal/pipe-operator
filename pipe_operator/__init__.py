@@ -2,7 +2,6 @@ from .elixir_flow import elixir_pipe, tap, then
 from .python_flow import (
     AsyncPipe,
     Pipe,
-    PipeArgs,
     PipeEnd,
     PipeStart,
     Tap,
@@ -14,7 +13,6 @@ from .python_flow import (
 __all__ = [
     "AsyncPipe",
     "Pipe",
-    "PipeArgs",
     "PipeEnd",
     "PipeStart",
     "Tap",
