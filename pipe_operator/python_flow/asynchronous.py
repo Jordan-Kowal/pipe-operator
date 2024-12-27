@@ -7,7 +7,7 @@ from typing import (
 
 from typing_extensions import Concatenate, ParamSpec, TypeAlias
 
-from pipe_operator.python_flow.base import PipeStart, _BasePipe
+from pipe_operator.python_flow.base import _BasePipe
 from pipe_operator.shared.exceptions import PipeError
 from pipe_operator.shared.utils import is_async_function
 
@@ -56,7 +56,3 @@ class AsyncPipe(_BasePipe[TInput, FuncParams, TOutput]):
             raise PipeError(
                 "`AsyncPipe` only supports async functions. Use `Pipe` for regular functions."
             )
-
-    def __rrshift__(self, other: PipeStart[TInput]) -> PipeStart[TOutput]:
-        """Delegates to `PipeStart.__rshift__`"""
-        return other.__rshift__(self)

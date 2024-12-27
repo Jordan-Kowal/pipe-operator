@@ -6,7 +6,7 @@ from typing import (
 
 from typing_extensions import Concatenate, ParamSpec
 
-from pipe_operator.python_flow.base import PipeStart, _BasePipe
+from pipe_operator.python_flow.base import _BasePipe
 from pipe_operator.shared.exceptions import PipeError
 from pipe_operator.shared.utils import (
     is_async_function,
@@ -54,10 +54,6 @@ class Then(Generic[TInput, TOutput]):
                 "`Then` only supports 1-arg lambda functions. Use `Pipe` instead."
             )
 
-    def __rrshift__(self, other: PipeStart) -> PipeStart[TOutput]:
-        # Never called, but needed for typechecking
-        return other.__rshift__(self)
-
 
 class Tap(_BasePipe[TInput, FuncParams, TInput]):
     """
@@ -97,10 +93,6 @@ class Tap(_BasePipe[TInput, FuncParams, TInput]):
         **kwargs: FuncParams.kwargs,
     ) -> None:
         super().__init__(f, *args, **kwargs)  # type: ignore
-
-    def __rrshift__(self, other: PipeStart[TInput]) -> PipeStart[TInput]:
-        """Returns the unchanged PipeStart."""
-        return other
 
     def validate_f(self) -> None:
         """f cannot be an async function."""
