@@ -1,3 +1,4 @@
+import asyncio
 import time
 from unittest import TestCase
 
@@ -7,6 +8,11 @@ from pipe_operator.python_flow.base import (
 )
 from pipe_operator.python_flow.threads import ThreadPipe, ThreadWait
 from pipe_operator.shared.exceptions import PipeError
+
+
+async def async_add_one(value: int) -> int:
+    await asyncio.sleep(0.1)
+    return value + 1
 
 
 class ThreadTestCase(TestCase):
@@ -70,3 +76,7 @@ class ThreadTestCase(TestCase):
                 >> ThreadPipe("t1", lambda _: time.sleep(0.2))
                 >> PipeEnd()
             )
+
+    def test_does_not_support_async_functions(self) -> None:
+        with self.assertRaises(PipeError):
+            _ = PipeStart(3) >> ThreadPipe("t1", async_add_one) >> PipeEnd()

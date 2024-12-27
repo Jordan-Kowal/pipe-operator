@@ -6,15 +6,15 @@ from typing import (
 
 from typing_extensions import Concatenate, ParamSpec
 
-from pipe_operator.python_flow.base import Pipe, PipeStart
+from pipe_operator.python_flow.base import PipeStart, _BasePipe
 from pipe_operator.shared.exceptions import PipeError
 from pipe_operator.shared.utils import (
+    is_async_function,
     is_one_arg_lambda,
 )
 
 TInput = TypeVar("TInput")
 TOutput = TypeVar("TOutput")
-TValue = TypeVar("TValue")
 FuncParams = ParamSpec("FuncParams")
 
 
@@ -39,17 +39,15 @@ class Then(Generic[TInput, TOutput]):
         3
     """
 
-    __slots__ = ("f", "args", "kwargs", "is_tap", "is_thread")
+    __slots__ = ("f", "args", "kwargs")
 
     def __init__(self, f: Callable[[TInput], TOutput]) -> None:
         self.f = f
         self.args = ()
         self.kwargs = {}  # type: ignore
-        self.is_tap = False
-        self.is_thread = False
-        self.check_f()
+        self.validate_f()
 
-    def check_f(self) -> None:
+    def validate_f(self) -> None:
         """f must be a 1-arg lambda function."""
         if not is_one_arg_lambda(self.f):
             raise PipeError(
@@ -61,7 +59,7 @@ class Then(Generic[TInput, TOutput]):
         return other.__rshift__(self)
 
 
-class Tap(Pipe[TInput, FuncParams, TInput]):
+class Tap(_BasePipe[TInput, FuncParams, TInput]):
     """
     Pipe-able element that produces a side effect and returns the original value.
     Useful to perform async actions or to call an object's method that changes the state
@@ -71,6 +69,9 @@ class Tap(Pipe[TInput, FuncParams, TInput]):
         f (Callable[Concatenate[TInput, FuncParams], object]): The function that will be called in the pipe.
         args (FuncParams.args): All args (except the first) that will be passed to the function `f`.
         kwargs (FuncParams.kwargs): All kwargs that will be passed to the function `f`.
+
+    Raises:
+        PipeError: If `f` is an async function.
 
     Examples:
         >>> class BasicClass
@@ -95,9 +96,13 @@ class Tap(Pipe[TInput, FuncParams, TInput]):
         *args: FuncParams.args,
         **kwargs: FuncParams.kwargs,
     ) -> None:
-        kwargs["_tap"] = True
         super().__init__(f, *args, **kwargs)  # type: ignore
 
-    def __rrshift__(self, other: PipeStart) -> PipeStart[TInput]:
-        # Never called, but needed for typechecking
-        return other.__rshift__(self)
+    def __rrshift__(self, other: PipeStart[TInput]) -> PipeStart[TInput]:
+        """Returns the unchanged PipeStart."""
+        return other
+
+    def validate_f(self) -> None:
+        """f cannot be an async function."""
+        if is_async_function(self.f):
+            raise PipeError("`Tap` does not support async functions.")
