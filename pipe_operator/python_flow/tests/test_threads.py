@@ -15,12 +15,17 @@ async def async_add_one(value: int) -> int:
     return value + 1
 
 
+def add_one(value: int) -> int:
+    time.sleep(0.1)
+    return value + 1
+
+
 class ThreadTestCase(TestCase):
     def test_with_threads_without_join(self) -> None:
         start = time.perf_counter()
         op = (
             PipeStart(3)
-            >> ThreadPipe("t1", lambda _: time.sleep(0.2))
+            >> ThreadPipe("t1", add_one)
             >> ThreadPipe("t2", lambda _: time.sleep(0.2))
             >> PipeEnd()
         )
