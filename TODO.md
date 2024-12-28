@@ -9,5 +9,5 @@
 
 - Add pipe support for Multiprocessing?
 
-Keep only start/end into base.py
-Move pipe and tap into pipe.py
+- Mutualize Tap definition with Pipe?
+- Remove AsyncPipe for classic Pipe?
