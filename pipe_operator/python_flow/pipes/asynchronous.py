@@ -7,7 +7,7 @@ from typing import (
 
 from typing_extensions import Concatenate, ParamSpec, TypeAlias
 
-from pipe_operator.python_flow.base import _BasePipe
+from pipe_operator.python_flow.pipes.basics import _BasePipe
 from pipe_operator.shared.exceptions import PipeError
 from pipe_operator.shared.utils import is_async_function
 
