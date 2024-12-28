@@ -1,7 +1,7 @@
-from .asynchronous import AsyncPipe
-from .base import Pipe, PipeEnd, PipeStart
-from .extras import Tap
-from .threads import ThreadPipe, ThreadWait
+from .base import PipeEnd, PipeStart
+from .pipes.asynchronous import AsyncPipe
+from .pipes.basics import Pipe, Tap
+from .pipes.threads import ThreadPipe, ThreadWait
 
 __all__ = [
     "AsyncPipe",

@@ -1,16 +1,15 @@
 import asyncio
 import time
 from unittest import TestCase
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
-from pipe_operator.python_flow.asynchronous import AsyncPipe
 from pipe_operator.python_flow.base import (
-    Pipe,
     PipeEnd,
     PipeStart,
 )
-from pipe_operator.python_flow.extras import Tap
-from pipe_operator.python_flow.threads import (
+from pipe_operator.python_flow.pipes.asynchronous import AsyncPipe
+from pipe_operator.python_flow.pipes.basics import Pipe, Tap
+from pipe_operator.python_flow.pipes.threads import (
     ThreadPipe,
     ThreadWait,
 )
@@ -20,6 +19,15 @@ from pipe_operator.shared.exceptions import PipeError
 async def async_add_one(value: int) -> int:
     await asyncio.sleep(0.1)
     return value + 1
+
+
+def add_one(value: int) -> int:
+    time.sleep(0.1)
+    return value + 1
+
+
+def to_string(x: int) -> str:
+    return str(x)
 
 
 def double(x: int) -> int:
@@ -157,3 +165,111 @@ class PipeTestCase(TestCase):
         self.assertTrue(delta > 0.2)
         self.assertTrue(delta < 0.3)
         self.assertEqual(op, 86)
+
+
+class TapTestCase(TestCase):
+    def test_tap(self) -> None:
+        mock = Mock()
+        op = (
+            PipeStart(3)
+            >> Tap(lambda x: [x])  # tap + lambda
+            >> Pipe(double)
+            >> Tap(to_string)  # tap + function
+            >> Pipe(double)
+            >> Tap(compute, 2000, z=10)  # tap + function with args
+            >> Tap(lambda x: mock(x))  # tap + lambda
+            >> Pipe(double)
+            >> PipeEnd()
+        )
+        self.assertEqual(op, 24)
+        mock.assert_called_once_with(12)
+
+    def test_does_not_support_async_functions(self) -> None:
+        with self.assertRaises(PipeError):
+            _ = PipeStart(3) >> Tap(async_add_one) >> PipeEnd()
+
+    def test_does_not_support_multiple_args_lambdas(self) -> None:
+        with self.assertRaises(PipeError):
+            _ = PipeStart(3) >> Tap(lambda x, _y: x + 1) >> PipeEnd()  # type: ignore
+
+
+class ThreadTestCase(TestCase):
+    def test_with_threads_without_join(self) -> None:
+        start = time.perf_counter()
+        op = (
+            PipeStart(3)
+            >> ThreadPipe("t1", add_one)
+            >> ThreadPipe("t2", lambda _: time.sleep(0.2))
+            >> PipeEnd()
+        )
+        delta = time.perf_counter() - start
+        # We did not wait for the threads to finish
+        self.assertTrue(delta < 0.1)
+        self.assertEqual(op, 3)
+
+    def test_with_threads_with_some_joins(self) -> None:
+        start = time.perf_counter()
+        op = (
+            PipeStart(3)
+            >> ThreadPipe("t1", lambda _: time.sleep(0.1))
+            >> ThreadPipe("t2", lambda _: time.sleep(0.2))
+            >> ThreadWait(["t1"])
+            >> PipeEnd()
+        )
+        delta = time.perf_counter() - start
+        # We waited for the 1s thread only
+        self.assertTrue(delta > 0.1)
+        self.assertTrue(delta < 0.2)
+        self.assertEqual(op, 3)
+
+    def test_with_threads_with_join_all(self) -> None:
+        start = time.perf_counter()
+        op = (
+            PipeStart(3)
+            >> ThreadPipe("t1", lambda _: time.sleep(0.1))
+            >> ThreadPipe("t2", lambda _: time.sleep(0.2))
+            >> ThreadWait()
+            >> PipeEnd()
+        )
+        delta = time.perf_counter() - start
+        # We waited for all threads
+        self.assertTrue(delta > 0.2)
+        self.assertTrue(delta < 0.3)
+        self.assertEqual(op, 3)
+
+    def test_with_threads_with_unknown_thread_id(self) -> None:
+        with self.assertRaises(PipeError):
+            _ = (
+                PipeStart(3)
+                >> ThreadPipe("t1", lambda _: time.sleep(0.2))
+                >> ThreadWait(["t2"])
+                >> PipeEnd()
+            )
+
+    def test_with_threads_with_duplicated_thread_id(self) -> None:
+        with self.assertRaises(PipeError):
+            _ = (
+                PipeStart(3)
+                >> ThreadPipe("t1", lambda _: time.sleep(0.2))
+                >> ThreadPipe("t1", lambda _: time.sleep(0.2))
+                >> PipeEnd()
+            )
+
+    def test_does_not_support_async_functions(self) -> None:
+        with self.assertRaises(PipeError):
+            _ = PipeStart(3) >> ThreadPipe("t1", async_add_one) >> PipeEnd()
+
+
+class AsyncTestCase(TestCase):
+    def test_async_pipe(self) -> None:
+        start = time.perf_counter()
+        op = PipeStart(3) >> AsyncPipe(async_add_one) >> PipeEnd()
+        delta = time.perf_counter() - start
+        # We waited for the 1s from async_add_one
+        self.assertTrue(delta > 0.1)
+        self.assertTrue(delta < 0.2)
+        self.assertEqual(op, 4)
+
+    def test_does_not_support_regular_functions(self) -> None:
+        with self.assertRaises(PipeError):
+            _ = PipeStart(3) >> AsyncPipe(add_one) >> PipeEnd()  # type: ignore
