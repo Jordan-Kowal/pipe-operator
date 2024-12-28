@@ -7,7 +7,7 @@ from pipe_operator.python_flow.base import (
     PipeEnd,
     PipeStart,
 )
-from pipe_operator.python_flow.extras import Tap, Then
+from pipe_operator.python_flow.extras import Tap
 from pipe_operator.shared.exceptions import PipeError
 
 
@@ -33,28 +33,6 @@ class BasicClass:
         self.value = value
 
 
-class ThenTestCase(TestCase):
-    def test_then(self) -> None:
-        op = (
-            PipeStart("3")
-            >> Then[str, int](lambda x: int(x) + 1)  # typed then/lambda
-            >> Then[int, int](lambda x: double(x))  # typed then/lambda
-            >> Then(lambda x: x)  # then/lambda
-            >> PipeEnd()
-        )
-        self.assertEqual(op, 8)
-
-    def test_only_supports_one_arg_lambdas(self) -> None:
-        with self.assertRaises(PipeError):
-            _ = PipeStart(3) >> Then(double) >> PipeEnd()
-        with self.assertRaises(PipeError):
-            _ = PipeStart(3) >> Then(BasicClass) >> PipeEnd()
-        with self.assertRaises(PipeError):
-            _ = PipeStart(3) >> Then(lambda x, y: x + y) >> PipeEnd()  # type: ignore
-        with self.assertRaises(PipeError):
-            _ = PipeStart(3) >> Then(async_add_one) >> PipeEnd()
-
-
 class TapTestCase(TestCase):
     def test_tap(self) -> None:
         mock = Mock()
@@ -75,3 +53,7 @@ class TapTestCase(TestCase):
     def test_does_not_support_async_functions(self) -> None:
         with self.assertRaises(PipeError):
             _ = PipeStart(3) >> Tap(async_add_one) >> PipeEnd()
+
+    def test_does_not_support_multiple_args_lambdas(self) -> None:
+        with self.assertRaises(PipeError):
+            _ = PipeStart(3) >> Tap(lambda x, _y: x + 1) >> PipeEnd()  # type: ignore
