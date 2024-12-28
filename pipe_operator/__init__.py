@@ -5,7 +5,6 @@ from .python_flow import (
     PipeEnd,
     PipeStart,
     Tap,
-    Then,
     ThreadPipe,
     ThreadWait,
 )
@@ -16,7 +15,6 @@ __all__ = [
     "PipeEnd",
     "PipeStart",
     "Tap",
-    "Then",
     "ThreadPipe",
     "ThreadWait",
     "elixir_pipe",

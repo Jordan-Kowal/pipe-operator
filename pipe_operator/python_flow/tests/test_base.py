@@ -9,7 +9,7 @@ from pipe_operator.python_flow.base import (
     PipeEnd,
     PipeStart,
 )
-from pipe_operator.python_flow.extras import Tap, Then
+from pipe_operator.python_flow.extras import Tap
 from pipe_operator.python_flow.threads import (
     ThreadPipe,
     ThreadWait,
@@ -64,9 +64,9 @@ class PipeTestCase(TestCase):
     # ------------------------------
     # Errors
     # ------------------------------
-    def test_pipe_does_not_support_lambdas(self) -> None:
+    def test_pipe_does_not_support_multiple_args_lambdas(self) -> None:
         with self.assertRaises(PipeError):
-            _ = PipeStart(3) >> Pipe(lambda x: x + 1) >> PipeEnd()
+            _ = PipeStart(3) >> Pipe(lambda x, _y: x + 1) >> PipeEnd()  # type: ignore
 
     def test_pipe_does_not_support_async_functions(self) -> None:
         with self.assertRaises(PipeError):
@@ -80,11 +80,13 @@ class PipeTestCase(TestCase):
             PipeStart("3")
             >> Pipe(duplicate_string)  # function
             >> Pipe(int)  # function
-            >> Pipe(compute, 30, z=10)  # function with args
-            >> Pipe(_sum, 5, 10)  # pipe args # type: ignore
+            >> Pipe(compute, 30, z=10)  # function with args/kwargs
+            >> Pipe(_sum, 5, 10)  # function with no positional args  # type: ignore
+            >> Pipe(lambda x: x + 1)  # lambda
+            >> Pipe[int, [], int](lambda x: _sum(x, 5, 10))  # typed lambda
             >> PipeEnd()
         )
-        self.assertEqual(op, 88)
+        self.assertEqual(op, 104)
 
     def test_with_classes(self) -> None:
         op = (
@@ -92,6 +94,8 @@ class PipeTestCase(TestCase):
             >> Pipe(BasicClass)  # class
             >> Pipe(BasicClass.get_double)  # classmethod
             >> Pipe(BasicClass.get_value_method)  # method
+            >> Pipe(BasicClass)  # class
+            >> Pipe[BasicClass, [], int](lambda x: x.value)  # lambda for attribute
             >> PipeEnd()
         )
         self.assertEqual(op, 6)
@@ -139,13 +143,12 @@ class PipeTestCase(TestCase):
             >> AsyncPipe(async_add_one)  # async
             >> ThreadPipe("t2", double)  # thread
             >> Tap(compute, 2000, z=10)  # function with args
-            >> Then(lambda x: x + 1)  # then/lambda
+            >> Pipe(lambda x: x + 1)  # lambda
             >> Pipe(BasicClass)  # class
             >> Pipe(BasicClass.get_double)  # classmethod
             >> Tap(BasicClass.increment)  # tap + method that updates original object
             >> Pipe(BasicClass.get_value_method)  # method
-            >> Then[int, int](lambda x: x * 2)  # typed then/lambda
-            >> Then[int, int](lambda x: _sum(x, 4, 5, 6))  # typed then/lambda
+            >> Pipe[int, [], int](lambda x: _sum(x, 4, 5, 6))  # typed lambda
             >> ThreadWait()  # thread join
             >> PipeEnd()  # end
         )
@@ -153,4 +156,4 @@ class PipeTestCase(TestCase):
         delta = time.perf_counter() - start
         self.assertTrue(delta > 0.2)
         self.assertTrue(delta < 0.3)
-        self.assertEqual(op, 157)
+        self.assertEqual(op, 86)

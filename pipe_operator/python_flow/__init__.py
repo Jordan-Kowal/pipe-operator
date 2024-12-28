@@ -1,6 +1,6 @@
 from .asynchronous import AsyncPipe
 from .base import Pipe, PipeEnd, PipeStart
-from .extras import Tap, Then
+from .extras import Tap
 from .threads import ThreadPipe, ThreadWait
 
 __all__ = [
@@ -9,7 +9,6 @@ __all__ = [
     "PipeEnd",
     "PipeStart",
     "Tap",
-    "Then",
     "ThreadPipe",
     "ThreadWait",
 ]

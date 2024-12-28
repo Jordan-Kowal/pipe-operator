@@ -8,4 +8,6 @@
 ## Python implementation
 
 - Add pipe support for Multiprocessing?
-- Improve typing (better detect sync vs async, lambdas, etc.)
+
+Keep only start/end into base.py
+Move pipe and tap into pipe.py

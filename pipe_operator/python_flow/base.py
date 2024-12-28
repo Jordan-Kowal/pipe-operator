@@ -20,11 +20,12 @@ from pipe_operator.shared.exceptions import PipeError
 from pipe_operator.shared.utils import (
     is_async_function,
     is_lambda,
+    is_one_arg_lambda,
 )
 
 if TYPE_CHECKING:
     from pipe_operator.python_flow.asynchronous import AsyncPipe
-    from pipe_operator.python_flow.extras import Tap, Then
+    from pipe_operator.python_flow.extras import Tap
     from pipe_operator.python_flow.threads import ThreadPipe, ThreadWait
 
 
@@ -40,7 +41,7 @@ class PipeStart(Generic[TValue]):
     """
     The required starting point for the pipe workflow.
     It handles the `>>` operator to allow a fully working pipe workflow with
-    various elements like: `Pipe`, `AsyncPipe`, `Then, `Tap`, `ThreadPipe`, `ThreadWait`, and `PipeEnd`.
+    various elements like: `Pipe`, `AsyncPipe`, `Tap`, `ThreadPipe`, `ThreadWait`, and `PipeEnd`.
 
     Args:
         value (TValue): The starting value of the pipe.
@@ -53,6 +54,8 @@ class PipeStart(Generic[TValue]):
         ...     return value + 1
         >>> def duplicate_string(x: str) -> str:
         ...     return f"{x}{x}"
+        >>> def double(x: int) -> int:
+        ...     return x * 2
         >>> def compute(x: int, y: int, z: int = 0) -> int:
         ...     return x + y + z
         >>> def _sum(*args: int) -> int:
@@ -78,19 +81,16 @@ class PipeStart(Generic[TValue]):
         ...     >> AsyncPipe(async_add_one)
         ...     >> ThreadPipe("t2", double)
         ...     >> Tap(compute, 2000, z=10)
-        ...     >> Then(lambda x: x + 1)
-        ...     >> Pipe(BasicClass)  # class
+        ...     >> Pipe(lambda x: x + 1)
+        ...     >> Pipe(BasicClass)
         ...     >> Pipe(BasicClass.get_double)
         ...     >> Tap(BasicClass.increment)
         ...     >> Pipe(BasicClass.get_value_method)
-        ...     >> Then[int, int](lambda x: x * 2)
-        ...     >> ThreadPipe("t1", lambda _: time.sleep(0.1))
-        ...     >> ThreadWait(["t1"])
-        ...     >> Then(lambda x: _sum(x, 4, 5, 6))
+        ...     >> Pipe[int, [], int](lambda x: _sum(x, 4, 5, 6))
         ...     >> ThreadWait()
         ...     >> PipeEnd()
         ... )
-        157
+        86
     """
 
     __slots__ = ("value", "debug", "result", "history", "threads")
@@ -109,9 +109,6 @@ class PipeStart(Generic[TValue]):
     def __rshift__(
         self, other: "Pipe[TValue, FuncParams, TOutput]"
     ) -> "PipeStart[TOutput]": ...
-
-    @overload
-    def __rshift__(self, other: "Then[TValue, TOutput]") -> "PipeStart[TOutput]": ...
 
     @overload
     def __rshift__(self, other: "Tap[TValue, Any]") -> "PipeStart[TValue]": ...
@@ -137,7 +134,6 @@ class PipeStart(Generic[TValue]):
         other: Union[
             "AsyncPipe[TValue, FuncParams, TOutput]",
             "Pipe[TValue, FuncParams, TOutput]",
-            "Then[TValue, TOutput]",
             "Tap[TValue, Any]",
             "ThreadPipe[TValue, FuncParams]",
             "ThreadWait",
@@ -148,17 +144,10 @@ class PipeStart(Generic[TValue]):
         Implements the `>>` operator to enable our pipe workflow.
 
         Multiple possible cases based on what `other` is:
-            `Pipe/Then/AsyncPipe`           -->     Classic pipe workflow where we return the updated PipeStart with the result.
+            `Pipe/AsyncPipe`                -->     Classic pipe workflow where we return the updated PipeStart with the result.
             `Tap/ThreadPipe`                -->     Side effect where we call the function and return the unchanged PipeStart.
             `ThreadWait`                    -->     Blocks the pipe until some threads finish.
             `PipeEnd`                       -->     Simply returns the raw value.
-
-        Return can actually be of 3 types, also based on what `other` is:
-            `Pipe/Then/AsyncPipe`           -->     `PipeStart[TOutput]`
-            `Tap/ThreadPipe/ThreadWait`     -->     `PipeStart[TValue]`
-            `PipeEnd`                       -->     `TValue`
-
-        It is not indicated in the type annotations to avoid conflicts with type-checkers.
         """
         from pipe_operator.python_flow.asynchronous import AsyncPipe
         from pipe_operator.python_flow.extras import Tap
@@ -224,10 +213,9 @@ class PipeEnd:
     """
     Pipe-able element to call as the last element in the pipe.
     During the `>>` operation, it will extract the value from the `PipeStart` and return it.
-    This allows us to receive the raw output rather than a `PipeStart` wrapper.
 
     Examples:
-        >>> (PipeStart("1") >> Then(lambda x: int(x) + 1) >> PipeEnd())
+        >>> (PipeStart("1") >> Pipe(lambda x: int(x) + 1) >> PipeEnd())
         2
     """
 
@@ -259,7 +247,7 @@ class Pipe(_BasePipe[TInput, FuncParams, TOutput]):
     """
     Pipe-able element for most already-defined functions/classes/methods.
     Functions should at least take 1 argument.
-    For property calls, functions with no positional/keyword parameters, and lambdas, use `Then` instead.
+    When using a lambda, it can only take 1 argument.
 
     Args:
         f (Callable[Concatenate[TInput, FuncParams], TOutput]): The function that will be called in the pipe.
@@ -267,7 +255,7 @@ class Pipe(_BasePipe[TInput, FuncParams, TOutput]):
         kwargs (FuncParams.kwargs): All kwargs that will be passed to the function `f`.
 
     Raises:
-        PipeError: If `f` is a lambda or an async function.
+        PipeError: If `f` is a lambda with more than 1 arg or an async function.
 
     Examples:
         >>> class BasicClass:
@@ -280,19 +268,20 @@ class Pipe(_BasePipe[TInput, FuncParams, TOutput]):
         >>> (
         ...     PipeStart(1)
         ...     >> Pipe(double)
+        ...     >> Pipe(lambda x: x + 1)
         ...     >> Pipe(compute, 30, z=10)
         ...     >> Pipe(BasicClass)
-        ...     >> Then(lambda x: x.data + 3)
+        ...     >> Pipe[BasicClass, [], int](lambda x: x.data)
         ...     >> PipeEnd()
         ... )
-        45
+        43
     """
 
     def validate_f(self) -> None:
-        """f cannot be a lambda nor an async function."""
-        if is_lambda(self.f):
+        """f cannot be a lambda with multiple args nor an async function."""
+        if is_lambda(self.f) and not is_one_arg_lambda(self.f):
             raise PipeError(
-                "`Pipe` does not support lambda functions except. Use `Then` instead."
+                "Lambda functions with more than 1 argument are not supported."
             )
         if is_async_function(self.f):
             raise PipeError(
