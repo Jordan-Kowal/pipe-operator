@@ -1,7 +1,6 @@
 import asyncio
 from threading import Thread
 from typing import (
-    TYPE_CHECKING,
     Any,
     Dict,
     Generic,
@@ -14,13 +13,10 @@ from typing import (
 
 from typing_extensions import ParamSpec, TypeAlias
 
+from pipe_operator.python_flow.pipes.asynchronous import AsyncPipe
+from pipe_operator.python_flow.pipes.basics import Pipe, Tap
+from pipe_operator.python_flow.pipes.threads import ThreadPipe, ThreadWait
 from pipe_operator.shared.exceptions import PipeError
-
-if TYPE_CHECKING:
-    from pipe_operator.python_flow.pipes.asynchronous import AsyncPipe
-    from pipe_operator.python_flow.pipes.basics import Pipe, Tap
-    from pipe_operator.python_flow.pipes.threads import ThreadPipe, ThreadWait
-
 
 TInput = TypeVar("TInput")
 TOutput = TypeVar("TOutput")
@@ -28,6 +24,19 @@ TValue = TypeVar("TValue")
 FuncParams = ParamSpec("FuncParams")
 
 ThreadId: TypeAlias = Union[str, int]
+
+
+class PipeEnd:
+    """
+    Pipe-able element to call as the last element in the pipe.
+    During the `>>` operation, it will extract the value from the `PipeStart` and return it.
+
+    Examples:
+        >>> (PipeStart("1") >> Pipe(lambda x: int(x) + 1) >> PipeEnd())
+        2
+    """
+
+    __slots__ = ()
 
 
 class PipeStart(Generic[TValue]):
@@ -127,12 +136,12 @@ class PipeStart(Generic[TValue]):
     def __rshift__(
         self,
         other: Union[
-            "Tap[TValue, FuncParams, TOutput]",
-            "ThreadPipe[TValue, FuncParams, TOutput]",
-            "AsyncPipe[TValue, FuncParams, TOutput]",
-            "Pipe[TValue, FuncParams, TOutput]",
-            "ThreadWait",
-            "PipeEnd",
+            Tap[TValue, FuncParams, TOutput],
+            ThreadPipe[TValue, FuncParams, TOutput],
+            AsyncPipe[TValue, FuncParams, TOutput],
+            Pipe[TValue, FuncParams, TOutput],
+            ThreadWait,
+            PipeEnd,
         ],
     ) -> Union["PipeStart[TValue]", "PipeStart[TOutput]", "TValue"]:
         """
@@ -144,9 +153,6 @@ class PipeStart(Generic[TValue]):
             `ThreadWait`                    -->     Blocks the pipe until some threads finish.
             `PipeEnd`                       -->     Simply returns the raw value.
         """
-        from pipe_operator.python_flow.pipes.asynchronous import AsyncPipe
-        from pipe_operator.python_flow.pipes.basics import Tap
-        from pipe_operator.python_flow.pipes.threads import ThreadPipe, ThreadWait
 
         # ====> [EXIT] PipeEnd: returns the raw value
         if isinstance(other, PipeEnd):
@@ -202,16 +208,3 @@ class PipeStart(Generic[TValue]):
             if thread_id not in self.threads:
                 raise PipeError(f"Unknown thread_id: {thread_id}")
         return [self.threads[tid] for tid in thread_ids]
-
-
-class PipeEnd:
-    """
-    Pipe-able element to call as the last element in the pipe.
-    During the `>>` operation, it will extract the value from the `PipeStart` and return it.
-
-    Examples:
-        >>> (PipeStart("1") >> Pipe(lambda x: int(x) + 1) >> PipeEnd())
-        2
-    """
-
-    __slots__ = ()
