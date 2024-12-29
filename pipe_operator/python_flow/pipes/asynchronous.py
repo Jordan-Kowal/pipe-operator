@@ -7,7 +7,7 @@ from typing import (
 
 from typing_extensions import Concatenate, ParamSpec, TypeAlias
 
-from pipe_operator.python_flow.pipes.basics import _BasePipe
+from pipe_operator.python_flow.pipes.basics import Pipe
 from pipe_operator.shared.exceptions import PipeError
 from pipe_operator.shared.utils import is_async_function
 
@@ -19,7 +19,7 @@ FuncParams = ParamSpec("FuncParams")
 TaskId: TypeAlias = Union[str, int]
 
 
-class AsyncPipe(_BasePipe[TInput, FuncParams, TOutput]):
+class AsyncPipe(Pipe[TInput, FuncParams, TOutput]):
     """
     Pipe-able element to run and wait for async functions (through asyncio).
     Similar to the regular `Pipe` but for async functions.

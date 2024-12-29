@@ -8,21 +8,19 @@ from typing import (
 
 from typing_extensions import Concatenate, ParamSpec, TypeAlias
 
-from pipe_operator.python_flow.pipes.basics import _BasePipe
-from pipe_operator.shared.exceptions import PipeError
-from pipe_operator.shared.utils import is_async_function
+from pipe_operator.python_flow.pipes.basics import Pipe
 
 TInput = TypeVar("TInput")
 FuncParams = ParamSpec("FuncParams")
+TOutput = TypeVar("TOutput")
 
 ThreadId: TypeAlias = Union[str, int]
 
 
-class ThreadPipe(_BasePipe[TInput, FuncParams, TInput]):
+class ThreadPipe(Pipe[TInput, FuncParams, TOutput]):
     """
     Pipe-able element that runs the given instructions in a separate thread.
     Much like `Tap`, it performs a side-effect and does not impact the original value.
-    Useful for performing async/parallel actions.
     Can be used alongside `ThreadWait` to wait for specific/all threads to finish.
 
     Args:
@@ -32,7 +30,9 @@ class ThreadPipe(_BasePipe[TInput, FuncParams, TInput]):
         kwargs (FuncParams.kwargs): All kwargs that will be passed to the function `f`.
 
     Raises:
+        PipeError: If `f` is a lambda with more than 1 arg.
         PipeError: If `f` is an async function.
+        PipeError: If `thread_id` is already used in the ongoing pipe.
 
     Examples:
         >>> import time
@@ -45,7 +45,7 @@ class ThreadPipe(_BasePipe[TInput, FuncParams, TInput]):
         3
     """
 
-    __slots__ = _BasePipe.__slots__ + ("thread_id",)
+    __slots__ = Pipe.__slots__ + ("thread_id",)
 
     def __init__(
         self,
@@ -57,11 +57,6 @@ class ThreadPipe(_BasePipe[TInput, FuncParams, TInput]):
         self.thread_id = thread_id
         super().__init__(f, *args, **kwargs)  # type: ignore
 
-    def validate_f(self) -> None:
-        """f cannot be an async function."""
-        if is_async_function(self.f):
-            raise PipeError("`ThreadPipe` does not support async functions.`")
-
 
 class ThreadWait:
     """
@@ -69,6 +64,9 @@ class ThreadWait:
 
     Args:
         thread_ids (Optional[List[str]]): A list of thread identifiers to wait for. If not provided, all threads will be waited for.
+
+    Raises:
+        PipeError: If `thread_ids` has unknown values.
 
     Examples:
         >>> import time
