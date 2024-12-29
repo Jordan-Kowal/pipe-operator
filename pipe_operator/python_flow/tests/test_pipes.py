@@ -259,6 +259,10 @@ class ThreadTestCase(TestCase):
         with self.assertRaises(PipeError):
             _ = PipeStart(3) >> ThreadPipe("t1", async_add_one) >> PipeEnd()
 
+    def test_does_not_support_multiple_args_lambdas(self) -> None:
+        with self.assertRaises(PipeError):
+            _ = PipeStart(3) >> ThreadPipe("t1", lambda x, _y: x + 1) >> PipeEnd()  # type: ignore
+
 
 class AsyncTestCase(TestCase):
     def test_async_pipe(self) -> None:

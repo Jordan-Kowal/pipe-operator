@@ -1,4 +1,3 @@
-from abc import ABC, abstractmethod
 from typing import (
     Callable,
     Generic,
@@ -19,28 +18,7 @@ TOutput = TypeVar("TOutput")
 FuncParams = ParamSpec("FuncParams")
 
 
-class _BasePipe(ABC, Generic[TInput, FuncParams, TOutput]):
-    """Base class for pipe-able elements."""
-
-    __slots__ = ("f", "args", "kwargs")
-
-    def __init__(
-        self,
-        f: Callable[Concatenate[TInput, FuncParams], TOutput],
-        *args: FuncParams.args,
-        **kwargs: FuncParams.kwargs,
-    ) -> None:
-        self.f = f
-        self.args = args
-        self.kwargs = kwargs
-        self.validate_f()
-
-    @abstractmethod
-    def validate_f(self) -> None:
-        """Implements validation for the `f` function."""
-
-
-class Pipe(_BasePipe[TInput, FuncParams, TOutput]):
+class Pipe(Generic[TInput, FuncParams, TOutput]):
     """
     Pipe-able element for most already-defined functions/classes/methods.
     Functions should at least take 1 argument.
@@ -52,7 +30,8 @@ class Pipe(_BasePipe[TInput, FuncParams, TOutput]):
         kwargs (FuncParams.kwargs): All kwargs that will be passed to the function `f`.
 
     Raises:
-        PipeError: If `f` is a lambda with more than 1 arg or an async function.
+        PipeError: If `f` is a lambda with more than 1 arg.
+        PipeError: If `f` is an async function.
 
     Examples:
         >>> class BasicClass:
@@ -74,6 +53,19 @@ class Pipe(_BasePipe[TInput, FuncParams, TOutput]):
         43
     """
 
+    __slots__ = ("f", "args", "kwargs")
+
+    def __init__(
+        self,
+        f: Callable[Concatenate[TInput, FuncParams], TOutput],
+        *args: FuncParams.args,
+        **kwargs: FuncParams.kwargs,
+    ) -> None:
+        self.f = f
+        self.args = args
+        self.kwargs = kwargs
+        self.validate_f()
+
     def validate_f(self) -> None:
         """f cannot be a lambda with multiple args nor an async function."""
         if is_lambda(self.f) and not is_one_arg_lambda(self.f):
@@ -86,7 +78,7 @@ class Pipe(_BasePipe[TInput, FuncParams, TOutput]):
             )
 
 
-class Tap(_BasePipe[TInput, FuncParams, TInput]):
+class Tap(Pipe[TInput, FuncParams, TOutput]):
     """
     Pipe-able element that produces a side effect and returns the original value.
     Useful to perform async actions or to call an object's method that changes the state
@@ -98,6 +90,7 @@ class Tap(_BasePipe[TInput, FuncParams, TInput]):
         kwargs (FuncParams.kwargs): All kwargs that will be passed to the function `f`.
 
     Raises:
+        PipeError: If `f` is a lambda with more than 1 arg.
         PipeError: If `f` is an async function.
 
     Examples:
@@ -115,21 +108,4 @@ class Tap(_BasePipe[TInput, FuncParams, TInput]):
         4
     """
 
-    def __init__(
-        self,
-        f: Callable[Concatenate[TInput, FuncParams], object],
-        *args: FuncParams.args,
-        **kwargs: FuncParams.kwargs,
-    ) -> None:
-        super().__init__(f, *args, **kwargs)  # type: ignore
-
-    def validate_f(self) -> None:
-        """f cannot be a lambda with multiple args nor an async function."""
-        if is_lambda(self.f) and not is_one_arg_lambda(self.f):
-            raise PipeError(
-                "Lambda functions with more than 1 argument are not supported."
-            )
-        if is_async_function(self.f):
-            raise PipeError(
-                "`Pipe` does not support async functions. Use `AsyncPipe` instead."
-            )
+    pass

@@ -100,19 +100,13 @@ class PipeStart(Generic[TValue]):
 
     @overload
     def __rshift__(
-        self, other: "Pipe[TValue, FuncParams, TOutput]"
-    ) -> "PipeStart[TOutput]": ...
-
-    @overload
-    def __rshift__(self, other: "Tap[TValue, Any]") -> "PipeStart[TValue]": ...
-
-    @overload
-    def __rshift__(
-        self, other: "ThreadPipe[TValue, FuncParams]"
+        self, other: "Tap[TValue, FuncParams, TOutput]"
     ) -> "PipeStart[TValue]": ...
 
     @overload
-    def __rshift__(self, other: "ThreadWait") -> "PipeStart[TValue]": ...
+    def __rshift__(
+        self, other: "ThreadPipe[TValue, FuncParams, TOutput]"
+    ) -> "PipeStart[TValue]": ...
 
     @overload
     def __rshift__(
@@ -120,19 +114,27 @@ class PipeStart(Generic[TValue]):
     ) -> "PipeStart[TOutput]": ...
 
     @overload
+    def __rshift__(
+        self, other: "Pipe[TValue, FuncParams, TOutput]"
+    ) -> "PipeStart[TOutput]": ...
+
+    @overload
+    def __rshift__(self, other: "ThreadWait") -> "PipeStart[TValue]": ...
+
+    @overload
     def __rshift__(self, other: "PipeEnd") -> "TValue": ...
 
     def __rshift__(
         self,
         other: Union[
+            "Tap[TValue, FuncParams, TOutput]",
+            "ThreadPipe[TValue, FuncParams, TOutput]",
             "AsyncPipe[TValue, FuncParams, TOutput]",
             "Pipe[TValue, FuncParams, TOutput]",
-            "Tap[TValue, Any]",
-            "ThreadPipe[TValue, FuncParams]",
             "ThreadWait",
             "PipeEnd",
         ],
-    ) -> Union["PipeStart[TOutput]", "PipeStart[TValue]", "TValue"]:
+    ) -> Union["PipeStart[TValue]", "PipeStart[TOutput]", "TValue"]:
         """
         Implements the `>>` operator to enable our pipe workflow.
 
@@ -159,7 +161,7 @@ class PipeStart(Generic[TValue]):
 
         # ====> [EXIT] ThreadPipe: calls the function in a separate thread
         if isinstance(other, ThreadPipe):
-            args = (self.value, *other.args)
+            args = (self.value, *other.args)  # type: ignore
             thread = Thread(target=other.f, args=args, kwargs=other.kwargs)  # type: ignore
             if other.thread_id in self.threads:
                 raise PipeError(f"Thread ID {other.thread_id} already exists")
@@ -172,7 +174,7 @@ class PipeStart(Generic[TValue]):
         if isinstance(other, AsyncPipe):
             self.result = asyncio.run(other.f(self.value, *other.args, **other.kwargs))  # type: ignore
         else:
-            self.result = other.f(self.value, *other.args, **other.kwargs)  # type: ignore
+            self.result = other.f(self.value, *other.args, **other.kwargs)
 
         # ====> [EXIT] Tap: returns unchanged PipeStart
         if isinstance(other, Tap):
@@ -181,7 +183,7 @@ class PipeStart(Generic[TValue]):
             return self
 
         # ====> [EXIT] Otherwise, returns the updated PipeStart
-        self.value, self.result = self.result, None  # type: ignore
+        self.value, self.result = self.result, None
         self._handle_debug()
         return self
 

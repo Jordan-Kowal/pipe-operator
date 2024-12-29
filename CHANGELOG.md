@@ -12,8 +12,8 @@
 
 - 💥 [Python] Removed both `Then` and `PipeArgs` to reduce complexity, as it can easily be replaced with `Pipe`
 - 🚀 [Python] Added `AsyncPipe` to handle (and wait for) async function calls from asyncio
-- 🔧 [Python] Added a private `_BasePipe` and `@overload` decorator for better typing and validations
-- 🔧 [Python] Reworked typing and function validation of most pipe-able elements to be more explicit
+- 🔧 [Python] Reworked typing (with `@overload`) and function validation of most pipe-able elements to be more explicit
+- 🔧 [Python] Reworked project structure
 
 ## 1.1.0 - 2024-11-23
 
