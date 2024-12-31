@@ -87,7 +87,7 @@ class PipeTestCase(TestCase):
         op: int = (
             PipeStart("3")
             >> Pipe(duplicate_string)  # function
-            >> Pipe(int)  # function
+            >> Pipe[str, [], int](int)  # function
             >> Pipe(compute, 30, z=10)  # function with args/kwargs
             >> Pipe(_sum, 5, 10)  # function with no positional args  # type: ignore
             >> Pipe(lambda x: x + 1)  # lambda

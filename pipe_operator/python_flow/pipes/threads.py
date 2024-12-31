@@ -1,3 +1,4 @@
+from threading import Thread
 from typing import (
     Callable,
     List,
@@ -8,7 +9,9 @@ from typing import (
 
 from typing_extensions import Concatenate, ParamSpec, TypeAlias
 
-from pipe_operator.python_flow.pipes.basics import Pipe
+from pipe_operator.python_flow.base import PipeStart
+from pipe_operator.python_flow.pipes.basics import _SyncPipeable
+from pipe_operator.shared.exceptions import PipeError
 
 TInput = TypeVar("TInput")
 FuncParams = ParamSpec("FuncParams")
@@ -17,7 +20,7 @@ TOutput = TypeVar("TOutput")
 ThreadId: TypeAlias = Union[str, int]
 
 
-class ThreadPipe(Pipe[TInput, FuncParams, TOutput]):
+class ThreadPipe(_SyncPipeable[TInput, FuncParams, TOutput]):
     """
     Pipe-able element that runs the given instructions in a separate thread.
     Much like `Tap`, it performs a side-effect and does not impact the original value.
@@ -45,17 +48,26 @@ class ThreadPipe(Pipe[TInput, FuncParams, TOutput]):
         3
     """
 
-    __slots__ = Pipe.__slots__ + ("thread_id",)
+    __slots__ = _SyncPipeable.__slots__ + ("thread_id",)
 
     def __init__(
         self,
         thread_id: ThreadId,
-        f: Callable[Concatenate[TInput, FuncParams], object],
+        f: Callable[Concatenate[TInput, FuncParams], TOutput],
         *args: FuncParams.args,
         **kwargs: FuncParams.kwargs,
     ) -> None:
         self.thread_id = thread_id
-        super().__init__(f, *args, **kwargs)  # type: ignore
+        super().__init__(f, *args, **kwargs)
+
+    def __rrshift__(self, other: PipeStart[TInput]) -> PipeStart[TInput]:
+        args = (other.value, *self.args)
+        thread = Thread(target=self.f, args=args, kwargs=self.kwargs)  # type: ignore
+        if self.thread_id in other.threads:
+            raise PipeError(f"Thread ID {self.thread_id} already exists")
+        other.threads[self.thread_id] = thread
+        thread.start()
+        return other
 
 
 class ThreadWait:
@@ -83,3 +95,9 @@ class ThreadWait:
 
     def __init__(self, thread_ids: Optional[List[str]] = None) -> None:
         self.thread_ids = thread_ids
+
+    def __rrshift__(self, other: PipeStart[TInput]) -> PipeStart[TInput]:
+        threads = other._get_threads(self.thread_ids)
+        for thread in threads:
+            thread.join()
+        return other

@@ -1,4 +1,3 @@
-import asyncio
 from threading import Thread
 from typing import (
     Any,
@@ -8,20 +7,14 @@ from typing import (
     Optional,
     TypeVar,
     Union,
-    overload,
 )
 
-from typing_extensions import ParamSpec, TypeAlias
+from typing_extensions import TypeAlias
 
-from pipe_operator.python_flow.pipes.asynchronous import AsyncPipe
-from pipe_operator.python_flow.pipes.basics import Pipe, Tap
-from pipe_operator.python_flow.pipes.threads import ThreadPipe, ThreadWait
 from pipe_operator.shared.exceptions import PipeError
 
-TInput = TypeVar("TInput")
-TOutput = TypeVar("TOutput")
 TValue = TypeVar("TValue")
-FuncParams = ParamSpec("FuncParams")
+TNewValue = TypeVar("TNewValue")
 
 ThreadId: TypeAlias = Union[str, int]
 
@@ -37,6 +30,9 @@ class PipeEnd:
     """
 
     __slots__ = ()
+
+    def __rrshift__(self, other: "PipeStart[TValue]") -> TValue:
+        return other.value
 
 
 class PipeStart(Generic[TValue]):
@@ -106,92 +102,6 @@ class PipeStart(Generic[TValue]):
         if self.debug:
             print(self.value)
             self.history.append(value)
-
-    @overload
-    def __rshift__(
-        self, other: "Tap[TValue, FuncParams, TOutput]"
-    ) -> "PipeStart[TValue]": ...
-
-    @overload
-    def __rshift__(
-        self, other: "ThreadPipe[TValue, FuncParams, TOutput]"
-    ) -> "PipeStart[TValue]": ...
-
-    @overload
-    def __rshift__(
-        self, other: "AsyncPipe[TValue, FuncParams, TOutput]"
-    ) -> "PipeStart[TOutput]": ...
-
-    @overload
-    def __rshift__(
-        self, other: "Pipe[TValue, FuncParams, TOutput]"
-    ) -> "PipeStart[TOutput]": ...
-
-    @overload
-    def __rshift__(self, other: "ThreadWait") -> "PipeStart[TValue]": ...
-
-    @overload
-    def __rshift__(self, other: "PipeEnd") -> "TValue": ...
-
-    def __rshift__(
-        self,
-        other: Union[
-            Tap[TValue, FuncParams, TOutput],
-            ThreadPipe[TValue, FuncParams, TOutput],
-            AsyncPipe[TValue, FuncParams, TOutput],
-            Pipe[TValue, FuncParams, TOutput],
-            ThreadWait,
-            PipeEnd,
-        ],
-    ) -> Union["PipeStart[TValue]", "PipeStart[TOutput]", "TValue"]:
-        """
-        Implements the `>>` operator to enable our pipe workflow.
-
-        Multiple possible cases based on what `other` is:
-            `Pipe/AsyncPipe`                -->     Classic pipe workflow where we return the updated PipeStart with the result.
-            `Tap/ThreadPipe`                -->     Side effect where we call the function and return the unchanged PipeStart.
-            `ThreadWait`                    -->     Blocks the pipe until some threads finish.
-            `PipeEnd`                       -->     Simply returns the raw value.
-        """
-
-        # ====> [EXIT] PipeEnd: returns the raw value
-        if isinstance(other, PipeEnd):
-            return self.value
-
-        # ====> [EXIT] ThreadWait: waits for some threads to finish, then returns the value
-        if isinstance(other, ThreadWait):
-            threads = self._get_threads(other.thread_ids)
-            for thread in threads:
-                thread.join()
-            return self
-
-        # ====> [EXIT] ThreadPipe: calls the function in a separate thread
-        if isinstance(other, ThreadPipe):
-            args = (self.value, *other.args)  # type: ignore
-            thread = Thread(target=other.f, args=args, kwargs=other.kwargs)  # type: ignore
-            if other.thread_id in self.threads:
-                raise PipeError(f"Thread ID {other.thread_id} already exists")
-            self.threads[other.thread_id] = thread
-            thread.start()
-            self._handle_debug()
-            return self
-
-        # ====> Executes the instructions
-        if isinstance(other, AsyncPipe):
-            self.result = asyncio.run(other.f(self.value, *other.args, **other.kwargs))  # type: ignore
-        else:
-            self.result = other.f(self.value, *other.args, **other.kwargs)
-
-        # ====> [EXIT] Tap: returns unchanged PipeStart
-        if isinstance(other, Tap):
-            self.result = None
-            self._handle_debug()
-            return self
-
-        # ====> [EXIT] Otherwise, returns the updated PipeStart
-        self.value, self.result = self.result, None
-        self._handle_debug()
-        return self
 
     def _handle_debug(self) -> None:
         """Will print and append to history. Debug mode only."""

@@ -1,11 +1,16 @@
+from abc import ABC, abstractmethod
 from typing import (
+    Awaitable,
     Callable,
     Generic,
     TypeVar,
+    Union,
+    override,
 )
 
 from typing_extensions import Concatenate, ParamSpec
 
+from pipe_operator.python_flow.base import PipeStart
 from pipe_operator.shared.exceptions import PipeError
 from pipe_operator.shared.utils import (
     is_async_function,
@@ -18,7 +23,78 @@ TOutput = TypeVar("TOutput")
 FuncParams = ParamSpec("FuncParams")
 
 
-class Pipe(Generic[TInput, FuncParams, TOutput]):
+class _Pipeable(ABC, Generic[TInput, FuncParams, TOutput]):
+    __slots__ = ("f", "args", "kwargs")
+
+    @abstractmethod
+    def __init__(
+        self,
+        f: Callable[
+            Concatenate[TInput, FuncParams], Union[TOutput, Awaitable[TOutput]]
+        ],
+        *args: FuncParams.args,
+        **kwargs: FuncParams.kwargs,
+    ) -> None: ...
+
+    @abstractmethod
+    def validate_f(
+        self,
+        f: Callable[
+            Concatenate[TInput, FuncParams], Union[TOutput, Awaitable[TOutput]]
+        ],
+    ) -> None: ...
+
+    @abstractmethod
+    def __rrshift__(
+        self, other: PipeStart[TInput]
+    ) -> Union[PipeStart[TInput], PipeStart[TOutput]]: ...
+
+
+class _SyncPipeable(_Pipeable[TInput, FuncParams, TOutput]):
+    def __init__(
+        self,
+        f: Callable[Concatenate[TInput, FuncParams], TOutput],
+        *args: FuncParams.args,
+        **kwargs: FuncParams.kwargs,
+    ) -> None:
+        self.validate_f(f)
+        self.f = f
+        self.args = args
+        self.kwargs = kwargs
+
+    def validate_f(self, f: Callable) -> None:
+        """f cannot be a lambda with multiple args nor an async function."""
+        if is_lambda(f) and not is_one_arg_lambda(f):
+            raise PipeError(
+                "Lambda functions with more than 1 argument are not supported."
+            )
+        if is_async_function(f):
+            raise PipeError(
+                "`Pipe` does not support async functions. Use `AsyncPipe` instead."
+            )
+
+
+class _AsyncPipeable(_Pipeable[TInput, FuncParams, TOutput]):
+    def __init__(
+        self,
+        f: Callable[Concatenate[TInput, FuncParams], Awaitable[TOutput]],
+        *args: FuncParams.args,
+        **kwargs: FuncParams.kwargs,
+    ) -> None:
+        self.validate_f(f)
+        self.f = f
+        self.args = args
+        self.kwargs = kwargs
+
+    def validate_f(self, f: Callable) -> None:
+        """f must be an async function."""
+        if not is_async_function(f):
+            raise PipeError(
+                "`AsyncPipe` only supports async functions. Use `Pipe` for regular functions."
+            )
+
+
+class Pipe(_SyncPipeable[TInput, FuncParams, TOutput]):
     """
     Pipe-able element for most already-defined functions/classes/methods.
     Functions should at least take 1 argument.
@@ -53,39 +129,20 @@ class Pipe(Generic[TInput, FuncParams, TOutput]):
         43
     """
 
-    __slots__ = ("f", "args", "kwargs")
-
-    def __init__(
-        self,
-        f: Callable[Concatenate[TInput, FuncParams], TOutput],
-        *args: FuncParams.args,
-        **kwargs: FuncParams.kwargs,
-    ) -> None:
-        self.f = f
-        self.args = args
-        self.kwargs = kwargs
-        self.validate_f()
-
-    def validate_f(self) -> None:
-        """f cannot be a lambda with multiple args nor an async function."""
-        if is_lambda(self.f) and not is_one_arg_lambda(self.f):
-            raise PipeError(
-                "Lambda functions with more than 1 argument are not supported."
-            )
-        if is_async_function(self.f):
-            raise PipeError(
-                "`Pipe` does not support async functions. Use `AsyncPipe` instead."
-            )
+    def __rrshift__(self, other: PipeStart[TInput]) -> PipeStart[TOutput]:
+        value: TOutput = self.f(other.value, *self.args, **self.kwargs)
+        other.value = value  # type: ignore
+        return other  # type: ignore
 
 
-class Tap(Pipe[TInput, FuncParams, TOutput]):
+class Tap(_SyncPipeable[TInput, FuncParams, TOutput]):
     """
     Pipe-able element that produces a side effect and returns the original value.
     Useful to perform async actions or to call an object's method that changes the state
     without returning anything.
 
     Args:
-        f (Callable[Concatenate[TInput, FuncParams], object]): The function that will be called in the pipe.
+        f (Callable[Concatenate[TInput, FuncParams], TOutput]): The function that will be called in the pipe.
         args (FuncParams.args): All args (except the first) that will be passed to the function `f`.
         kwargs (FuncParams.kwargs): All kwargs that will be passed to the function `f`.
 
@@ -108,4 +165,7 @@ class Tap(Pipe[TInput, FuncParams, TOutput]):
         4
     """
 
-    pass
+    @override
+    def __rrshift__(self, other: PipeStart[TInput]) -> PipeStart[TInput]:
+        self.f(other.value, *self.args, **self.kwargs)
+        return other
