@@ -13,7 +13,7 @@
 - 💥 [Python] Removed both `Then` and `PipeArgs` to reduce complexity, as it can easily be replaced with `Pipe`
 - 🚀 [Python] Added `AsyncPipe` to handle (and wait for) async function calls from asyncio
 - 🔧 [Python] `>>` logic is now handle in each pipeable's `__rrshift__` instead of `PipeStart.__rshift__`
-- 🔧 [Python] Reworked project structure
+- 🔧 [Python] Greatly improved typing with things like `@final`, `@override`, `Self`, `TypeAlias`, and `TypeGuard`
 
 ## 1.1.0 - 2024-11-23
 
