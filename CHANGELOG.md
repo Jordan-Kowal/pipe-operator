@@ -12,7 +12,7 @@
 
 - 💥 [Python] Removed both `Then` and `PipeArgs` to reduce complexity, as it can easily be replaced with `Pipe`
 - 🚀 [Python] Added `AsyncPipe` to handle (and wait for) async function calls from asyncio
-- 🔧 [Python] Reworked typing (with `@overload`) and function validation of most pipe-able elements to be more explicit
+- 🔧 [Python] `>>` logic is now handle in each pipeable's `__rrshift__` instead of `PipeStart.__rshift__`
 - 🔧 [Python] Reworked project structure
 
 ## 1.1.0 - 2024-11-23
