@@ -407,3 +407,29 @@ class PipeEnd:
 
     def __rrshift__(self, other: PipeStart[TValue]) -> TValue:
         return other.value
+
+
+# @overload
+# def pipe(
+#     f: Callable[Concatenate[TInput, FuncParams], TOutput],
+#     *args: FuncParams.args,
+#     **kwargs: FuncParams.kwargs,
+# ) -> Pipe[TInput, FuncParams, TOutput]: ...
+
+
+# @overload
+# def pipe(
+#     f: Callable[Concatenate[TInput, FuncParams], Awaitable[TOutput]],
+#     *args: FuncParams.args,
+#     **kwargs: FuncParams.kwargs,
+# ) -> AsyncPipe[TInput, FuncParams, TOutput]: ...
+
+
+# def pipe(
+#     f: Callable[Concatenate[TInput, FuncParams], Union[TOutput, Awaitable[TOutput]]],
+#     *args: FuncParams.args,
+#     **kwargs: FuncParams.kwargs,
+# ) -> Union[AsyncPipe[TInput, FuncParams, TOutput], Pipe[TInput, FuncParams, TOutput]]:
+#     if is_async_function(f):
+#         return AsyncPipe(f, *args, **kwargs)  # type: ignore
+#     return Pipe(f, *args, **kwargs)  # type: ignore
