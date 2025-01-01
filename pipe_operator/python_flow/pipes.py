@@ -9,8 +9,11 @@ from typing import (
     Generic,
     List,
     Optional,
+    Self,
     TypeVar,
     Union,
+    final,
+    override,
 )
 
 from typing_extensions import Concatenate, ParamSpec, TypeAlias
@@ -25,6 +28,13 @@ from pipe_operator.shared.utils import (
 TInput = TypeVar("TInput")
 FuncParams = ParamSpec("FuncParams")
 TOutput = TypeVar("TOutput")
+
+SyncCallable: TypeAlias = Callable[Concatenate[TInput, FuncParams], TOutput]
+AsyncCallable: TypeAlias = Callable[Concatenate[TInput, FuncParams], Awaitable[TOutput]]
+PipeableCallable: TypeAlias = Union[
+    Callable[Concatenate[TInput, FuncParams], TOutput],
+    Callable[Concatenate[TInput, FuncParams], Awaitable[TOutput]],
+]
 
 TValue = TypeVar("TValue")
 TNewValue = TypeVar("TNewValue")
@@ -91,6 +101,7 @@ class PipeStart(Generic[TValue]):
 
     __slots__ = ("value", "debug", "result", "history", "threads")
 
+    @final
     def __init__(self, value: TValue, debug: bool = False) -> None:
         self.value = value
         self.debug = debug
@@ -100,6 +111,7 @@ class PipeStart(Generic[TValue]):
         self._handle_debug()
 
     @classmethod
+    @final
     def update(
         cls, pipe_start: "PipeStart[TValue]", value: TNewValue
     ) -> "PipeStart[TNewValue]":
@@ -107,10 +119,12 @@ class PipeStart(Generic[TValue]):
         pipe_start._handle_debug()
         return pipe_start  # type: ignore
 
-    def keep(self) -> "PipeStart[TValue]":
+    @final
+    def keep(self) -> Self:
         self._handle_debug()
         return self
 
+    @final
     def _handle_debug(self) -> None:
         """Will print and append to history. Debug mode only."""
         if not self.debug:
@@ -118,6 +132,7 @@ class PipeStart(Generic[TValue]):
         print(self.value)
         self.history.append(self.value)
 
+    @final
     def _get_threads(self, thread_ids: Optional[List[str]] = None) -> List[Thread]:
         """Returns a list of threads, filtered by thread_ids if provided."""
         if thread_ids is None:
@@ -135,9 +150,7 @@ class _Pipeable(ABC, Generic[TInput, FuncParams, TOutput]):
     @abstractmethod
     def __init__(
         self,
-        f: Callable[
-            Concatenate[TInput, FuncParams], Union[TOutput, Awaitable[TOutput]]
-        ],
+        f: PipeableCallable[TInput, FuncParams, TOutput],
         *args: FuncParams.args,
         **kwargs: FuncParams.kwargs,
     ) -> None: ...
@@ -145,9 +158,7 @@ class _Pipeable(ABC, Generic[TInput, FuncParams, TOutput]):
     @abstractmethod
     def validate_f(
         self,
-        f: Callable[
-            Concatenate[TInput, FuncParams], Union[TOutput, Awaitable[TOutput]]
-        ],
+        f: PipeableCallable[TInput, FuncParams, TOutput],
     ) -> None: ...
 
     @abstractmethod
@@ -158,9 +169,10 @@ class _Pipeable(ABC, Generic[TInput, FuncParams, TOutput]):
 
 # region _SyncPipeable
 class _SyncPipeable(_Pipeable[TInput, FuncParams, TOutput]):
+    @override
     def __init__(
         self,
-        f: Callable[Concatenate[TInput, FuncParams], TOutput],
+        f: SyncCallable[TInput, FuncParams, TOutput],
         *args: FuncParams.args,
         **kwargs: FuncParams.kwargs,
     ) -> None:
@@ -169,6 +181,7 @@ class _SyncPipeable(_Pipeable[TInput, FuncParams, TOutput]):
         self.args = args
         self.kwargs = kwargs
 
+    @override
     def validate_f(self, f: Callable) -> None:
         """f cannot be a lambda with multiple args nor an async function."""
         if is_lambda(f) and not is_one_arg_lambda(f):
@@ -183,9 +196,10 @@ class _SyncPipeable(_Pipeable[TInput, FuncParams, TOutput]):
 
 # region _AsyncPipeable
 class _AsyncPipeable(_Pipeable[TInput, FuncParams, TOutput]):
+    @override
     def __init__(
         self,
-        f: Callable[Concatenate[TInput, FuncParams], Awaitable[TOutput]],
+        f: AsyncCallable[TInput, FuncParams, TOutput],
         *args: FuncParams.args,
         **kwargs: FuncParams.kwargs,
     ) -> None:
@@ -194,6 +208,7 @@ class _AsyncPipeable(_Pipeable[TInput, FuncParams, TOutput]):
         self.args = args
         self.kwargs = kwargs
 
+    @override
     def validate_f(self, f: Callable) -> None:
         """f must be an async function."""
         if not is_async_function(f):
@@ -210,7 +225,7 @@ class Pipe(_SyncPipeable[TInput, FuncParams, TOutput]):
     When using a lambda, it can only take 1 argument.
 
     Args:
-        f (Callable[Concatenate[TInput, FuncParams], TOutput]): The function that will be called in the pipe.
+        f (SyncCallable[TInput, FuncParams, TOutput]): The function that will be called in the pipe.
         args (FuncParams.args): All args (except the first) that will be passed to the function `f`.
         kwargs (FuncParams.kwargs): All kwargs that will be passed to the function `f`.
 
@@ -238,6 +253,8 @@ class Pipe(_SyncPipeable[TInput, FuncParams, TOutput]):
         43
     """
 
+    @override
+    @final
     def __rrshift__(self, other: PipeStart[TInput]) -> PipeStart[TOutput]:
         value: TOutput = self.f(other.value, *self.args, **self.kwargs)
         return PipeStart.update(other, value)
@@ -251,7 +268,7 @@ class Tap(_SyncPipeable[TInput, FuncParams, TOutput]):
     without returning anything.
 
     Args:
-        f (Callable[Concatenate[TInput, FuncParams], TOutput]): The function that will be called in the pipe.
+        f (SyncCallable[TInput, FuncParams, TOutput]): The function that will be called in the pipe.
         args (FuncParams.args): All args (except the first) that will be passed to the function `f`.
         kwargs (FuncParams.kwargs): All kwargs that will be passed to the function `f`.
 
@@ -274,6 +291,8 @@ class Tap(_SyncPipeable[TInput, FuncParams, TOutput]):
         4
     """
 
+    @override
+    @final
     def __rrshift__(self, other: PipeStart[TInput]) -> PipeStart[TInput]:
         self.f(other.value, *self.args, **self.kwargs)
         return other.keep()
@@ -286,7 +305,7 @@ class AsyncPipe(_AsyncPipeable[TInput, FuncParams, TOutput]):
     Similar to the regular `Pipe` but for async functions.
 
     Args:
-        f (Callable[Concatenate[TInput, FuncParams], Awaitable[TOutput]]): The async function that will be called with asyncio.
+        f (AsyncCallable[TInput, FuncParams, TOutput]): The async function that will be called with asyncio.
         args (FuncParams.args): All args (except the first) that will be passed to the function `f`.
         kwargs (FuncParams.kwargs): All kwargs that will be passed to the function `f`.
 
@@ -302,6 +321,8 @@ class AsyncPipe(_AsyncPipeable[TInput, FuncParams, TOutput]):
         4
     """
 
+    @override
+    @final
     def __rrshift__(self, other: PipeStart[TInput]) -> PipeStart[TOutput]:
         value = asyncio.run(self.f(other.value, *self.args, **self.kwargs))  # type: ignore
         return PipeStart.update(other, value)
@@ -316,7 +337,7 @@ class ThreadPipe(_SyncPipeable[TInput, FuncParams, TOutput]):
 
     Args:
         thread_id (str): A unique identifier (within this pipe) for the thread. Useful for `ThreadWait`.
-        f (Callable[Concatenate[TInput, FuncParams], object]): The function that will be called in the thread.
+        f (SyncCallable[TInput, FuncParams, TOutput]): The function that will be called in the thread.
         args (FuncParams.args): All args (except the first) that will be passed to the function `f`.
         kwargs (FuncParams.kwargs): All kwargs that will be passed to the function `f`.
 
@@ -338,16 +359,20 @@ class ThreadPipe(_SyncPipeable[TInput, FuncParams, TOutput]):
 
     __slots__ = _SyncPipeable.__slots__ + ("thread_id",)
 
+    @override
+    @final
     def __init__(
         self,
         thread_id: ThreadId,
-        f: Callable[Concatenate[TInput, FuncParams], TOutput],
+        f: SyncCallable[TInput, FuncParams, TOutput],
         *args: FuncParams.args,
         **kwargs: FuncParams.kwargs,
     ) -> None:
         self.thread_id = thread_id
         super().__init__(f, *args, **kwargs)
 
+    @override
+    @final
     def __rrshift__(self, other: PipeStart[TInput]) -> PipeStart[TInput]:
         args = (other.value, *self.args)
         thread = Thread(target=self.f, args=args, kwargs=self.kwargs)  # type: ignore
@@ -382,9 +407,11 @@ class ThreadWait:
 
     __slots__ = ("thread_ids",)
 
+    @final
     def __init__(self, thread_ids: Optional[List[str]] = None) -> None:
         self.thread_ids = thread_ids
 
+    @final
     def __rrshift__(self, other: PipeStart[TInput]) -> PipeStart[TInput]:
         threads = other._get_threads(self.thread_ids)
         for thread in threads:
@@ -405,31 +432,6 @@ class PipeEnd:
 
     __slots__ = ()
 
+    @final
     def __rrshift__(self, other: PipeStart[TValue]) -> TValue:
         return other.value
-
-
-# @overload
-# def pipe(
-#     f: Callable[Concatenate[TInput, FuncParams], TOutput],
-#     *args: FuncParams.args,
-#     **kwargs: FuncParams.kwargs,
-# ) -> Pipe[TInput, FuncParams, TOutput]: ...
-
-
-# @overload
-# def pipe(
-#     f: Callable[Concatenate[TInput, FuncParams], Awaitable[TOutput]],
-#     *args: FuncParams.args,
-#     **kwargs: FuncParams.kwargs,
-# ) -> AsyncPipe[TInput, FuncParams, TOutput]: ...
-
-
-# def pipe(
-#     f: Callable[Concatenate[TInput, FuncParams], Union[TOutput, Awaitable[TOutput]]],
-#     *args: FuncParams.args,
-#     **kwargs: FuncParams.kwargs,
-# ) -> Union[AsyncPipe[TInput, FuncParams, TOutput], Pipe[TInput, FuncParams, TOutput]]:
-#     if is_async_function(f):
-#         return AsyncPipe(f, *args, **kwargs)  # type: ignore
-#     return Pipe(f, *args, **kwargs)  # type: ignore
