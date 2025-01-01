@@ -9,5 +9,6 @@
 
 - Add pipe support for Multiprocessing?
 
-- Mutualize Tap definition with Pipe?
-- Remove AsyncPipe for classic Pipe?
+- Redo Then for lambdas only
+- Add AsyncTaskPipe
+- Try setting up factories (start, end, pipe, tap, then, thread, wait)
