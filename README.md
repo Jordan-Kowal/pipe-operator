@@ -33,7 +33,7 @@ Then either import the 🐍 **pythonic classes** or the 🍹 **elixir functions*
 
 ```python
 # Pythonic classes
-from pipe_operator import Pipe, PipeArgs, PipeEnd, PipeStart, Tap, Then, ThreadPipe, ThreadWait
+from pipe_operator import AsyncPipe, Pipe, PipeEnd, PipeObject, Tap, ThreadPipe, ThreadWait
 # Elixir functions
 from pipe_operator import elixir_pipe, tap, then
 ```
@@ -44,20 +44,20 @@ You can use the 🐍 **pythonic** implementation, which is **entirely compatible
 but a bit more verbose than the original pipe operator:
 
 ```python
-from pipe_operator import Pipe, PipeArgs, PipeEnd, PipeStart, Tap, Then, ThreadPipe, ThreadWait
+from pipe_operator import AsyncPipe, Pipe, PipeEnd, PipeObject, Tap, ThreadPipe, ThreadWait
 
 result = (
-    PipeStart("3")                          # starts the pipe
+    PipeObject("3")                          # starts the pipe
     >> Pipe(int)                            # function with 1-arg
+    >> AsyncPipe(async_func)                # async (waited for)
     >> Pipe(my_func, 2000, z=10)            # function with multiple args
     >> Tap(print)                           # side effect
-    >> Then(lambda x: x + 1)                # lambda
+    >> Pipe(lambda x: x + 1)                # lambda
     >> Pipe(MyClass)                        # class
     >> Pipe(MyClass.my_classmethod)         # classmethod
     >> Tap(MyClass.my_method)               # side effect that can update the original object
     >> Pipe(MyClass.my_other_method)        # method
-    >> Then[int, int](lambda x: x * 2)      # explicitly-typed lambda
-    >> PipeArgs(my_other_func, 4, 5, 6)     # special case for functions with no positional/keyword parameters
+    >> Pipe[int, [], int](lambda x: x * 2)  # explicitly-typed lambda
     >> ThreadPipe("t1", do_something)       # thread
     >> ThreadWait(["t1"])                   # wait for thread(s)
     >> PipeEnd()                            # extract the value
@@ -101,24 +101,22 @@ In the 🐍 **pythonic implementation**, we expose the following classes:
 
 | Class        | Description                                                           | Examples                                  |
 | ------------ | --------------------------------------------------------------------- | ----------------------------------------- |
-| `PipeStart`  | The start of the pipe                                                 | `PipeStart("3")`                          |
+| `PipeObject`  | The start of the pipe                                                 | `PipeObject("3")`                          |
 | `Pipe`       | Used to call almost any functions or classes, or methods              | `Pipe(int)`, `Pipe(my_func, 2000, z=10)`  |
-| `PipeArgs`   | Same as `Pipe` but for function with no positional/keyword parameters | `PipeArgs(func, 1, 2)`                    |
-| `Then`       | Same as `Pipe`, but for 1-arg lambda functions                        | `Then(lambda x: x.attribute)`             |
 | `Tap`        | Used to trigger a side effect (meaning it returns the original value) | `Tap(print)`, `Tap(lambda x: x.method())` |
 | `ThreadPipe` | Used to call a function in a thread                                   | `ThreadPipe("t1", do_something)()`        |
 | `ThreadWait` | Used to wait for multiple (or all)threads to finish                   | `ThreadWait()`, `ThreadWait(["id1"])`     |
+| `AsyncPipe`  | Used to call and wait for async functions (from asyncio)              | `AsyncPipe(async_func)`                               |
 | `PipeEnd`    | The end of the pipe, to extract the raw final result                  | `PipeEnd()`                               |
 
 ### Limitations
 
-**property:** Properties cannot be called directly. You must resort to the use of `Then(lambda x: x.my_property)`.
+**property:** Properties cannot be called directly. You must resort to the use of `Pipe(lambda x: x.my_property)`.
 This will work just fine and ensure type-safety throughout the pipe.
 
-**functions without positional/keyword parameters:** While they are technically supported by the `Pipe` class,
-your type-checker will not handle them properly, because the `Pipe` class expect the function to have
-at least 1 positional/keyword parameter (ie the first one, passed down the pipe). To bypass this limitation,
-you should use `PipeArgs` instead.
+**functions without positional/keyword parameters:** Calling it directly within `Pipe` will cause a typing error.
+You can bypass it either through a typed lambda `Pipe[int, [], int](lambda x: sum(x, 3))` or with a `# type: ignore`
+comment.
 
 **pyright:** `pyright` seems to have trouble dealing with our `>>` in some specific cases. As such,
 we advise you set `reportOperatorIssue = "none"` in your `pyright` config.
