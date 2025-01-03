@@ -12,14 +12,14 @@
 
 - 💥 [Python] Removed both `Then` and `PipeArgs` to reduce complexity, as it can easily be replaced with `Pipe`
 - 🚀 [Python] Added `AsyncPipe` to handle (and wait for) async function calls from asyncio
-- 🔧 [Python] `>>` logic is now handle in each pipeable's `__rrshift__` instead of `PipeStart.__rshift__`
+- 🔧 [Python] `>>` logic is now handle in each pipeable's `__rrshift__` instead of `PipeObject.__rshift__`
 - 🔧 [Python] Greatly improved typing with things like `@final`, `@override`, `Self`, `TypeAlias`, and `TypeGuard`
 
 ## 1.1.0 - 2024-11-23
 
 - 🚀 [Python] Added thread support with `ThreadPipe` and `ThreadWait`. See [README.md](README.md) for more details.
-- ✨ [Python] Keep same `PipeStart` object throughout the pipe for improved performances
-- ✨ [Python] Added the `PipeStart.history` attribute to keep track of all its values (only in debug mode)
+- ✨ [Python] Keep same `PipeObject` object throughout the pipe for improved performances
+- ✨ [Python] Added the `PipeObject.history` attribute to keep track of all its values (only in debug mode)
 - 🔧 [Python] Split logic into smaller modules: [base.py](pipe_operator/python_flow/base.py), [extras.py](pipe_operator/python_flow/extras.py), [threads.py](pipe_operator/python_flow/threads.py)
 
 ## 1.0.4 - 2024-11-22

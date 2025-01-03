@@ -9,6 +9,11 @@
 
 - Add pipe support for Multiprocessing?
 
-- Redo Then for lambdas only
-- Add AsyncTaskPipe
-- Try setting up factories (start, end, pipe, tap, then, thread, wait)
+- Add tests for `then`
+- Update tests with all use-cases
+- Add complex test with and without debug
+- Fix typing with PipeStart and other type ignore comments
+  - Review .keep() and .update()
+- Retry with `__new__` and correct typing, without factory
+  - If it works, try to include Then into PipeFactory
+- Update inits, docstrings, readme, and changelog

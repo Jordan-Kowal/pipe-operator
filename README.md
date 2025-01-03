@@ -33,7 +33,7 @@ Then either import the 🐍 **pythonic classes** or the 🍹 **elixir functions*
 
 ```python
 # Pythonic classes
-from pipe_operator import AsyncPipe, Pipe, PipeEnd, PipeStart, Tap, ThreadPipe, ThreadWait
+from pipe_operator import AsyncPipe, Pipe, PipeEnd, PipeObject, Tap, ThreadPipe, ThreadWait
 # Elixir functions
 from pipe_operator import elixir_pipe, tap, then
 ```
@@ -44,10 +44,10 @@ You can use the 🐍 **pythonic** implementation, which is **entirely compatible
 but a bit more verbose than the original pipe operator:
 
 ```python
-from pipe_operator import AsyncPipe, Pipe, PipeEnd, PipeStart, Tap, ThreadPipe, ThreadWait
+from pipe_operator import AsyncPipe, Pipe, PipeEnd, PipeObject, Tap, ThreadPipe, ThreadWait
 
 result = (
-    PipeStart("3")                          # starts the pipe
+    PipeObject("3")                          # starts the pipe
     >> Pipe(int)                            # function with 1-arg
     >> AsyncPipe(async_func)                # async (waited for)
     >> Pipe(my_func, 2000, z=10)            # function with multiple args
@@ -101,7 +101,7 @@ In the 🐍 **pythonic implementation**, we expose the following classes:
 
 | Class        | Description                                                           | Examples                                  |
 | ------------ | --------------------------------------------------------------------- | ----------------------------------------- |
-| `PipeStart`  | The start of the pipe                                                 | `PipeStart("3")`                          |
+| `PipeObject`  | The start of the pipe                                                 | `PipeObject("3")`                          |
 | `Pipe`       | Used to call almost any functions or classes, or methods              | `Pipe(int)`, `Pipe(my_func, 2000, z=10)`  |
 | `Tap`        | Used to trigger a side effect (meaning it returns the original value) | `Tap(print)`, `Tap(lambda x: x.method())` |
 | `ThreadPipe` | Used to call a function in a thread                                   | `ThreadPipe("t1", do_something)()`        |
