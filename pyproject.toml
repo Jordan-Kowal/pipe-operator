@@ -97,7 +97,7 @@ force-sort-within-sections = true
 # COVERAGE
 # ------------------------------
 [tool.coverage.run]
-omit = ["*/__init__.py", "*/tests/*"]
+omit = ["*/__init__.py", "*/tests/*", "*/tests.py"]
 
 [tool.coverage.report]
 exclude_lines = ["pragma: no cover", "if TYPE_CHECKING:"]
