@@ -9,7 +9,6 @@
 
 - Add pipe support for Multiprocessing?
 
-- Add complex test with and without debug
 - Fix typing with PipeStart and other type ignore comments
   - Review .keep() and .update()
 - Try to handle factory directly in `Pipe`

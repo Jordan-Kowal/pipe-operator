@@ -67,38 +67,60 @@ class BasicClass:
 
 
 class CompleteFlowTestCase(TestCase):
+    def test_complex(self) -> None:
+        with patch("builtins.print"):
+            op = (
+                start("3", debug=True)
+                >> pipe(duplicate_string)  # function
+                >> then[str, int](lambda x: int(x))  # lambda
+                >> pipe(async_add_one)  # async function
+                >> task("t1", lambda _: time.sleep(0.2))  # (side effect) lambda task
+                >> pipe(compute, 30, z=10)  # function with args/kwargs
+                >> task("t2", async_add_one)  # (side effect) async task
+                >> pipe(_sum, 5, 10)  # function with no positional args  # type: ignore
+                >> wait(["t1"])  # wait for a specific task
+                >> pipe(BasicClass)  # class
+                >> pipe(BasicClass.get_double)  # classmethod
+                >> tap(BasicClass.increment)  # (side effect) method
+                >> pipe(BasicClass.get_value_plus_arg, 5)  # method with arg
+                >> tap(lambda x: print(x))  # (side effect) lambda
+                >> wait()  # wait for all remaining tasks
+                >> end()
+            )
+        self.assertEqual(op, 184)
+
     def test_complex_with_debug(self) -> None:
         _start = time.perf_counter()
         with patch("builtins.print"):
             instance = (
-                start("3", debug=True)  # start
+                start("3", debug=True)
                 >> pipe(duplicate_string)  # function
-                >> task("t1", lambda _: time.sleep(0.2))  # thread
-                >> pipe(int)  # function
-                >> pipe(async_add_one)  # async
-                >> task("t2", double)  # thread
-                >> task("t3", async_add_one)  # async
-                >> tap(compute, 2000, z=10)  # function with args
-                >> then[int, int](lambda x: x + 1)  # lambda
+                >> then[str, int](lambda x: int(x))  # lambda
+                >> pipe(async_add_one)  # async function
+                >> task("t1", lambda _: time.sleep(0.2))  # (side effect) lambda task
+                >> pipe(compute, 30, z=10)  # function with args/kwargs
+                >> task("t2", async_add_one)  # (side effect) async task
+                >> pipe(_sum, 5, 10)  # function with no positional args  # type: ignore
+                >> wait(["t1"])  # wait for a specific task
                 >> pipe(BasicClass)  # class
                 >> pipe(BasicClass.get_double)  # classmethod
-                >> tap(BasicClass.increment)  # tap + updates original object
-                >> pipe(BasicClass.get_value_method)  # method
-                >> then[int, int](lambda x: _sum(x, 4, 5, 6))  # typed lambda
-                >> wait()  # thread join
+                >> tap(BasicClass.increment)  # (side effect) method
+                >> pipe(BasicClass.get_value_plus_arg, 5)  # method with arg
+                >> tap(lambda x: print(x))  # (side effect) lambda
+                >> wait()  # wait for all remaining tasks
             )
-            op: int = instance >> end()
-            normalized_history = [
-                x.value if isinstance(x, BasicClass) else x for x in instance.history
-            ]
-            self.assertListEqual(
-                normalized_history,
-                ["3", "33", "33", 33, 34, 34, 34, 34, 35, 35, 71, 71, 71, 86, 86],
-            )
+        op: int = instance >> end()
+        normalized_history = [
+            x.value if isinstance(x, BasicClass) else x for x in instance.history
+        ]
+        self.assertListEqual(
+            normalized_history,
+            ["3", "33", 33, 34, 34, 74, 74, 89, 89, 89, 179, 179, 184, 184, 184],
+        )
         delta = time.perf_counter() - _start
-        self.assertTrue(delta > 0.2)
-        self.assertTrue(delta < 0.3)
-        self.assertEqual(op, 86)
+        self.assertTrue(delta > 0.3)
+        self.assertTrue(delta < 0.4)
+        self.assertEqual(op, 184)
 
 
 # region PipeTestCase
@@ -172,10 +194,10 @@ class TapTestCase(TestCase):
             >> tap(BasicClass.increment)  # Updates original object
             >> tap(BasicClass.get_double)  # classmethod
             >> tap(BasicClass.get_value_plus_arg, 5)  # method with arg
-            >> pipe(BasicClass.get_value_plus_arg, 1)
+            >> pipe(BasicClass.get_value_method)
             >> end()
         )
-        self.assertEqual(op, 8)
+        self.assertEqual(op, 7)
         mock.assert_called_once_with(12)
 
 
@@ -194,11 +216,11 @@ class TaskTestCase(TestCase):
             >> task("t5", BasicClass.increment)  # Updates original object
             >> task("t6", BasicClass.get_double)  # classmethod
             >> task("t7", BasicClass.get_value_plus_arg, 5)  # method with arg
-            >> pipe(BasicClass.get_value_plus_arg, 1)
+            >> pipe(BasicClass.get_value_method)
             >> wait()
             >> end()
         )
-        self.assertEqual(op, 8)
+        self.assertEqual(op, 7)
         mock.assert_called_once_with(12)
 
     def test_without_join(self) -> None:
