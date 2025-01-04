@@ -4,13 +4,11 @@ from threading import Thread
 from typing import (
     Any,
     Callable,
-    Coroutine,
     Dict,
     Generic,
     List,
     Optional,
     Self,
-    TypeAlias,
     Union,
     overload,
     override,
@@ -44,13 +42,13 @@ class PipeObject(Generic[TValue]):
         self.tasks: Dict[TaskId, Thread] = {}
         self._handle_debug()
 
-    @classmethod
-    def update(
-        cls, pipe_start: "PipeObject[TValue]", value: TNewValue
-    ) -> "PipeObject[TNewValue]":
-        pipe_start.value = value  # type: ignore
-        pipe_start._handle_debug()
-        return pipe_start  # type: ignore
+    def update(self, value: TNewValue) -> "PipeObject[TNewValue]":
+        new_pipe = PipeObject(value, self.debug)
+        new_pipe.history = self.history
+        new_pipe.tasks = self.tasks
+        del self
+        new_pipe._handle_debug()
+        return new_pipe
 
     def keep(self) -> Self:
         self._handle_debug()
@@ -84,9 +82,6 @@ class PipeObject(Generic[TValue]):
         return [self.tasks[tid] for tid in task_ids]
 
 
-Other: TypeAlias = Union[PipeObject[TInput], PipeObject[Coroutine[Any, Any, TInput]]]
-
-
 # region Pipe
 class Pipe(Generic[TInput, FuncParams, TOutput]):
     __slots__ = ("f", "args", "kwargs")
@@ -101,9 +96,9 @@ class Pipe(Generic[TInput, FuncParams, TOutput]):
         self.args = args
         self.kwargs = kwargs
 
-    def __rrshift__(self, other: Other[TInput]) -> PipeObject[TOutput]:
-        value = self.f(other.value, *self.args, **self.kwargs)  # type: ignore
-        return PipeObject.update(other, value)  # type: ignore
+    def __rrshift__(self, other: PipeObject[TInput]) -> PipeObject[TOutput]:
+        value = self.f(other.value, *self.args, **self.kwargs)
+        return other.update(value)
 
 
 # region AsyncPipe
@@ -120,9 +115,9 @@ class AsyncPipe(Generic[TInput, FuncParams, TOutput]):
         self.args = args
         self.kwargs = kwargs
 
-    def __rrshift__(self, other: Other[TInput]) -> PipeObject[TOutput]:
+    def __rrshift__(self, other: PipeObject[TInput]) -> PipeObject[TOutput]:
         value = asyncio.run(self.f(other.value, *self.args, **self.kwargs))  # type: ignore
-        return PipeObject.update(other, value)  # type: ignore
+        return other.update(value)
 
 
 # region PipeFactory
@@ -161,8 +156,10 @@ class PipeFactory(Generic[TInput, FuncParams, TOutput]):
             return AsyncPipe(f, *args, **kwargs)
         raise PipeError("Unsupported function provided to `pipe`.")
 
-    def __rrshift__(self, _other: Other[TInput]) -> PipeObject[TOutput]:  # noqa:  # type: ignore
-        pass
+    def __rrshift__(self, _other: PipeObject[TInput]) -> PipeObject[TOutput]:
+        if isinstance(self, AsyncPipe) or isinstance(self, Pipe):
+            return self.__rrshift__(_other)
+        raise PipeError("???")
 
 
 # region Then
@@ -174,9 +171,9 @@ class Then(Generic[TInput, TOutput]):
             raise PipeError("`then` only supports one-arg lambdas. Try `pipe` instead.")
         self.f = f
 
-    def __rrshift__(self, other: Other[TInput]) -> PipeObject[TOutput]:
+    def __rrshift__(self, other: PipeObject[TInput]) -> PipeObject[TOutput]:
         value = self.f(other.value)
-        return PipeObject.update(other, value)  # type: ignore
+        return other.update(value)
 
 
 # region _SideEffect
@@ -194,18 +191,18 @@ class _SideEffect(ABC, Generic[TInput, FuncParams]):
         self.kwargs = kwargs
 
     @abstractmethod
-    def __rrshift__(self, other: Other[TInput]) -> PipeObject[TInput]: ...
+    def __rrshift__(self, other: PipeObject[TInput]) -> PipeObject[TInput]: ...
 
 
 # region Tap
 class Tap(_SideEffect[TInput, FuncParams]):
     @override
-    def __rrshift__(self, other: Other[TInput]) -> PipeObject[TInput]:
+    def __rrshift__(self, other: PipeObject[TInput]) -> PipeObject[TInput]:
         if is_async_pipeable(self.f):
             asyncio.run(self.f(other.value, *self.args, **self.kwargs))  # type: ignore
         else:
-            self.f(other.value, *self.args, **self.kwargs)  # type: ignore
-        return other.keep()  # type: ignore
+            self.f(other.value, *self.args, **self.kwargs)
+        return other.keep()
 
 
 # region TaskPipe
@@ -224,14 +221,19 @@ class TaskPipe(_SideEffect[TInput, FuncParams]):
         super().__init__(f, *args, **kwargs)
 
     @override
-    def __rrshift__(self, other: Other[TInput]) -> PipeObject[TInput]:
-        args = (other.value, *self.args)
+    def __rrshift__(self, other: PipeObject[TInput]) -> PipeObject[TInput]:
         if is_async_pipeable(self.f):
-            thread = Thread(target=lambda: asyncio.run(self.f(*args, **self.kwargs)))  # type: ignore
+            thread = Thread(
+                target=lambda: asyncio.run(
+                    self.f(other.value, *self.args, **self.kwargs)  # type: ignore
+                )
+            )
         else:
-            thread = Thread(target=self.f, args=args, kwargs=self.kwargs)  # type: ignore
+            args = (other.value, *self.args)
+            kwargs: Any = self.kwargs or {}
+            thread = Thread(target=self.f, args=args, kwargs=kwargs)
         other.register_thread(self.task_id, thread)
-        return other.keep()  # type: ignore
+        return other.keep()
 
 
 # region WaitFor
@@ -241,14 +243,14 @@ class WaitFor:
     def __init__(self, task_ids: Optional[List[TaskId]] = None) -> None:
         self.task_ids = task_ids
 
-    def __rrshift__(self, other: Other[TInput]) -> PipeObject[TInput]:
+    def __rrshift__(self, other: PipeObject[TInput]) -> PipeObject[TInput]:
         other.wait_for_tasks(self.task_ids)
-        return other.keep()  # type: ignore
+        return other.keep()
 
 
 # region PipeEnd
 class PipeEnd:
     __slots__ = ()
 
-    def __rrshift__(self, other: Other[TValue]) -> TValue:
-        return other.value  # type: ignore
+    def __rrshift__(self, other: PipeObject[TValue]) -> TValue:
+        return other.value
