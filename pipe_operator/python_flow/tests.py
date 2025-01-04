@@ -1,15 +1,16 @@
 import asyncio
 import time
+from typing import Any
 from unittest import TestCase
 from unittest.mock import Mock, patch
 
 from pipe_operator.python_flow.classes import PipeEnd as end
+from pipe_operator.python_flow.classes import PipeFactory as pipe
 from pipe_operator.python_flow.classes import PipeObject as start
 from pipe_operator.python_flow.classes import Tap as tap
 from pipe_operator.python_flow.classes import TaskPipe as task
 from pipe_operator.python_flow.classes import Then as then
 from pipe_operator.python_flow.classes import WaitFor as wait
-from pipe_operator.python_flow.factories import pipe
 from pipe_operator.shared.exceptions import PipeError
 
 
@@ -102,11 +103,7 @@ class CompleteFlowTestCase(TestCase):
 
 # region PipeTestCase
 class PipeTestCase(TestCase):
-    def test_fails_with_lambdas(self) -> None:
-        with self.assertRaises(PipeError):
-            pipe(lambda x: x + 1)  # noqa: # type: ignore
-
-    def test_with_valid_pipeables(self) -> None:
+    def test_supported_pipeables(self) -> None:
         _start = time.perf_counter()
         op = (
             start("3")
@@ -125,14 +122,48 @@ class PipeTestCase(TestCase):
         self.assertTrue(delta < 0.2)
         self.assertEqual(op, 123)
 
+    def test_fails_with_lambdas(self) -> None:
+        with self.assertRaises(PipeError):
+            pipe(lambda x: x + 1)  # noqa: # type: ignore
+
+
+# region ThenTestCase
+class ThenTestCase(TestCase):
+    def test_with_one_arg_lambdas(self) -> None:
+        op = (
+            start(3)
+            >> then[int, int](lambda x: x + 1)
+            >> then[int, str](lambda x: str(x))
+            >> end()
+        )
+        self.assertEqual(op, "4")
+
+    def test_if_function_is_not_1_arg_lambda(self) -> None:
+        with self.assertRaises(PipeError):
+            then(lambda x, y: x + y)  # type: ignore
+        with self.assertRaises(PipeError):
+            then(string_to_int)
+        with self.assertRaises(PipeError):
+            then(async_add_one)
+        with self.assertRaises(PipeError):
+            then(compute)  # type: ignore
+        with self.assertRaises(PipeError):
+            then(_sum)
+        with self.assertRaises(PipeError):
+            then(BasicClass)
+        with self.assertRaises(PipeError):
+            then(BasicClass.get_double)
+        with self.assertRaises(PipeError):
+            then(BasicClass.get_value_plus_arg)  # type: ignore
+
 
 # region TapTestCase
 class TapTestCase(TestCase):
-    def test_tap(self) -> None:
+    def test_supported_pipeables(self) -> None:
         mock = Mock()
         op = (
             start(3)
-            >> tap(lambda x: double(x))  # lambda # type: ignore
+            >> tap[int, Any](lambda x: double(x))  # typed lambda
             >> tap(lambda _: mock(12))  # lambda
             >> pipe(double)
             >> tap(int_to_string)  # function
@@ -150,7 +181,27 @@ class TapTestCase(TestCase):
 
 # region TaskTestCase
 class TaskTestCase(TestCase):
-    def test_with_threads_without_join(self) -> None:
+    def test_supported_pipeables(self) -> None:
+        mock = Mock()
+        op = (
+            start(3)
+            >> task[int, Any]("t1", lambda x: double(x))  # typed lambda
+            >> task("t2", lambda _: mock(12))  # lambda
+            >> pipe(double)
+            >> task("t3", int_to_string)  # function
+            >> task("t41", async_add_one)  # async function
+            >> pipe(BasicClass)
+            >> task("t5", BasicClass.increment)  # Updates original object
+            >> task("t6", BasicClass.get_double)  # classmethod
+            >> task("t7", BasicClass.get_value_plus_arg, 5)  # method with arg
+            >> pipe(BasicClass.get_value_plus_arg, 1)
+            >> wait()
+            >> end()
+        )
+        self.assertEqual(op, 8)
+        mock.assert_called_once_with(12)
+
+    def test_without_join(self) -> None:
         _start = time.perf_counter()
         op = (
             start(3)
@@ -163,7 +214,7 @@ class TaskTestCase(TestCase):
         self.assertTrue(delta < 0.1)
         self.assertEqual(op, 3)
 
-    def test_with_threads_with_some_joins(self) -> None:
+    def test_with_some_joins(self) -> None:
         _start = time.perf_counter()
         op: int = (
             start(3)
@@ -178,7 +229,7 @@ class TaskTestCase(TestCase):
         self.assertTrue(delta < 0.2)
         self.assertEqual(op, 3)
 
-    def test_with_threads_with_join_all(self) -> None:
+    def test_with_join_all(self) -> None:
         _start = time.perf_counter()
         op: int = (
             start(3)
@@ -193,7 +244,7 @@ class TaskTestCase(TestCase):
         self.assertTrue(delta < 0.2)
         self.assertEqual(op, 3)
 
-    def test_with_threads_with_unknown_thread_id(self) -> None:
+    def test_should_crash_on_unknown_task_id(self) -> None:
         with self.assertRaises(PipeError):
             _ = (
                 start(3)
@@ -202,7 +253,7 @@ class TaskTestCase(TestCase):
                 >> end()
             )
 
-    def test_with_threads_with_duplicated_thread_id(self) -> None:
+    def test_should_crash_on_duplicate_task_id(self) -> None:
         with self.assertRaises(PipeError):
             _ = (
                 start(3)

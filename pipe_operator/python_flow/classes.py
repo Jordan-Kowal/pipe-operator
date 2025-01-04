@@ -12,6 +12,7 @@ from typing import (
     Self,
     TypeAlias,
     Union,
+    overload,
     override,
 )
 
@@ -26,9 +27,9 @@ from pipe_operator.python_flow.types import (
     TOutput,
     TValue,
 )
-from pipe_operator.python_flow.utils import is_async_pipeable
+from pipe_operator.python_flow.utils import is_async_pipeable, is_sync_pipeable
 from pipe_operator.shared.exceptions import PipeError
-from pipe_operator.shared.utils import is_one_arg_lambda
+from pipe_operator.shared.utils import is_lambda, is_one_arg_lambda
 
 
 # region PipeObject
@@ -86,13 +87,13 @@ class PipeObject(Generic[TValue]):
 Other: TypeAlias = Union[PipeObject[TInput], PipeObject[Coroutine[Any, Any, TInput]]]
 
 
-# region _Pipeable
-class _Pipeable(ABC, Generic[TInput, FuncParams, TOutput]):
+# region Pipe
+class Pipe(Generic[TInput, FuncParams, TOutput]):
     __slots__ = ("f", "args", "kwargs")
 
     def __init__(
         self,
-        f: PipeableCallable[TInput, FuncParams, TOutput],
+        f: SyncCallable[TInput, FuncParams, TOutput],
         *args: FuncParams.args,
         **kwargs: FuncParams.kwargs,
     ) -> None:
@@ -100,8 +101,82 @@ class _Pipeable(ABC, Generic[TInput, FuncParams, TOutput]):
         self.args = args
         self.kwargs = kwargs
 
-    @abstractmethod
-    def __rrshift__(self, other: Other[TInput]) -> PipeObject[TOutput]: ...
+    def __rrshift__(self, other: Other[TInput]) -> PipeObject[TOutput]:
+        value = self.f(other.value, *self.args, **self.kwargs)  # type: ignore
+        return PipeObject.update(other, value)  # type: ignore
+
+
+# region AsyncPipe
+class AsyncPipe(Generic[TInput, FuncParams, TOutput]):
+    __slots__ = ("f", "args", "kwargs")
+
+    def __init__(
+        self,
+        f: AsyncCallable[TInput, FuncParams, TOutput],
+        *args: FuncParams.args,
+        **kwargs: FuncParams.kwargs,
+    ) -> None:
+        self.f = f
+        self.args = args
+        self.kwargs = kwargs
+
+    def __rrshift__(self, other: Other[TInput]) -> PipeObject[TOutput]:
+        value = asyncio.run(self.f(other.value, *self.args, **self.kwargs))  # type: ignore
+        return PipeObject.update(other, value)  # type: ignore
+
+
+# region PipeFactory
+class PipeFactory(Generic[TInput, FuncParams, TOutput]):
+    @overload
+    def __new__(  # type: ignore
+        cls,
+        f: AsyncCallable[TInput, FuncParams, TOutput],
+        *args: FuncParams.args,
+        **kwargs: FuncParams.kwargs,
+    ) -> AsyncPipe[TInput, FuncParams, TOutput]: ...
+
+    @overload
+    def __new__(  # type: ignore
+        cls,
+        f: SyncCallable[TInput, FuncParams, TOutput],
+        *args: FuncParams.args,
+        **kwargs: FuncParams.kwargs,
+    ) -> Pipe[TInput, FuncParams, TOutput]: ...
+
+    def __new__(  # type: ignore
+        cls,
+        f: PipeableCallable[TInput, FuncParams, TOutput],
+        *args: FuncParams.args,
+        **kwargs: FuncParams.kwargs,
+    ) -> Union[
+        Pipe[TInput, FuncParams, TOutput], AsyncPipe[TInput, FuncParams, TOutput]
+    ]:
+        if is_lambda(f):
+            raise PipeError(
+                "`pipe` does not support lambda functions. Use `then` instead."
+            )
+        if is_sync_pipeable(f):
+            return Pipe(f, *args, **kwargs)
+        if is_async_pipeable(f):
+            return AsyncPipe(f, *args, **kwargs)
+        raise PipeError("Unsupported function provided to `pipe`.")
+
+    def __rrshift__(self, _other: Other[TInput]) -> PipeObject[TOutput]:  # noqa:  # type: ignore
+        pass
+
+
+# region Then
+class Then(Generic[TInput, TOutput]):
+    __slots__ = ("f",)
+
+    def __init__(self, f: Callable[[TInput], TOutput]) -> None:
+        if not is_one_arg_lambda(f):
+            raise PipeError("`then` only supports one-arg lambdas. Try `pipe` instead.")
+        self.f = f
+
+    def __rrshift__(self, other: Other[TInput]) -> PipeObject[TOutput]:
+        value = self.f(other.value)
+        return PipeObject.update(other, value)  # type: ignore
 
 
 # region _SideEffect
@@ -120,54 +195,6 @@ class _SideEffect(ABC, Generic[TInput, FuncParams]):
 
     @abstractmethod
     def __rrshift__(self, other: Other[TInput]) -> PipeObject[TInput]: ...
-
-
-# region Pipe
-class Pipe(_Pipeable[TInput, FuncParams, TOutput]):
-    @override
-    def __init__(
-        self,
-        f: SyncCallable[TInput, FuncParams, TOutput],
-        *args: FuncParams.args,
-        **kwargs: FuncParams.kwargs,
-    ) -> None:
-        super().__init__(f, *args, **kwargs)
-
-    @override
-    def __rrshift__(self, other: Other[TInput]) -> PipeObject[TOutput]:
-        value = self.f(other.value, *self.args, **self.kwargs)  # type: ignore
-        return PipeObject.update(other, value)  # type: ignore
-
-
-# region AsyncPipe
-class AsyncPipe(_Pipeable[TInput, FuncParams, TOutput]):
-    @override
-    def __init__(
-        self,
-        f: AsyncCallable[TInput, FuncParams, TOutput],
-        *args: FuncParams.args,
-        **kwargs: FuncParams.kwargs,
-    ) -> None:
-        super().__init__(f, *args, **kwargs)
-
-    @override
-    def __rrshift__(self, other: Other[TInput]) -> PipeObject[TOutput]:
-        value = asyncio.run(self.f(other.value, *self.args, **self.kwargs))  # type: ignore
-        return PipeObject.update(other, value)  # type: ignore
-
-
-# region Then
-class Then(Generic[TInput, TOutput]):
-    __slots__ = ("f",)
-
-    def __init__(self, f: Callable[[TInput], TOutput]) -> None:
-        if not is_one_arg_lambda(f):
-            raise PipeError("`then` only supports one-arg lambdas. Try `pipe` instead.")
-        self.f = f
-
-    def __rrshift__(self, other: Other[TInput]) -> PipeObject[TOutput]:
-        value = self.f(other.value)
-        return PipeObject.update(other, value)  # type: ignore
 
 
 # region Tap
