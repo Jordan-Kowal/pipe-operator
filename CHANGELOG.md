@@ -8,12 +8,44 @@
 - 🔧 Others
 - 💥 Breaking
 
-## TBD
+## 2.0.0 - TBD
 
-- 💥 [Python] Removed both `Then` and `PipeArgs` to reduce complexity, as it can easily be replaced with `Pipe`
-- 🚀 [Python] Added `AsyncPipe` to handle (and wait for) async function calls from asyncio
+### 💥 Breaking changes: imports
+
+Two major changes have been introduced:
+
+- Imports are no longer at the top level but are now nested their respective modules
+- For the 🐍 python implementation, the available imports have changed
+
+```python
+from pipe_operator.elixir_flow import elixir_pipe, tap, then
+from pipe_operator.python_flow import end, pipe, start, tap, task, then, wait
+```
+
+If you were using the python implementation before, the migration is quite simple. Here is the mapping:
+
+| Before        | After   |
+| ------------- | ------- |
+| `PipeStart`   | `start` |
+| `Pipe`        | `pipe`  |
+| `PipeArgs`    | `pipe`  |
+| `Tap`         | `tap`   |
+| `Then`        | `then`  |
+| `ThreadPipe`  | `task`  |
+| `ThreadWait`  | `wait`  |
+| `PipeEnd`     | `end`   |
+
+### 🚀 New feature: async function support
+
+The 🐍 python implementation now support **async functions** from `asyncio`.
+When using `pipe`, `tap`, or `task`, you can freely pass an async or sync function as the first argument.
+As for `then`, it only supports single-arg lambda function and therefore does not support async functions.
+
+### 🔧 Other changes
+
+- 🔧 [Python] Updated documentation (docstrings and [README.md](./README.md))
 - 🔧 [Python] `>>` logic is now handle in each pipeable's `__rrshift__` instead of `PipeObject.__rshift__`
-- 🔧 [Python] Greatly improved typing with things like `@final`, `@override`, `Self`, `TypeAlias`, and `TypeGuard`
+- 🔧 [Python] Greatly improved typing annotations (using `@overload`, `@override`, `TypeAlias`, `TypeGuard`, ...)
 
 ## 1.1.0 - 2024-11-23
 
