@@ -8,12 +8,13 @@ from typing import (
     Generic,
     List,
     Optional,
-    Self,
     Union,
     cast,
     overload,
     override,
 )
+
+from typing_extensions import Self
 
 from pipe_operator.python_flow.types import (
     AsyncCallable,
