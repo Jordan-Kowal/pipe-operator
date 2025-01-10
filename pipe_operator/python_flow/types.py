@@ -1,12 +1,13 @@
 from typing import (
     Awaitable,
     Callable,
-    Concatenate,
     ParamSpec,
     TypeAlias,
     TypeVar,
     Union,
 )
+
+from typing_extensions import Concatenate
 
 TInput = TypeVar("TInput")
 FuncParams = ParamSpec("FuncParams")
