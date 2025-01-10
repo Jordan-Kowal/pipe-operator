@@ -67,7 +67,7 @@ show_column_numbers = true
 strict_optional = false
 warn_redundant_casts = true
 warn_unused_ignores = true
-disable_error_code = "attr-defined,import-untyped"
+disable_error_code = "attr-defined,import-untyped,redundant-cast"
 
 [[tool.mypy.overrides]]
 module = "*/elixir_flow/tests/test_pipe"
