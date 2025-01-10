@@ -11,10 +11,9 @@ from typing import (
     Union,
     cast,
     overload,
-    override,
 )
 
-from typing_extensions import Self
+from typing_extensions import Self, override
 
 from pipe_operator.python_flow.types import (
     AsyncCallable,

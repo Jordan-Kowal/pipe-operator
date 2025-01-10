@@ -1,5 +1,7 @@
 import inspect
-from typing import Any, Callable, Coroutine, TypeGuard
+from typing import Any, Callable, Coroutine
+
+from typing_extensions import TypeGuard
 
 from pipe_operator.python_flow.types import (
     AsyncCallable,

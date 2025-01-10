@@ -1,7 +1,9 @@
 import inspect
 import types
 from types import LambdaType
-from typing import Any, Callable, TypeGuard
+from typing import Any, Callable
+
+from typing_extensions import TypeGuard
 
 
 def is_lambda(f: Callable) -> TypeGuard[LambdaType]:
