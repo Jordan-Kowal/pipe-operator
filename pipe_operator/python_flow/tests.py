@@ -211,7 +211,7 @@ class TaskTestCase(TestCase):
             >> task("t2", lambda _: mock(12))  # lambda
             >> pipe(double)
             >> task("t3", int_to_string)  # function
-            >> task("t41", async_add_one)  # async function
+            >> task("t4", async_add_one)  # async function
             >> pipe(BasicClass)
             >> task("t5", BasicClass.increment)  # Updates original object
             >> task("t6", BasicClass.get_double)  # classmethod
