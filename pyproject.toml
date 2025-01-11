@@ -1,6 +1,6 @@
 [project]
 name = "pipe_operator"
-version = "1.1.0"
+version = "2.0.0"
 requires-python = ">=3.9"
 description = "Elixir's pipe operator in Python"
 dependencies = ["typing-extensions>=4.12.2"]
@@ -72,12 +72,6 @@ disable_error_code = "attr-defined,import-untyped,redundant-cast"
 [[tool.mypy.overrides]]
 module = "*/elixir_flow/tests/test_pipe"
 disable_error_code = "attr-defined,import-untyped,name-defined"
-
-# ------------------------------
-# PYRIGHT
-# ------------------------------
-[tool.pyright]
-reportOperatorIssue = "none"
 
 # ------------------------------
 # RUFF

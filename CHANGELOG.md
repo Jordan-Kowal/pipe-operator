@@ -8,7 +8,7 @@
 - 🔧 Others
 - 💥 Breaking
 
-## 2.0.0 - TBD
+## 2.0.0 - 2025-01-11
 
 ### 💥 Breaking changes: imports
 
@@ -39,10 +39,11 @@ If you were using the python implementation before, the migration is quite simpl
 
 The 🐍 python implementation now support **async functions** from `asyncio`.
 When using `pipe`, `tap`, or `task`, you can freely pass an async or sync function as the first argument.
-As for `then`, it only supports single-arg lambda function and therefore does not support async functions.
+As for `then`, it only supports single-arg lambda function.
 
 ### 🔧 Other changes
 
+- ✨ [Python] Exported classes with aliases (ie `PipeStart` is exported as `start`) for improved readability
 - 🔧 [Python] Updated documentation (docstrings and [README.md](./README.md))
 - 🔧 [Python] `>>` logic is now handle in each pipeable's `__rrshift__` instead of `PipeObject.__rshift__`
 - 🔧 [Python] Greatly improved typing annotations (using `@overload`, `@override`, `TypeAlias`, `TypeGuard`, ...)
