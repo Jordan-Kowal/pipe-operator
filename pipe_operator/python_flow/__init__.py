@@ -1,14 +1,17 @@
-from .base import Pipe, PipeArgs, PipeEnd, PipeStart
-from .extras import Tap, Then
-from .threads import ThreadPipe, ThreadWait
+from .classes import PipeEnd as end
+from .classes import PipeFactory as pipe
+from .classes import PipeObject as start
+from .classes import Tap as tap
+from .classes import TaskPipe as task
+from .classes import Then as then
+from .classes import WaitFor as wait
 
 __all__ = [
-    "Pipe",
-    "PipeArgs",
-    "PipeEnd",
-    "PipeStart",
-    "Tap",
-    "Then",
-    "ThreadPipe",
-    "ThreadWait",
+    "end",
+    "pipe",
+    "start",
+    "tap",
+    "task",
+    "then",
+    "wait",
 ]

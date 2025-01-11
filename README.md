@@ -4,7 +4,7 @@
 ![Tests](https://github.com/Jordan-Kowal/pipe-operator/actions/workflows/tests.yml/badge.svg?branch=main)
 ![Build](https://github.com/Jordan-Kowal/pipe-operator/actions/workflows/publish_package.yml/badge.svg?event=release)
 ![Coverage](https://badgen.net/badge/coverage/%3E90%25/pink)
-![Tag](https://badgen.net/badge/tag/1.1.0/orange)
+![Tag](https://badgen.net/badge/tag/2.0.0/orange)
 ![Python](https://badgen.net/badge/python/3.9%20|%203.10%20|%203.11%20|%203.12|%203.13)
 ![Licence](https://badgen.net/badge/licence/MIT)
 
@@ -12,7 +12,7 @@
   - [⚡ Quick start](#-quick-start)
   - [📕 Overview](#-overview)
   - [🐍 Pythonic implementation](#-pythonic-implementation)
-    - [Available classes](#available-classes)
+    - [Available imports](#available-imports)
     - [Limitations](#limitations)
   - [🍹 Elixir-like implementation](#-elixir-like-implementation)
     - [Overview](#overview)
@@ -29,13 +29,13 @@ This module provides 2 vastly different implementations, each with its own pros 
 ## ⚡ Quick start
 
 As simple as `pip install pipe_operator`.
-Then either import the 🐍 **pythonic classes** or the 🍹 **elixir functions**
+Then either import the 🐍 **pythonic version** or the 🍹 **elixir version**
 
 ```python
-# Pythonic classes
-from pipe_operator import Pipe, PipeArgs, PipeEnd, PipeStart, Tap, Then, ThreadPipe, ThreadWait
-# Elixir functions
-from pipe_operator import elixir_pipe, tap, then
+# Pythonic imports
+from pipe_operator.python_flow import end, pipe, start, tap, task, then, wait
+# Elixir imports
+from pipe_operator.elixir_flow import elixir_pipe, tap, then
 ```
 
 ## 📕 Overview
@@ -44,23 +44,24 @@ You can use the 🐍 **pythonic** implementation, which is **entirely compatible
 but a bit more verbose than the original pipe operator:
 
 ```python
-from pipe_operator import Pipe, PipeArgs, PipeEnd, PipeStart, Tap, Then, ThreadPipe, ThreadWait
+from pipe_operator.python_flow import end, pipe, start, tap, task, then, wait
 
 result = (
-    PipeStart("3")                          # starts the pipe
-    >> Pipe(int)                            # function with 1-arg
-    >> Pipe(my_func, 2000, z=10)            # function with multiple args
-    >> Tap(print)                           # side effect
-    >> Then(lambda x: x + 1)                # lambda
-    >> Pipe(MyClass)                        # class
-    >> Pipe(MyClass.my_classmethod)         # classmethod
-    >> Tap(MyClass.my_method)               # side effect that can update the original object
-    >> Pipe(MyClass.my_other_method)        # method
-    >> Then[int, int](lambda x: x * 2)      # explicitly-typed lambda
-    >> PipeArgs(my_other_func, 4, 5, 6)     # special case for functions with no positional/keyword parameters
-    >> ThreadPipe("t1", do_something)       # thread
-    >> ThreadWait(["t1"])                   # wait for thread(s)
-    >> PipeEnd()                            # extract the value
+    start("3")                              # start
+    >> pipe(do_something)                   # function
+    >> then[str, int](lambda x: int(x))     # typed lambda
+    >> pipe(do_something_async)             # async function
+    >> task("t1", lambda _: print("hello")) # lambda task
+    >> pipe(do_something_else, 30, z=10)    # function with args/kwargs
+    >> task("t2", do_something_async)       # async task
+    >> wait(["t1"])                         # wait for a specific task
+    >> pipe(BasicClass)                     # class
+    >> pipe(BasicClass.my_classmethode)     # classmethod
+    >> tap(BasicClass.my_method)            # (side effect) method
+    >> pipe(BasicClass.other_method, 5)     # method with arg
+    >> tap(lambda x: print(x))              # lambda (side-effect)
+    >> wait()                               # wait for all remaining tasks
+    >> end()                                # end
 )
 ```
 
@@ -95,33 +96,27 @@ workflow(3)
 
 ## 🐍 Pythonic implementation
 
-### Available classes
+### Available imports
 
-In the 🐍 **pythonic implementation**, we expose the following classes:
+In the 🐍 **pythonic implementation**, we expose the following items:
 
-| Class        | Description                                                           | Examples                                  |
-| ------------ | --------------------------------------------------------------------- | ----------------------------------------- |
-| `PipeStart`  | The start of the pipe                                                 | `PipeStart("3")`                          |
-| `Pipe`       | Used to call almost any functions or classes, or methods              | `Pipe(int)`, `Pipe(my_func, 2000, z=10)`  |
-| `PipeArgs`   | Same as `Pipe` but for function with no positional/keyword parameters | `PipeArgs(func, 1, 2)`                    |
-| `Then`       | Same as `Pipe`, but for 1-arg lambda functions                        | `Then(lambda x: x.attribute)`             |
-| `Tap`        | Used to trigger a side effect (meaning it returns the original value) | `Tap(print)`, `Tap(lambda x: x.method())` |
-| `ThreadPipe` | Used to call a function in a thread                                   | `ThreadPipe("t1", do_something)()`        |
-| `ThreadWait` | Used to wait for multiple (or all)threads to finish                   | `ThreadWait()`, `ThreadWait(["id1"])`     |
-| `PipeEnd`    | The end of the pipe, to extract the raw final result                  | `PipeEnd()`                               |
+| Import  | Description                                                           | Examples                                      |
+| --------| --------------------------------------------------------------------- | --------------------------------------------- |
+| `start` | The start of the pipe                                                 | `start("3")`                                  |
+| `pipe`  | To call almost any functions, classes, or methods (except lambdas)    | `pipe(int)`, `pipe(do_something, 2000, z=10)` |
+| `then`  | To call 1-arg lambda functions (like elixir)                          | `then[int, str](lambda x: str(x))`            |
+| `tap`   | To perform side-effects and return the original value (like elixir)   | `tap(do_something)`                           |
+| `task`  | To perform non-blocking function calls (in a thread)                  | `task("t1", do_something, arg1)`              |
+| `wait`  | To wait for specific tasks to complete                                | `wait(["id1"])`, `wait()`                     |
+| `end`   | The end of the pipe, to extract the raw final result                  | `end()`                                       |
 
 ### Limitations
 
-**property:** Properties cannot be called directly. You must resort to the use of `Then(lambda x: x.my_property)`.
-This will work just fine and ensure type-safety throughout the pipe.
+**property:** Class instance properties cannot be called through `pipe`. You must use `then` with a lambda instead.
+For example: `then[MyClass, int](lambda x: x.value)`
 
-**functions without positional/keyword parameters:** While they are technically supported by the `Pipe` class,
-your type-checker will not handle them properly, because the `Pipe` class expect the function to have
-at least 1 positional/keyword parameter (ie the first one, passed down the pipe). To bypass this limitation,
-you should use `PipeArgs` instead.
-
-**pyright:** `pyright` seems to have trouble dealing with our `>>` in some specific cases. As such,
-we advise you set `reportOperatorIssue = "none"` in your `pyright` config.
+**functions without positional/keyword parameters:** Functions like `do_something(*args)` are supported though
+the type-checker will complain. Use a single `# type: ignore` comment instead.
 
 ## 🍹 Elixir-like implementation
 
