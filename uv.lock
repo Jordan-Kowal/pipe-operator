@@ -521,7 +521,7 @@ dependencies = [
     { name = "typing-extensions" },
 ]
 
-[package.dependency-groups]
+[package.dev-dependencies]
 dev = [
     { name = "build" },
     { name = "coverage" },
@@ -535,7 +535,7 @@ dev = [
 [package.metadata]
 requires-dist = [{ name = "typing-extensions", specifier = ">=4.12.2" }]
 
-[package.metadata.dependency-groups]
+[package.metadata.requires-dev]
 dev = [
     { name = "build", specifier = ">=1.2.2.post1" },
     { name = "coverage", specifier = ">=7.6.3" },
