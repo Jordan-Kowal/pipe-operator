@@ -8,6 +8,12 @@
 - 🔧 Others
 - 💥 Breaking
 
+## 2.0.1 - 2025-04-18
+
+- 🔧 Removed `update_deps` action
+- 🔧 Added `dependabot` config for `uv` deps updates
+- 🔧 Upgraded deps
+
 ## 2.0.0 - 2025-01-11
 
 ### 💥 Breaking changes: imports

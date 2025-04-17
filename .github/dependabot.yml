@@ -1,0 +1,14 @@
+version: 2
+updates:
+  - package-ecosystem: "uv"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 1
+    groups:
+      all:
+        patterns: ["*"]
+    reviewers:
+      - "Jordan-Kowal"
+    commit-message:
+      prefix: "[Deps] "
