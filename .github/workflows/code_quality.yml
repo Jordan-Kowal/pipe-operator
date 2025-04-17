@@ -18,7 +18,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.13" # Cached by github (https://github.com/actions/runner-images/blob/main/images/ubuntu/Ubuntu2204-Readme.md#python)
-          cache: "pip"
+          cache: "uv"
           cache-dependency-path: |
             ./uv.lock
 
@@ -46,7 +46,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.13"
-          cache: "pip"
+          cache: "uv"
           cache-dependency-path: |
             ./uv.lock
 
@@ -71,7 +71,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.13"
-          cache: "pip"
+          cache: "uv"
           cache-dependency-path: |
             ./uv.lock
 
@@ -98,7 +98,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.13"
-          cache: "pip"
+          cache: "uv"
           cache-dependency-path: |
             ./uv.lock
 
@@ -123,7 +123,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.13"
-          cache: "pip"
+          cache: "uv"
           cache-dependency-path: |
             ./uv.lock
 
@@ -149,7 +149,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.13"
-          cache: "pip"
+          cache: "uv"
           cache-dependency-path: |
             ./uv.lock
 
