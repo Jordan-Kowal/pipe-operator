@@ -12,6 +12,7 @@
 
 - 🔧 Removed `update_deps` action
 - 🔧 Added `dependabot` config for `uv` deps updates
+- 🔧 Updated CI to use python 3.13
 - 🔧 Upgraded deps
 
 ## 2.0.0 - 2025-01-11
