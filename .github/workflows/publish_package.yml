@@ -28,7 +28,7 @@ jobs:
       - name: Cache venv
         uses: actions/cache@v3
         with:
-          path: .venv
+          path: ./.venv
           key: python-3-13-venv-${{ hashFiles('./uv.lock') }}
 
       - name: Build and publish

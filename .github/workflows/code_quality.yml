@@ -25,7 +25,7 @@ jobs:
         id: cache-venv
         uses: actions/cache@v3
         with:
-          path: .venv
+          path: ./.venv
           key: python-3-13-venv-${{ hashFiles('./uv.lock') }}
 
       - name: Install dependencies
@@ -51,7 +51,7 @@ jobs:
       - name: Cache venv
         uses: actions/cache@v3
         with:
-          path: .venv
+          path: ./.venv
           key: python-3-13-venv-${{ hashFiles('./uv.lock') }}
 
       - name: Run flake8
@@ -75,7 +75,7 @@ jobs:
       - name: Cache venv
         uses: actions/cache@v3
         with:
-          path: .venv
+          path: ./.venv
           key: python-3-13-venv-${{ hashFiles('./uv.lock') }}
 
       - name: Run ruff
@@ -101,7 +101,7 @@ jobs:
       - name: Cache venv
         uses: actions/cache@v3
         with:
-          path: .venv
+          path: ./.venv
           key: python-3-13-venv-${{ hashFiles('./uv.lock') }}
 
       - name: Run mypy
@@ -125,7 +125,7 @@ jobs:
       - name: Cache venv
         uses: actions/cache@v3
         with:
-          path: .venv
+          path: ./.venv
           key: python-3-13-venv-${{ hashFiles('./uv.lock') }}
 
       - name: Run pyright
@@ -150,7 +150,7 @@ jobs:
       - name: Cache venv
         uses: actions/cache@v3
         with:
-          path: .venv
+          path: ./.venv
           key: python-3-13-venv-${{ hashFiles('./uv.lock') }}
 
       - name: Run coverage
