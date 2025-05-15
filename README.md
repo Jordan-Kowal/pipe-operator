@@ -188,6 +188,7 @@ the following:
 
 - `mypy`: Either ignore `operator,call-arg,call-overload,name-defined`, or ignore just `name-defined` and use the `@no_type_check` decorator
 - `pyright`: Set `reportOperatorIssue`, `reportCallIssue`, `reportUndefinedVariable` to `none`
+- `ty`: Ignore `missing-argument`, `unsupported-operator`, and `unresolved-reference`
 - `ruff`: Disable the `F821` error
 - `flake8`: Disable the `F821` error
 

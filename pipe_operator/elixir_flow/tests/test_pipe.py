@@ -50,7 +50,7 @@ class ClassWithDecoratedMethod(BasicClass):
             >> double
             >> add(10)
             >> _sum(1, 2, 3, 4)
-            >> pow(2)
+            >> pow(2)  # ty: ignore
             >> add(-20)
             >> double
         )

@@ -8,6 +8,10 @@
 - 🔧 Others
 - 💥 Breaking
 
+## TBD
+
+- 🔧 Added `ty`  type-checker in the config and the CI
+
 ## 2.0.1 - 2025-04-18
 
 - 🔧 Removed `update_deps` action

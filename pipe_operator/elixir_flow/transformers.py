@@ -94,16 +94,16 @@ class PipeTransformer(ast.NodeTransformer):
         # Property call `_.attribute`
         if (
             isinstance(node.right, ast.Attribute)
-            and isinstance(node.right.value, ast.Name)
-            and node.right.value.id == self.placeholder
+            and isinstance(node.right.value, ast.Name)  # ty: ignore
+            and node.right.value.id == self.placeholder  # ty: ignore
         ):
             transformed_node = self._transform_attribute(node)
         # Method call `_.method(...)`
         elif (
             isinstance(node.right, ast.Call)
-            and isinstance(node.right.func, ast.Attribute)
-            and isinstance(node.right.func.value, ast.Name)
-            and node.right.func.value.id == self.placeholder
+            and isinstance(node.right.func, ast.Attribute)  # ty: ignore
+            and isinstance(node.right.func.value, ast.Name)  # ty: ignore
+            and node.right.func.value.id == self.placeholder  # ty: ignore
         ):
             transformed_node = self._transform_method_call(node)
         # Direct operations like BinOp (but not our operator),

@@ -154,7 +154,7 @@ class ThenTestCase(TestCase):
     def test_with_one_arg_lambdas(self) -> None:
         op = (
             start(3)
-            >> then[int, int](lambda x: x + 1)
+            >> then[int, int](lambda x: x + 1)  # ty: ignore
             >> then[int, str](lambda x: str(x))
             >> end()
         )
@@ -172,7 +172,7 @@ class ThenTestCase(TestCase):
         with self.assertRaises(PipeError):
             then(_sum)
         with self.assertRaises(PipeError):
-            then(BasicClass)
+            then(BasicClass)  # ty: ignore
         with self.assertRaises(PipeError):
             then(BasicClass.get_double)
         with self.assertRaises(PipeError):

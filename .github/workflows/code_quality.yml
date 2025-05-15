@@ -133,6 +133,30 @@ jobs:
           . .venv/bin/activate
           pyright .
 
+  ty:
+    needs: setup
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache-dependency-path: |
+            ./uv.lock
+
+      - name: Cache venv
+        uses: actions/cache@v3
+        with:
+          path: ./.venv
+          key: python-3-13-venv-${{ hashFiles('./uv.lock') }}
+
+      - name: Run pyright
+        run: |
+          . .venv/bin/activate
+          ty check .
+
 
   coverage:
     needs: setup

@@ -50,6 +50,7 @@ dev-dependencies = [
     "pyright>=1.1.385",
     "ruff>=0.7.0",
     "twine>=5.1.1",
+    "ty>=0.0.1a3",
 ]
 
 # ------------------------------
@@ -72,6 +73,15 @@ disable_error_code = "attr-defined,import-untyped,redundant-cast"
 [[tool.mypy.overrides]]
 module = "*/elixir_flow/tests/test_pipe"
 disable_error_code = "attr-defined,import-untyped,name-defined"
+
+# ------------------------------
+# TY
+# ------------------------------
+[tool.ty.rules]
+missing-argument = "ignore"
+unsupported-operator = "ignore"
+unresolved-reference = "ignore"
+invalid-argument-type = "ignore"
 
 # ------------------------------
 # RUFF

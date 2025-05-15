@@ -112,8 +112,8 @@ def elixir_pipe(
             ctx = decorator_frame[0].f_locals
             first_line_number = decorator_frame[2]
         else:
-            ctx = func_or_class.__globals__
-            first_line_number = func_or_class.__code__.co_firstlineno
+            ctx = func_or_class.__globals__  # ty: ignore
+            first_line_number = func_or_class.__code__.co_firstlineno  # ty: ignore
 
         # Extract AST
         source = getsource(func_or_class)
