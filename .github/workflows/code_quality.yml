@@ -155,7 +155,7 @@ jobs:
       - name: Run pyright
         run: |
           . .venv/bin/activate
-          ty check .
+          ty check . --error-on-warning
 
 
   coverage:

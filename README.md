@@ -182,7 +182,7 @@ Eventually, `a >> b(...) >> c(...)` becomes `c(b(a, ...), ...)`.
 ### Linters and type-checkers issues
 
 Sadly, this implementation comes short when dealing with linters (like `ruff` or `flake8`)
-and type-checkers (like `mypy` or `pyright`). Because these are static code analyzers, they inspect
+and type-checkers (like `mypy`, `pyright`, or `ty`). Because these are static code analyzers, they inspect
 the original code, and not your AST-modified version. To bypass the errors, you'll need to disable
 the following:
 
