@@ -10,6 +10,7 @@
 
 ## TBD
 
+- 🔧 Added `CODEOWNERS` file and removed reviewers from dependabot
 - 🔧 Added `ty`  type-checker in the config and the CI
 
 ## 2.0.1 - 2025-04-18

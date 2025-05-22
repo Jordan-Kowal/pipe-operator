@@ -8,7 +8,5 @@ updates:
     groups:
       all:
         patterns: ["*"]
-    reviewers:
-      - "Jordan-Kowal"
     commit-message:
       prefix: "[Deps] "
