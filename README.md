@@ -69,7 +69,7 @@ Or the 🍹 **elixir-like** implementation, whose syntax greatly resembles the o
 but has major issues with linters and type-checkers.
 
 ```python
-from pipe_operator import elixir_pipe, tap, then
+from pipe_operator.elixir_flow import elixir_pipe, tap, then
 
 @elixir_pipe
 def workflow(value):
@@ -166,6 +166,21 @@ to skip the lambda declaration and directly perform the following operations:
 | f-strings                   | `a >> f"{_}"`                    | `(lambda Z: f"{Z}")(a)`                    |
 | list/set/... creations      | `a >> [_, 1, 2]`                 | `(lambda Z: [Z, 1, 2])(a)`                 |
 | list/set/... comprehensions | `a >> [x + _ for x in range(_)]` | `(lambda Z: [x + Z for x in range(Z)])(a)` |
+
+Also you can write own functions like:
+```python
+def pipe_filter(iterable, filter_func):
+    return filter(filter_func, iterable)
+
+def pipe_map(iterable, map_func):
+    return map(map_func, iterable)
+```
+and use it same like elixir code:
+```python
+value
+>> pipe_filter(lambda a: '@' in a)
+>> pipe_map(lambda a: a.lower())
+```
 
 ### How it works
 
