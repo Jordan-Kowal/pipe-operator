@@ -168,6 +168,7 @@ to skip the lambda declaration and directly perform the following operations:
 | list/set/... comprehensions | `a >> [x + _ for x in range(_)]` | `(lambda Z: [x + Z for x in range(Z)])(a)` |
 
 Also you can write own functions like:
+
 ```python
 def pipe_filter(iterable, filter_func):
     return filter(filter_func, iterable)
