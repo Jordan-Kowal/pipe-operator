@@ -175,7 +175,9 @@ def pipe_filter(iterable, filter_func):
 def pipe_map(iterable, map_func):
     return map(map_func, iterable)
 ```
+
 and use it same like elixir code:
+
 ```python
 value
 >> pipe_filter(lambda a: '@' in a)
