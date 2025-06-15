@@ -8,5 +8,3 @@ on:
 jobs:
   update-deps:
     uses: Jordan-Kowal/github-workflows/.github/workflows/update-uv-lockfile.yml@main
-    with:
-      token: ${{ secrets.DEPENDABOT_PAT }}
