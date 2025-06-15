@@ -6,5 +6,5 @@ on:
     - cron: '0 0 * * 1'  # Run weekly on Monday
 
 jobs:
-  update-deps:
+  update-uv-lockfile:
     uses: Jordan-Kowal/github-workflows/.github/workflows/update-uv-lockfile.yml@main
