@@ -1,0 +1,12 @@
+name: Update uv lockfile
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 0 * * 1'  # Run weekly on Monday
+
+jobs:
+  update-deps:
+    uses: Jordan-Kowal/github-workflows/.github/workflows/update-uv-lockfile.yml@main
+    with:
+      token: ${{ secrets.DEPENDABOT_PAT }}
