@@ -3,7 +3,7 @@ name: Update uv lockfile
 on:
   workflow_dispatch:
   schedule:
-    - cron: '0 0 * * 1'  # Run weekly on Monday
+    - cron: '0 0 1 * *'  # Run monthly on the 1st day of the month
 
 jobs:
   update-uv-lockfile:

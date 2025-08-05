@@ -12,7 +12,7 @@
 
 - 🔧 Added `CODEOWNERS` file and removed reviewers from dependabot
 - 🔧 Added `ty`  type-checker in the config and the CI
-- 🔧 Fallback to `update-uv-lockfile` action for dependency upgrades
+- 🔧 Fallback to `update-uv-lockfile` action for monthly dependency updates
 
 ## 2.0.1 - 2025-04-18
 
