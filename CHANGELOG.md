@@ -11,8 +11,9 @@
 ## TBD
 
 - 🔧 Added `CODEOWNERS` file and removed reviewers from dependabot
-- 🔧 Added `ty`  type-checker in the config and the CI
+- 🔧 Added `ty` type-checker in the config and the CI
 - 🔧 Fallback to `update-uv-lockfile` action for monthly dependency updates
+- 🔧 Added ZED editor config in `.zed` folder
 
 ## 2.0.1 - 2025-04-18
 
@@ -37,16 +38,16 @@ from pipe_operator.python_flow import end, pipe, start, tap, task, then, wait
 
 If you were using the python implementation before, the migration is quite simple. Here is the mapping:
 
-| Before        | After   |
-| ------------- | ------- |
-| `PipeStart`   | `start` |
-| `Pipe`        | `pipe`  |
-| `PipeArgs`    | `pipe`  |
-| `Tap`         | `tap`   |
-| `Then`        | `then`  |
-| `ThreadPipe`  | `task`  |
-| `ThreadWait`  | `wait`  |
-| `PipeEnd`     | `end`   |
+| Before       | After   |
+| ------------ | ------- |
+| `PipeStart`  | `start` |
+| `Pipe`       | `pipe`  |
+| `PipeArgs`   | `pipe`  |
+| `Tap`        | `tap`   |
+| `Then`       | `then`  |
+| `ThreadPipe` | `task`  |
+| `ThreadWait` | `wait`  |
+| `PipeEnd`    | `end`   |
 
 ### 🚀 New feature: async function support
 

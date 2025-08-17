@@ -1,0 +1,62 @@
+{
+  // Extensions
+  "auto_install_extensions": {
+    "basher": true,
+    "codebook": true,
+    "env": true,
+    "git-firefly": true,
+    "ini": true,
+    "ruff": true,
+    "toml": true,
+    "ty": true
+  },
+
+  // LSP active on all files
+  "language_servers": ["codebook"],
+
+  // LSP configurations
+  "lsp": {
+    "pyright": {
+      "settings": {
+        "python": {
+          "pythonPath": "./.venv/bin/python",
+          "analysis": {
+            "exclude": [
+              "**/__pycache__/**",
+              "**/.*_cache*/**",
+              "**/.direnv/**",
+              "**/.git/**",
+              "**/.idea/**",
+              "**/.ipython/**",
+              "**/.venv/**",
+              "**/site-packages/**",
+              "**/venv/**"
+            ],
+            "extraPaths": [],
+            "include": [],
+            "ignore": ["**/.venv"],
+            "typeCheckingMode": "off",
+            "useLibraryCodeForTypes": true
+          }
+        }
+      }
+    }
+  },
+
+  "languages": {
+    "Python": {
+      "language_servers": ["!pylsp", "pyright", "ruff", "ty"],
+      "format_on_save": "on",
+      "formatter": {
+        "language_server": {
+          "name": "ruff"
+        }
+      },
+      "code_actions_on_format": {
+        "source.fixAll.ruff": true,
+        "source.organizeImports.ruff": true,
+        "source.removeUnusedImports.python": true
+      }
+    }
+  }
+}
