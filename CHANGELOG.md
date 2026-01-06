@@ -8,12 +8,11 @@
 - 🔧 Others
 - 💥 Breaking
 
-## TBD
+## 2.0.2 - 2026-01-06
 
 - 🔧 Added `CODEOWNERS` file and removed reviewers from dependabot
 - 🔧 Added `ty` type-checker in the config and the CI
 - 🔧 Fallback to `update-uv-lockfile` action for monthly dependency updates
-- 🔧 Added ZED editor config in `.zed` folder
 
 ## 2.0.1 - 2025-04-18
 

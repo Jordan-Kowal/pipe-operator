@@ -14,8 +14,8 @@ TOutput = TypeVar("TOutput")
 SyncCallable: TypeAlias = Callable[Concatenate[TInput, FuncParams], TOutput]
 AsyncCallable: TypeAlias = Callable[Concatenate[TInput, FuncParams], Awaitable[TOutput]]
 PipeableCallable: TypeAlias = Union[
-    Callable[Concatenate[TInput, FuncParams], TOutput],
-    Callable[Concatenate[TInput, FuncParams], Awaitable[TOutput]],
+    SyncCallable[TInput, FuncParams, TOutput],
+    AsyncCallable[TInput, FuncParams, TOutput],
 ]
 
 TValue = TypeVar("TValue")

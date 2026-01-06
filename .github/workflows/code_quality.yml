@@ -152,7 +152,7 @@ jobs:
           path: ./.venv
           key: python-3-13-venv-${{ hashFiles('./uv.lock') }}
 
-      - name: Run pyright
+      - name: Run ty
         run: |
           . .venv/bin/activate
           ty check . --error-on-warning
