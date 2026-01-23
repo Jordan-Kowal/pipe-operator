@@ -31,7 +31,7 @@ coverage report --fail-under=90
 coverage html
 ```
 
-In the CI, tests are run on multiple Python versions (from 3.9 to 3.13)
+In the CI, tests are run on multiple Python versions (from 3.9 to 3.14)
 to ensure compatibility on each version.
 
 ### Using git hooks
@@ -59,5 +59,5 @@ We use GitHub actions to verify, build, and deploy the application. We currently
 
 - [code_quality](.github/workflows/code_quality.yml): runs `ruff`, `flake8`, `mypy`, `pyright`, `ty`, and `coverage`
 - [publish_package](.github/workflows/publish_package.yml): Deploys the package on PyPi
-- [tests](.github/workflows/tests.yml): runs unittests on multiple Python versions (from 3.9 to 3.13)
+- [tests](.github/workflows/tests.yml): runs unittests on multiple Python versions (from 3.9 to 3.14)
 - [update-uv-lockfile](.github/workflows/update-uv-lockfile.yml): Updates the uv lockfile

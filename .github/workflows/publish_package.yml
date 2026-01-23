@@ -21,7 +21,7 @@ jobs:
 
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.13"
+          python-version: "3.14"
           cache-dependency-path: |
             ./uv.lock
 
@@ -29,7 +29,7 @@ jobs:
         uses: actions/cache@v3
         with:
           path: ./.venv
-          key: python-3-13-venv-${{ hashFiles('./uv.lock') }}
+          key: python-3-14-venv-${{ hashFiles('./uv.lock') }}
 
       - name: Build and publish
         env:
