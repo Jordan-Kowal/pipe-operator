@@ -23,7 +23,7 @@ Reference these for project details:
 - **Elixir Flow**: Mimics Elixir's `|>` operator using Python's `>>` operator
 - **Python Flow**: A more Pythonic approach using chaining
 
-The project focuses on type safety, code quality, and compatibility across multiple Python versions (3.9-3.13).
+The project focuses on type safety, code quality, and compatibility across multiple Python versions (3.9-3.14).
 
 ## Technology Stack
 
@@ -49,7 +49,7 @@ pipe_operator/
 
 ## Python Version Compatibility **(Critical)**
 
-Code must work on Python 3.9 through 3.13. Avoid Python 3.10+ only features.
+Code must work on Python 3.9 through 3.14. Avoid Python 3.10+ only features.
 
 **Anti-patterns - DO NOT USE:**
 

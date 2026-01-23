@@ -8,6 +8,13 @@
 - 🔧 Others
 - 💥 Breaking
 
+## 2.1.0 - 2026-01-23
+
+- ✨ Added support for Python 3.14
+- 🔧 Re-added `dependabot` config for `uv`
+- 🔧 Added ClaudeCode configuration
+- 🔧 Updated deps
+
 ## 2.0.2 - 2026-01-06
 
 - 🔧 Added `CODEOWNERS` file and removed reviewers from dependabot
