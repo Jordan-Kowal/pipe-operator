@@ -77,7 +77,7 @@ class CompleteFlowTestCase(TestCase):
                 >> task("t1", lambda _: time.sleep(0.2))  # (side effect) lambda task
                 >> pipe(compute, 30, z=10)  # function with args/kwargs
                 >> task("t2", async_add_one)  # (side effect) async task
-                >> pipe(_sum, 5, 10)  # function with no positional args  # type: ignore
+                >> pipe(_sum, 5, 10)  # function with no positional args
                 >> wait(["t1"])  # wait for a specific task
                 >> pipe(BasicClass)  # class
                 >> pipe(BasicClass.get_double)  # classmethod
@@ -100,7 +100,7 @@ class CompleteFlowTestCase(TestCase):
                 >> task("t1", lambda _: time.sleep(0.2))  # (side effect) lambda task
                 >> pipe(compute, 30, z=10)  # function with args/kwargs
                 >> task("t2", async_add_one)  # (side effect) async task
-                >> pipe(_sum, 5, 10)  # function with no positional args  # type: ignore
+                >> pipe(_sum, 5, 10)  # function with no positional args
                 >> wait(["t1"])  # wait for a specific task
                 >> pipe(BasicClass)  # class
                 >> pipe(BasicClass.get_double)  # classmethod
@@ -132,7 +132,7 @@ class PipeTestCase(TestCase):
             >> pipe(string_to_int)  # function
             >> pipe(async_add_one)  # async function
             >> pipe(compute, 30, z=10)  # function with args/kwargs
-            >> pipe(_sum, 5, 10)  # function with no positional args  # type: ignore
+            >> pipe(_sum, 5, 10)  # function with no positional args
             >> pipe(BasicClass)  # class
             >> pipe(BasicClass.get_double)  # classmethod
             >> pipe(BasicClass.get_value_plus_arg, 5)  # method with arg
@@ -154,7 +154,7 @@ class ThenTestCase(TestCase):
     def test_with_one_arg_lambdas(self) -> None:
         op = (
             start(3)
-            >> then[int, int](lambda x: x + 1)  # ty: ignore
+            >> then[int, int](lambda x: x + 1)
             >> then[int, str](lambda x: str(x))
             >> end()
         )
@@ -172,7 +172,7 @@ class ThenTestCase(TestCase):
         with self.assertRaises(PipeError):
             then(_sum)
         with self.assertRaises(PipeError):
-            then(BasicClass)  # ty: ignore
+            then(BasicClass)
         with self.assertRaises(PipeError):
             then(BasicClass.get_double)
         with self.assertRaises(PipeError):
