@@ -1,6 +1,7 @@
 ### IDE ###
 .vscode
 .idea
+.claude/settings.local.json
 
 ### Django ###
 *.log

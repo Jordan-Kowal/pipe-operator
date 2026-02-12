@@ -48,6 +48,7 @@ dev-dependencies = [
     "coverage>=7.6.3",
     "flake8>=7.1.1",
     "mypy>=1.12.1",
+    "pyrefly>=0.52.0",
     "pyright>=1.1.385",
     "ruff>=0.7.0",
     "twine>=5.1.1",
@@ -84,6 +85,13 @@ unsupported-operator = "ignore"
 unresolved-reference = "ignore"
 invalid-argument-type = "ignore"
 unused-ignore-comment = "ignore"
+
+# ------------------------------
+# PYREFLY
+# ------------------------------
+[tool.pyrefly.errors]
+no-matching-overload = false
+redundant-cast = false
 
 # ------------------------------
 # RUFF

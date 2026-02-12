@@ -200,13 +200,14 @@ Eventually, `a >> b(...) >> c(...)` becomes `c(b(a, ...), ...)`.
 ### Linters and type-checkers issues
 
 Sadly, this implementation comes short when dealing with linters (like `ruff` or `flake8`)
-and type-checkers (like `mypy`, `pyright`, or `ty`). Because these are static code analyzers, they inspect
+and type-checkers (like `mypy`, `pyright`, `ty`, or `pyrefly`). Because these are static code analyzers, they inspect
 the original code, and not your AST-modified version. To bypass the errors, you'll need to disable
 the following:
 
 - `mypy`: Either ignore `operator,call-arg,call-overload,name-defined`, or ignore just `name-defined` and use the `@no_type_check` decorator
 - `pyright`: Set `reportOperatorIssue`, `reportCallIssue`, `reportUndefinedVariable` to `none`
 - `ty`: Ignore `missing-argument`, `unsupported-operator`, and `unresolved-reference`
+- `pyrefly`: Disable `no-matching-overload`
 - `ruff`: Disable the `F821` error
 - `flake8`: Disable the `F821` error
 

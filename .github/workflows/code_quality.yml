@@ -157,6 +157,29 @@ jobs:
           . .venv/bin/activate
           ty check . --error-on-warning
 
+  pyrefly:
+    needs: setup
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+          cache-dependency-path: |
+            ./uv.lock
+
+      - name: Cache venv
+        uses: actions/cache@v3
+        with:
+          path: ./.venv
+          key: python-3-14-venv-${{ hashFiles('./uv.lock') }}
+
+      - name: Run pyrefly
+        run: |
+          . .venv/bin/activate
+          pyrefly check .
 
   coverage:
     needs: setup

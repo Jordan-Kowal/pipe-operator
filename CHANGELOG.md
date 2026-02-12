@@ -8,6 +8,10 @@
 - 🔧 Others
 - 💥 Breaking
 
+## TBD
+
+- 🔧 Added `pyrefly` type-checker in the config and the CI
+
 ## 2.1.0 - 2026-01-23
 
 - ✨ Added support for Python 3.14

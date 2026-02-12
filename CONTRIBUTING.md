@@ -45,11 +45,11 @@ Run the following command to tell `git` to look for hooks in this folder:
 git config core.hooksPath .githooks
 ```
 
-Pre-commit hooks will run `ruff`, `flake8`, `mypy`, `pyright`, `ty`, and `coverage` on each commit.
+Pre-commit hooks will run `ruff`, `flake8`, `mypy`, `pyright`, `ty`, `pyrefly`, and `coverage` on each commit.
 
 ### Linters
 
-In both the CI and githooks, we use both `ruff` and `flake8`, as well as `mypy`, `ty`, and `pyright`.
+In both the CI and githooks, we use both `ruff` and `flake8`, as well as `mypy`, `ty`, `pyright`, and `pyrefly`.
 This is mostly to ensure that our implementation is compatible with the most common
 linters and type checkers.
 
@@ -57,7 +57,7 @@ linters and type checkers.
 
 We use GitHub actions to verify, build, and deploy the application. We currently have:
 
-- [code_quality](.github/workflows/code_quality.yml): runs `ruff`, `flake8`, `mypy`, `pyright`, `ty`, and `coverage`
+- [code_quality](.github/workflows/code_quality.yml): runs `ruff`, `flake8`, `mypy`, `pyright`, `ty`, `pyrefly`, and `coverage`
 - [publish_package](.github/workflows/publish_package.yml): Deploys the package on PyPi
 - [tests](.github/workflows/tests.yml): runs unittests on multiple Python versions (from 3.9 to 3.14)
 - [update-uv-lockfile](.github/workflows/update-uv-lockfile.yml): Updates the uv lockfile

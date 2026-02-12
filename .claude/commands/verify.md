@@ -21,7 +21,10 @@ Run all quality assurance checks in the following order:
 5. **Ty** (type checking)
    - `ty check . --error-on-warning`
 
-6. **Coverage** (tests)
+6. **Pyrefly** (type checking)
+   - `pyrefly check .`
+
+7. **Coverage** (tests)
    - `coverage run -m unittest discover .`
    - `coverage report --fail-under=90`
 

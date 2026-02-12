@@ -146,7 +146,7 @@ class PipeTestCase(TestCase):
 
     def test_fails_with_lambdas(self) -> None:
         with self.assertRaises(PipeError):
-            pipe(lambda x: x + 1)  # noqa: # type: ignore
+            pipe(lambda x: x + 1)  # type: ignore
 
 
 # region ThenTestCase
