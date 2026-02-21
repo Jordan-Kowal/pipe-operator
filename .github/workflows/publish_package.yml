@@ -17,25 +17,23 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - uses: actions/setup-python@v5
+      - uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.14"
-          cache-dependency-path: |
-            ./uv.lock
 
-      - name: Cache venv
-        uses: actions/cache@v3
-        with:
-          path: ./.venv
-          key: python-3-14-venv-${{ hashFiles('./uv.lock') }}
+      - name: Install dependencies
+        run: uv sync --frozen
 
       - name: Build and publish
         env:
           TWINE_USERNAME: __token__
           TWINE_PASSWORD: ${{ secrets.PYPI_API_KEY }}
         run: |
-          . .venv/bin/activate
-          python -m build
-          twine upload dist/*
+          uv run python -m build
+          uv run twine upload dist/*

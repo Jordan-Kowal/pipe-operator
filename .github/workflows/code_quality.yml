@@ -9,199 +9,147 @@ on:
     branches: ['main']
 
 jobs:
-  setup:
+  flake8:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - uses: actions/setup-python@v5
+      - uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.14"
-          cache-dependency-path: |
-            ./uv.lock
-
-      - name: Cache venv
-        id: cache-venv
-        uses: actions/cache@v3
-        with:
-          path: ./.venv
-          key: python-3-14-venv-${{ hashFiles('./uv.lock') }}
 
       - name: Install dependencies
-        if: ${{ steps.cache-venv.outputs.cache-hit != 'true' }}
-        run: |
-          python -m pip install --upgrade pip
-          pip install uv
-          uv sync --frozen
-
-  flake8:
-    needs: setup
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.14"
-          cache-dependency-path: |
-            ./uv.lock
-
-      - name: Cache venv
-        uses: actions/cache@v3
-        with:
-          path: ./.venv
-          key: python-3-14-venv-${{ hashFiles('./uv.lock') }}
+        run: uv sync --frozen
 
       - name: Run flake8
-        run: |
-          . .venv/bin/activate
-          flake8 .
+        run: uv run flake8 .
 
   ruff:
-    needs: setup
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - uses: actions/setup-python@v5
+      - uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.14"
-          cache-dependency-path: |
-            ./uv.lock
 
-      - name: Cache venv
-        uses: actions/cache@v3
-        with:
-          path: ./.venv
-          key: python-3-14-venv-${{ hashFiles('./uv.lock') }}
+      - name: Install dependencies
+        run: uv sync --frozen
 
       - name: Run ruff
         run: |
-          . .venv/bin/activate
-          ruff check --select I .
-          ruff check .
-          ruff format --check .
+          uv run ruff check --select I .
+          uv run ruff check .
+          uv run ruff format --check .
 
   mypy:
-    needs: setup
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - uses: actions/setup-python@v5
+      - uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.14"
-          cache-dependency-path: |
-            ./uv.lock
 
-      - name: Cache venv
-        uses: actions/cache@v3
-        with:
-          path: ./.venv
-          key: python-3-14-venv-${{ hashFiles('./uv.lock') }}
+      - name: Install dependencies
+        run: uv sync --frozen
 
       - name: Run mypy
-        run: |
-          . .venv/bin/activate
-          mypy .
+        run: uv run mypy .
 
   pyright:
-    needs: setup
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - uses: actions/setup-python@v5
+      - uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.14"
-          cache-dependency-path: |
-            ./uv.lock
 
-      - name: Cache venv
-        uses: actions/cache@v3
-        with:
-          path: ./.venv
-          key: python-3-14-venv-${{ hashFiles('./uv.lock') }}
+      - name: Install dependencies
+        run: uv sync --frozen
 
       - name: Run pyright
-        run: |
-          . .venv/bin/activate
-          pyright .
+        run: uv run pyright .
 
   ty:
-    needs: setup
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - uses: actions/setup-python@v5
+      - uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.14"
-          cache-dependency-path: |
-            ./uv.lock
 
-      - name: Cache venv
-        uses: actions/cache@v3
-        with:
-          path: ./.venv
-          key: python-3-14-venv-${{ hashFiles('./uv.lock') }}
+      - name: Install dependencies
+        run: uv sync --frozen
 
       - name: Run ty
-        run: |
-          . .venv/bin/activate
-          ty check . --error-on-warning
+        run: uv run ty check . --error-on-warning
 
   pyrefly:
-    needs: setup
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - uses: actions/setup-python@v5
+      - uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.14"
-          cache-dependency-path: |
-            ./uv.lock
 
-      - name: Cache venv
-        uses: actions/cache@v3
-        with:
-          path: ./.venv
-          key: python-3-14-venv-${{ hashFiles('./uv.lock') }}
+      - name: Install dependencies
+        run: uv sync --frozen
 
       - name: Run pyrefly
-        run: |
-          . .venv/bin/activate
-          pyrefly check .
+        run: uv run pyrefly check .
 
   coverage:
-    needs: setup
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - uses: actions/setup-python@v5
+      - uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.14"
-          cache-dependency-path: |
-            ./uv.lock
 
-      - name: Cache venv
-        uses: actions/cache@v3
-        with:
-          path: ./.venv
-          key: python-3-14-venv-${{ hashFiles('./uv.lock') }}
+      - name: Install dependencies
+        run: uv sync --frozen
 
       - name: Run coverage
         run: |
-          . .venv/bin/activate
-          coverage run -m unittest discover .
-          coverage report --fail-under=90
+          uv run coverage run -m unittest discover .
+          uv run coverage report --fail-under=90
