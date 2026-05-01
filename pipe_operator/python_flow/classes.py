@@ -7,7 +7,7 @@ from typing import (
     Generic,
     List,
     Optional,
-    Union,
+    Tuple,
     cast,
     overload,
 )
@@ -46,16 +46,21 @@ class PipeObject(Generic[TValue]):
 
     __slots__ = ("value", "debug", "history", "tasks")
 
+    value: Any
+    debug: bool
+    history: List[Any]
+    tasks: Dict[TaskId, Thread]
+
     def __init__(self, value: TValue, debug: bool = False) -> None:
         self.value = value
         self.debug = debug
-        self.history: List[Any] = []
-        self.tasks: Dict[TaskId, Thread] = {}
+        self.history = []
+        self.tasks = {}
         self._handle_debug()
 
     def update(self, value: TNewValue) -> "PipeObject[TNewValue]":
         """Updates the value of the PipeObject and returns the object."""
-        self.value = value  # type: ignore
+        self.value = value
         self._handle_debug()
         return cast("PipeObject[TNewValue]", self)
 
@@ -98,6 +103,10 @@ class PipeObject(Generic[TValue]):
 class Pipe(Generic[TInput, FuncParams, TOutput]):
     __slots__ = ("f", "args", "kwargs")
 
+    f: SyncCallable[TInput, FuncParams, TOutput]
+    args: Tuple[Any, ...]
+    kwargs: Dict[str, Any]
+
     def __init__(
         self,
         f: SyncCallable[TInput, FuncParams, TOutput],
@@ -110,14 +119,17 @@ class Pipe(Generic[TInput, FuncParams, TOutput]):
 
     def __rrshift__(self, other: PipeObject[TInput]) -> PipeObject[TOutput]:
         """Runs the function and updates the PipeObject."""
-        cast_value = cast(TInput, other.value)
-        result = self.f(cast_value, *self.args, **self.kwargs)
+        result = self.f(other.value, *self.args, **self.kwargs)
         return other.update(result)
 
 
 # region AsyncPipe
 class AsyncPipe(Generic[TInput, FuncParams, TOutput]):
     __slots__ = ("f", "args", "kwargs")
+
+    f: AsyncCallable[TInput, FuncParams, TOutput]
+    args: Tuple[Any, ...]
+    kwargs: Dict[str, Any]
 
     def __init__(
         self,
@@ -131,12 +143,36 @@ class AsyncPipe(Generic[TInput, FuncParams, TOutput]):
 
     def __rrshift__(self, other: PipeObject[TInput]) -> PipeObject[TOutput]:
         """Runs the function and updates the PipeObject."""
-        value = asyncio.run(self.f(other.value, *self.args, **self.kwargs))  # type: ignore
+        coro = self.f(other.value, *self.args, **self.kwargs)
+        value = asyncio.run(coro)
         return other.update(value)
 
 
-# region PipeFactory
-class PipeFactory(Generic[TInput, FuncParams, TOutput]):
+# region pipe (factory)
+# Async overload comes first so async functions resolve to `AsyncPipe`.
+# Mypy flags this as overlapping with the sync overload because a sync function
+# could in theory return a Coroutine. Runtime dispatch handles this correctly.
+@overload
+def pipe(  # type: ignore[overload-overlap]
+    f: AsyncCallable[TInput, FuncParams, TOutput],
+    *args: FuncParams.args,
+    **kwargs: FuncParams.kwargs,
+) -> AsyncPipe[TInput, FuncParams, TOutput]: ...
+
+
+@overload
+def pipe(
+    f: SyncCallable[TInput, FuncParams, TOutput],
+    *args: FuncParams.args,
+    **kwargs: FuncParams.kwargs,
+) -> Pipe[TInput, FuncParams, TOutput]: ...
+
+
+def pipe(
+    f: Any,
+    *args: Any,
+    **kwargs: Any,
+) -> Any:
     """
     Most common pipeable that can be used for sync/async functions, classes, methods, etc.
     Function should take at least 1 argument and cannot be lambdas (use `then` for that).
@@ -160,45 +196,13 @@ class PipeFactory(Generic[TInput, FuncParams, TOutput]):
         ... )
         9
     """
-
-    @overload
-    def __new__(  # type: ignore
-        cls,
-        f: AsyncCallable[TInput, FuncParams, TOutput],
-        *args: FuncParams.args,
-        **kwargs: FuncParams.kwargs,
-    ) -> AsyncPipe[TInput, FuncParams, TOutput]: ...
-
-    @overload
-    def __new__(  # type: ignore
-        cls,
-        f: SyncCallable[TInput, FuncParams, TOutput],
-        *args: FuncParams.args,
-        **kwargs: FuncParams.kwargs,
-    ) -> Pipe[TInput, FuncParams, TOutput]: ...
-
-    def __new__(  # type: ignore
-        cls,
-        f: PipeableCallable[TInput, FuncParams, TOutput],
-        *args: FuncParams.args,
-        **kwargs: FuncParams.kwargs,
-    ) -> Union[
-        Pipe[TInput, FuncParams, TOutput], AsyncPipe[TInput, FuncParams, TOutput]
-    ]:
-        if is_lambda(f):
-            raise PipeError(
-                "`pipe` does not support lambda functions. Use `then` instead."
-            )
-        if is_sync_pipeable(f):
-            return Pipe(f, *args, **kwargs)
-        if is_async_pipeable(f):
-            return AsyncPipe(f, *args, **kwargs)
-        raise PipeError("Unsupported function provided to `pipe`.")
-
-    def __rrshift__(self, _other: PipeObject[TInput]) -> PipeObject[TOutput]:
-        if isinstance(self, AsyncPipe) or isinstance(self, Pipe):
-            return self.__rrshift__(_other)
-        raise PipeError("Unsupported function provided to `pipe`.")
+    if is_lambda(f):
+        raise PipeError("`pipe` does not support lambda functions. Use `then` instead.")
+    if is_async_pipeable(f):
+        return AsyncPipe(f, *args, **kwargs)
+    if is_sync_pipeable(f):
+        return Pipe(f, *args, **kwargs)
+    raise PipeError("Unsupported function provided to `pipe`.")
 
 
 # region Then
@@ -222,6 +226,8 @@ class Then(Generic[TInput, TOutput]):
     """
 
     __slots__ = ("f",)
+
+    f: Callable[[TInput], TOutput]
 
     def __init__(self, f: Callable[[TInput], TOutput]) -> None:
         if not is_one_arg_lambda(f):
@@ -266,6 +272,10 @@ class Tap(Generic[TInput, FuncParams]):
 
     __slots__ = ("f", "args", "kwargs")
 
+    f: PipeableCallable[TInput, FuncParams, Any]
+    args: Tuple[Any, ...]
+    kwargs: Dict[str, Any]
+
     def __init__(
         self,
         f: PipeableCallable[TInput, FuncParams, Any],
@@ -277,12 +287,12 @@ class Tap(Generic[TInput, FuncParams]):
         self.kwargs = kwargs
 
     def __rrshift__(self, other: PipeObject[TInput]) -> PipeObject[TInput]:
-        """Runs the function in a new thread and returns the unchanged PipeObject."""
-        if is_async_pipeable(self.f):
-            asyncio.run(self.f(other.value, *self.args, **self.kwargs))  # type: ignore
+        """Runs the function and returns the unchanged PipeObject."""
+        f = self.f
+        if is_sync_pipeable(f):
+            f(other.value, *self.args, **self.kwargs)
         else:
-            cast_value = cast(TInput, other.value)
-            self.f(cast_value, *self.args, **self.kwargs)
+            asyncio.run(f(other.value, *self.args, **self.kwargs))
         return other.retain()
 
 
@@ -320,6 +330,11 @@ class TaskPipe(Generic[TInput, FuncParams]):
 
     __slots__ = ("f", "args", "kwargs", "task_id")
 
+    f: PipeableCallable[TInput, FuncParams, Any]
+    args: Tuple[Any, ...]
+    kwargs: Dict[str, Any]
+    task_id: TaskId
+
     def __init__(
         self,
         task_id: TaskId,
@@ -334,16 +349,14 @@ class TaskPipe(Generic[TInput, FuncParams]):
 
     def __rrshift__(self, other: PipeObject[TInput]) -> PipeObject[TInput]:
         """Runs the function in a new thread and returns the PipeObject unchanged."""
-        if is_async_pipeable(self.f):
-            thread = Thread(
-                target=lambda: asyncio.run(
-                    self.f(other.value, *self.args, **self.kwargs)  # type: ignore
-                )
-            )
+        f = self.f
+        value = other.value
+        args = self.args
+        kwargs = self.kwargs
+        if is_async_pipeable(f):
+            thread = Thread(target=lambda: asyncio.run(f(value, *args, **kwargs)))
         else:
-            args = (other.value, *self.args)
-            kwargs: Any = self.kwargs or {}
-            thread = Thread(target=self.f, args=args, kwargs=kwargs)
+            thread = Thread(target=f, args=(value, *args), kwargs=kwargs)
         other.register_thread(self.task_id, thread)
         return other.retain()
 
@@ -371,6 +384,8 @@ class WaitFor:
     """
 
     __slots__ = ("task_ids",)
+
+    task_ids: Optional[List[TaskId]]
 
     def __init__(self, task_ids: Optional[List[TaskId]] = None) -> None:
         self.task_ids = task_ids

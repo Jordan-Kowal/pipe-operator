@@ -1,6 +1,7 @@
 from typing import (
-    Awaitable,
+    Any,
     Callable,
+    Coroutine,
     TypeVar,
     Union,
 )
@@ -12,7 +13,9 @@ FuncParams = ParamSpec("FuncParams")
 TOutput = TypeVar("TOutput")
 
 SyncCallable: TypeAlias = Callable[Concatenate[TInput, FuncParams], TOutput]
-AsyncCallable: TypeAlias = Callable[Concatenate[TInput, FuncParams], Awaitable[TOutput]]
+AsyncCallable: TypeAlias = Callable[
+    Concatenate[TInput, FuncParams], Coroutine[Any, Any, TOutput]
+]
 PipeableCallable: TypeAlias = Union[
     SyncCallable[TInput, FuncParams, TOutput],
     AsyncCallable[TInput, FuncParams, TOutput],

@@ -132,7 +132,7 @@ def elixir_pipe(
             d
             for d in tree.body[0].decorator_list  # type: ignore
             if isinstance(d, ast.Call)
-            and d.func.id != "elixir_pipe"  # type: ignore
+            and d.func.id != "elixir_pipe"
             or isinstance(d, ast.Name)
             and d.id != "elixir_pipe"
         ]

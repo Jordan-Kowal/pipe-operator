@@ -39,6 +39,13 @@ Source = "https://github.com/Jordan-Kowal/pipe-operator"
 requires = ["setuptools>=42", "wheel"]
 build-backend = "setuptools.build_meta"
 
+[tool.setuptools.packages.find]
+include = ["pipe_operator*"]
+exclude = ["*.tests", "*.tests.*"]
+
+[tool.setuptools.package-data]
+pipe_operator = ["py.typed"]
+
 # ------------------------------
 # Dependencies
 # ------------------------------
@@ -57,42 +64,87 @@ dev = [
 
 # ------------------------------
 # MYPY
+# Strict by default (python_flow). Permissive override for elixir_flow.
 # ------------------------------
 [tool.mypy]
-python_version = "3.14"
+python_version = "3.9"
 mypy_path = "."
-
-check_untyped_defs = true
-disallow_untyped_defs = true
+strict = true
 follow_imports = "silent"
 ignore_missing_imports = false
 show_column_numbers = true
-strict_optional = false
 warn_redundant_casts = true
 warn_unused_ignores = true
-disable_error_code = "attr-defined,import-untyped,redundant-cast,unused-ignore"
 
 [[tool.mypy.overrides]]
-module = "*/elixir_flow/tests/test_pipe"
-disable_error_code = "attr-defined,import-untyped,name-defined"
+module = "pipe_operator.elixir_flow.*"
+strict = false
+strict_optional = false
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+disallow_untyped_calls = false
+disallow_any_generics = false
+disallow_subclassing_any = false
+warn_return_any = false
+warn_unused_ignores = false
+no_implicit_reexport = false
+disable_error_code = ["attr-defined", "import-untyped", "name-defined", "redundant-cast", "unused-ignore", "type-arg"]
+
+# ------------------------------
+# PYRIGHT
+# Strict by default (python_flow). Permissive executionEnvironment for elixir_flow.
+# ------------------------------
+[tool.pyright]
+pythonVersion = "3.9"
+typeCheckingMode = "strict"
+include = ["pipe_operator"]
+exclude = ["**/__pycache__", ".venv", "build", "dist"]
+extraPaths = ["."]
+venvPath = "."
+venv = ".venv"
+
+[[tool.pyright.executionEnvironments]]
+root = "pipe_operator/elixir_flow"
+reportOperatorIssue = "none"
+reportCallIssue = "none"
+reportUndefinedVariable = "none"
+reportGeneralTypeIssues = "none"
+reportAttributeAccessIssue = "none"
+reportArgumentType = "none"
+reportUnknownArgumentType = "none"
+reportUnknownMemberType = "none"
+reportUnknownVariableType = "none"
+reportUnknownParameterType = "none"
+reportMissingParameterType = "none"
+reportMissingTypeArgument = "none"
+reportUntypedFunctionDecorator = "none"
+reportUnknownLambdaType = "none"
+
+# Tests use lambdas and dynamic patterns that strict mode flags. Permissive.
+[[tool.pyright.executionEnvironments]]
+root = "pipe_operator/python_flow/tests.py"
+reportUnknownVariableType = "none"
+reportUnknownLambdaType = "none"
+reportUnknownArgumentType = "none"
+reportOperatorIssue = "none"
+
+[[tool.pyright.executionEnvironments]]
+root = "pipe_operator/shared/tests"
+reportUnknownArgumentType = "none"
+reportUnknownLambdaType = "none"
+reportUnknownVariableType = "none"
 
 # ------------------------------
 # TY
+# Strict by default. Inline `# ty: ignore[rule]` used in elixir_flow only.
 # ------------------------------
-[tool.ty.rules]
-missing-argument = "ignore"
-unsupported-operator = "ignore"
-unresolved-reference = "ignore"
-invalid-argument-type = "ignore"
-unused-ignore-comment = "ignore"
-unused-type-ignore-comment = "ignore"
 
 # ------------------------------
 # PYREFLY
+# Strict by default. Inline `# pyrefly: ignore[rule]` used in elixir_flow only.
 # ------------------------------
-[tool.pyrefly.errors]
-no-matching-overload = false
-redundant-cast = false
+[tool.pyrefly]
+project-excludes = ["**/__pycache__", ".venv", "build", "dist"]
 
 # ------------------------------
 # RUFF

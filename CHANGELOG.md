@@ -10,11 +10,17 @@
 
 ## TBD
 
+- ✨ [Python] Added `py.typed` marker for PEP 561 compliance
+- ✨ [Python] Replaced `PipeFactory` class with a `pipe()` function (overloaded for sync/async)
+- ✨ [Python] Switched `is_async_pipeable`/`is_sync_pipeable` from `TypeGuard` to `TypeIs`
+- ✨ [Python] Tightened `args`/`kwargs` annotations on pipeables
+- ✨ Removed almost all `# type: ignore` comments from the python implementation
+- 🔧 Strict typing config by default (mypy, pyright, ty, pyrefly); permissive overrides scoped to `elixir_flow` only
+- 🔧 Added `__version__` to `pipe_operator/__init__.py` via `importlib.metadata`
 - 🔧 Added `pyrefly` type-checker in the config and the CI
-- 🔧 Modernized CI workflows: `astral-sh/setup-uv@v7`, `actions/checkout@v6`, `actions/setup-python@v6`, removed deprecated `actions/cache@v3`
+- 🔧 Modernized CI workflows: `astral-sh/setup-uv@v7`, `actions/checkout@v6`, `actions/setup-python@v6`
 - 🔧 Added `Makefile` with `verify`, `lint`, `types`, `test` targets
 - 🔧 Migrated `[tool.uv].dev-dependencies` to PEP 735 `[dependency-groups].dev`
-- 🔧 Fixed `ty` config to silence both `unused-ignore-comment` and `unused-type-ignore-comment`
 - 🔧 Updated deps
 
 ## 2.1.0 - 2026-01-23
