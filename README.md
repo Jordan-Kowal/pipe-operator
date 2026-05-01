@@ -115,8 +115,9 @@ In the 🐍 **pythonic implementation**, we expose the following items:
 **property:** Class instance properties cannot be called through `pipe`. You must use `then` with a lambda instead.
 For example: `then[MyClass, int](lambda x: x.value)`
 
-**functions without positional/keyword parameters:** Functions like `do_something(*args)` are supported though
-the type-checker will complain. Use a single `# type: ignore` comment instead.
+**variadic functions with `pyrefly`:** Functions like `do_something(*args)` are fully supported and work fine
+with `mypy`, `pyright`, and `ty`. Only `pyrefly` may complain due to its strict reading of `Concatenate` /
+`ParamSpec`. Add `# pyrefly: ignore[no-matching-overload]` on the line if needed.
 
 ## 🍹 Elixir-like implementation
 
