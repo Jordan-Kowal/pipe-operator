@@ -168,6 +168,17 @@ def pipe(
 ) -> Pipe[TInput, FuncParams, TOutput]: ...
 
 
+# Fallback overload for variadic callables (e.g. `def f(*args): ...`).
+# Pyrefly's strict reading of `Concatenate[T, P]` rejects matching against `*args`,
+# so this catches that case. Loses arg-checking for variadic case but real-world usage works.
+@overload
+def pipe(
+    f: Callable[..., TOutput],
+    *args: Any,
+    **kwargs: Any,
+) -> Pipe[Any, Any, TOutput]: ...
+
+
 def pipe(
     f: Any,
     *args: Any,

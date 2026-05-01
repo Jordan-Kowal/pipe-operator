@@ -77,7 +77,6 @@ class CompleteFlowTestCase(TestCase):
                 >> task("t1", lambda _: time.sleep(0.2))  # (side effect) lambda task
                 >> pipe(compute, 30, z=10)  # function with args/kwargs
                 >> task("t2", async_add_one)  # (side effect) async task
-                # pyrefly: ignore[no-matching-overload]
                 >> pipe(_sum, 5, 10)  # function with no positional args
                 >> wait(["t1"])  # wait for a specific task
                 >> pipe(BasicClass)  # class
@@ -101,7 +100,6 @@ class CompleteFlowTestCase(TestCase):
                 >> task("t1", lambda _: time.sleep(0.2))  # (side effect) lambda task
                 >> pipe(compute, 30, z=10)  # function with args/kwargs
                 >> task("t2", async_add_one)  # (side effect) async task
-                # pyrefly: ignore[no-matching-overload]
                 >> pipe(_sum, 5, 10)  # function with no positional args
                 >> wait(["t1"])  # wait for a specific task
                 >> pipe(BasicClass)  # class
@@ -134,7 +132,6 @@ class PipeTestCase(TestCase):
             >> pipe(string_to_int)  # function
             >> pipe(async_add_one)  # async function
             >> pipe(compute, 30, z=10)  # function with args/kwargs
-            # pyrefly: ignore[no-matching-overload]
             >> pipe(_sum, 5, 10)  # function with no positional args
             >> pipe(BasicClass)  # class
             >> pipe(BasicClass.get_double)  # classmethod
