@@ -12,6 +12,10 @@
 
 - 🔧 Added `pyrefly` type-checker in the config and the CI
 - 🔧 Modernized CI workflows: `astral-sh/setup-uv@v7`, `actions/checkout@v6`, `actions/setup-python@v6`, removed deprecated `actions/cache@v3`
+- 🔧 Added `Makefile` with `verify`, `lint`, `types`, `test` targets
+- 🔧 Migrated `[tool.uv].dev-dependencies` to PEP 735 `[dependency-groups].dev`
+- 🔧 Fixed `ty` config to silence both `unused-ignore-comment` and `unused-type-ignore-comment`
+- 🔧 Updated deps
 
 ## 2.1.0 - 2026-01-23
 

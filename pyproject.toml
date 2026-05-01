@@ -42,8 +42,8 @@ build-backend = "setuptools.build_meta"
 # ------------------------------
 # Dependencies
 # ------------------------------
-[tool.uv]
-dev-dependencies = [
+[dependency-groups]
+dev = [
     "build>=1.2.2.post1",
     "coverage>=7.6.3",
     "flake8>=7.1.1",
@@ -85,6 +85,7 @@ unsupported-operator = "ignore"
 unresolved-reference = "ignore"
 invalid-argument-type = "ignore"
 unused-ignore-comment = "ignore"
+unused-type-ignore-comment = "ignore"
 
 # ------------------------------
 # PYREFLY
