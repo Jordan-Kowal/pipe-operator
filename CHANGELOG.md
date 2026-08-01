@@ -17,6 +17,9 @@
 - 🔧 Added `Makefile` with `verify`, `lint`, `types`, `test` targets
 - 🔧 Migrated `[tool.uv].dev-dependencies` to PEP 735 `[dependency-groups].dev`
 - 🔧 Updated deps
+- 🔧 Pinned `target-version = "py310"` in the `ruff` config
+- 🔧 Modernized syntax to the 3.10 baseline: builtin generics (`list[int]`), `X | Y` unions, ABCs from `collections.abc`
+- 💥 Dropped support for Python 3.9 (EOL since 2025-10). Minimum version is now 3.10
 
 ## 2.1.0 - 2026-01-23
 

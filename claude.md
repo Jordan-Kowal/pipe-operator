@@ -21,11 +21,11 @@ This document provides context and guidelines for Claude AI when working on the 
 - **Elixir Flow**: Mimics Elixir's `|>` operator using Python's `>>` operator
 - **Python Flow**: A more Pythonic approach using chaining
 
-The project focuses on type safety, code quality, and compatibility across multiple Python versions (3.9-3.14).
+The project focuses on type safety, code quality, and compatibility across multiple Python versions (3.10-3.14).
 
 ## Technology Stack
 
-- **Language**: Python 3.9+
+- **Language**: Python 3.10+
 - **Package Manager**: uv
 - **Type Checkers**: mypy, pyright, ty, pyrefly
 - **Linters**: ruff, flake8
@@ -60,23 +60,23 @@ coverage run -m unittest discover . && coverage report --fail-under=90
 
 ## Python Version Compatibility **(Critical)**
 
-Code must work on Python 3.9 through 3.14. Avoid Python 3.10+ only features.
+Code must work on Python 3.10 through 3.14. Avoid Python 3.11+ only features.
 
 **Anti-patterns - DO NOT USE:**
 
-- `match`/`case` statements (Python 3.10+)
-- `|` operator for type unions in annotations (use `Union[A, B]` instead)
-- Structural pattern matching
-- `TypeAlias` without `from typing_extensions import TypeAlias`
-- `Self` type without `from typing_extensions import Self`
-- Built-in generic types in annotations like `list[int]` (use `List[int]`)
+- `Self` type from `typing` (3.11+) - import from `typing_extensions` instead
+- `TypeIs` / `assert_type` / `Never` from `typing` (3.11+ or later) - import from `typing_extensions`
+- Deprecated `typing` aliases like `List`, `Dict`, `Tuple`, `Type` (use builtins)
+- `typing.Coroutine` / `typing.Callable` (import from `collections.abc`)
+- Exception groups and `except*` (3.11+)
 
 **Correct patterns:**
 
-- Use `Union[A, B]` or `Optional[A]` for type unions
-- Use `List`, `Dict`, `Set`, `Tuple` from `typing` module
-- Use `if`/`elif`/`else` instead of match statements
-- Import from `typing_extensions` for newer type features
+- Use `X | Y` and `X | None` for type unions
+- Use builtin generics: `list[int]`, `dict[str, int]`, `tuple[int, ...]`
+- Import ABCs from `collections.abc` (`Callable`, `Coroutine`, `Iterator`)
+- `match`/`case` is allowed (3.10+)
+- Import from `typing_extensions` for anything newer than 3.10
 
 ### Type Safety
 

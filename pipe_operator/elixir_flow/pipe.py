@@ -1,8 +1,9 @@
 import ast
+from collections.abc import Callable
 from inspect import getsource, isclass, stack
 from itertools import takewhile
 from textwrap import dedent
-from typing import Any, Callable, Optional, TypeVar
+from typing import Any, TypeVar
 
 from pipe_operator.elixir_flow.transformers import (
     DEFAULT_LAMBDA_VAR,
@@ -16,7 +17,7 @@ from pipe_operator.shared.utils import is_one_arg_lambda
 
 
 def elixir_pipe(
-    func: Optional[Callable] = None,
+    func: Callable | None = None,
     operator: OperatorString = DEFAULT_OPERATOR,
     placeholder: str = DEFAULT_PLACEHOLDER,
     lambda_var: str = DEFAULT_LAMBDA_VAR,
@@ -124,7 +125,7 @@ def elixir_pipe(
         source_indent = sum([1 for _ in takewhile(str.isspace, source)]) + 1
         for node in ast.walk(tree):
             if hasattr(node, "col_offset"):
-                node.col_offset += source_indent  # noqa # type: ignore
+                node.col_offset += source_indent  # type: ignore
                 node.end_col_offset += source_indent  # type: ignore
 
         # Remove the @elixir_pipe decorator and @elixir_pipe() decorators from the AST to avoid recursive calls
@@ -147,10 +148,11 @@ def elixir_pipe(
         tree = transformer.visit(tree)
         code = compile(
             tree,
-            filename=(ctx["__file__"] if "__file__" in ctx else "repl"),
+            filename=ctx.get("__file__", "repl"),
             mode="exec",
         )
-        exec(code, ctx)
+        # Executing the rewritten AST is the core mechanism of this decorator
+        exec(code, ctx)  # noqa: S102
         return ctx[tree.body[0].name]
 
     # If decorator called without parenthesis `@elixir_pipe`

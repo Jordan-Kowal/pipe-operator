@@ -1,7 +1,7 @@
 [project]
 name = "pipe_operator"
 version = "2.1.0"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 description = "Elixir's pipe operator in Python"
 dependencies = ["typing-extensions>=4.12.2"]
 readme = "README.md"
@@ -19,7 +19,6 @@ classifiers = [
     "Operating System :: MacOS",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
@@ -67,7 +66,7 @@ dev = [
 # Strict by default (python_flow). Permissive override for elixir_flow.
 # ------------------------------
 [tool.mypy]
-python_version = "3.9"
+python_version = "3.10"
 mypy_path = "."
 strict = true
 follow_imports = "silent"
@@ -95,7 +94,7 @@ disable_error_code = ["attr-defined", "import-untyped", "name-defined", "redunda
 # Strict by default (python_flow). Permissive executionEnvironment for elixir_flow.
 # ------------------------------
 [tool.pyright]
-pythonVersion = "3.9"
+pythonVersion = "3.10"
 typeCheckingMode = "strict"
 include = ["pipe_operator"]
 exclude = ["**/__pycache__", ".venv", "build", "dist"]
@@ -149,9 +148,14 @@ project-excludes = ["**/__pycache__", ".venv", "build", "dist"]
 # ------------------------------
 # RUFF
 # ------------------------------
+[tool.ruff]
+target-version = "py310"
+
 [tool.ruff.format]
 quote-style = "double"
 docstring-code-format = true
+# README snippets use hand-aligned comment columns that the formatter would collapse
+exclude = ["README.md"]
 
 [tool.ruff.lint.per-file-ignores]
 "*/elixir_flow/tests/test_pipe.py" = ["F821"]

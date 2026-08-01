@@ -1,5 +1,6 @@
+from collections.abc import Callable, Coroutine
 import inspect
-from typing import Any, Callable, Coroutine
+from typing import Any
 
 from typing_extensions import TypeIs
 

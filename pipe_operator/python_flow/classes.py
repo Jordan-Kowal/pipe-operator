@@ -1,13 +1,9 @@
 import asyncio
+from collections.abc import Callable
 from threading import Thread
 from typing import (
     Any,
-    Callable,
-    Dict,
     Generic,
-    List,
-    Optional,
-    Tuple,
     cast,
     overload,
 )
@@ -44,12 +40,12 @@ class PipeObject(Generic[TValue]):
         4
     """
 
-    __slots__ = ("value", "debug", "history", "tasks")
+    __slots__ = ("debug", "history", "tasks", "value")
 
     value: Any
     debug: bool
-    history: List[Any]
-    tasks: Dict[TaskId, Thread]
+    history: list[Any]
+    tasks: dict[TaskId, Thread]
 
     def __init__(self, value: TValue, debug: bool = False) -> None:
         self.value = value
@@ -76,7 +72,7 @@ class PipeObject(Generic[TValue]):
         self.tasks[task_id] = thread
         thread.start()
 
-    def wait_for_tasks(self, task_ids: Optional[List[TaskId]] = None) -> None:
+    def wait_for_tasks(self, task_ids: list[TaskId] | None = None) -> None:
         """Explicitly waits for the given tasks to complete."""
         threads = self._get_tasks(task_ids)
         for thread in threads:
@@ -89,7 +85,7 @@ class PipeObject(Generic[TValue]):
         print(self.value)
         self.history.append(self.value)
 
-    def _get_tasks(self, task_ids: Optional[List[TaskId]] = None) -> List[Thread]:
+    def _get_tasks(self, task_ids: list[TaskId] | None = None) -> list[Thread]:
         """Returns a list of tasks, filtered by task_ids if provided."""
         if task_ids is None:
             return list(self.tasks.values())
@@ -101,11 +97,11 @@ class PipeObject(Generic[TValue]):
 
 # region Pipe
 class Pipe(Generic[TInput, FuncParams, TOutput]):
-    __slots__ = ("f", "args", "kwargs")
+    __slots__ = ("args", "f", "kwargs")
 
     f: SyncCallable[TInput, FuncParams, TOutput]
-    args: Tuple[Any, ...]
-    kwargs: Dict[str, Any]
+    args: tuple[Any, ...]
+    kwargs: dict[str, Any]
 
     def __init__(
         self,
@@ -125,11 +121,11 @@ class Pipe(Generic[TInput, FuncParams, TOutput]):
 
 # region AsyncPipe
 class AsyncPipe(Generic[TInput, FuncParams, TOutput]):
-    __slots__ = ("f", "args", "kwargs")
+    __slots__ = ("args", "f", "kwargs")
 
     f: AsyncCallable[TInput, FuncParams, TOutput]
-    args: Tuple[Any, ...]
-    kwargs: Dict[str, Any]
+    args: tuple[Any, ...]
+    kwargs: dict[str, Any]
 
     def __init__(
         self,
@@ -281,11 +277,11 @@ class Tap(Generic[TInput, FuncParams]):
         7  # Because `BasicClass.increment` updated the original object
     """
 
-    __slots__ = ("f", "args", "kwargs")
+    __slots__ = ("args", "f", "kwargs")
 
     f: PipeableCallable[TInput, FuncParams, Any]
-    args: Tuple[Any, ...]
-    kwargs: Dict[str, Any]
+    args: tuple[Any, ...]
+    kwargs: dict[str, Any]
 
     def __init__(
         self,
@@ -339,11 +335,11 @@ class TaskPipe(Generic[TInput, FuncParams]):
         4  # Because `BasicClass.increment` updated the original object
     """
 
-    __slots__ = ("f", "args", "kwargs", "task_id")
+    __slots__ = ("args", "f", "kwargs", "task_id")
 
     f: PipeableCallable[TInput, FuncParams, Any]
-    args: Tuple[Any, ...]
-    kwargs: Dict[str, Any]
+    args: tuple[Any, ...]
+    kwargs: dict[str, Any]
     task_id: TaskId
 
     def __init__(
@@ -396,9 +392,9 @@ class WaitFor:
 
     __slots__ = ("task_ids",)
 
-    task_ids: Optional[List[TaskId]]
+    task_ids: list[TaskId] | None
 
-    def __init__(self, task_ids: Optional[List[TaskId]] = None) -> None:
+    def __init__(self, task_ids: list[TaskId] | None = None) -> None:
         self.task_ids = task_ids
 
     def __rrshift__(self, other: PipeObject[TInput]) -> PipeObject[TInput]:

@@ -1,5 +1,4 @@
 import ast
-from typing import Optional, Type
 
 from pipe_operator.elixir_flow.utils import (
     OperatorString,
@@ -68,11 +67,11 @@ class PipeTransformer(ast.NodeTransformer):
         debug_mode: bool = False,
     ) -> None:
         # State
-        self.operator: Type[ast.operator] = string_to_ast_BinOp(operator)
+        self.operator: type[ast.operator] = string_to_ast_BinOp(operator)
         self.placeholder = placeholder
         self.lambda_var = lambda_var
         self.debug_mode = debug_mode
-        self.debug_func_node: Optional[ast.expr] = None
+        self.debug_func_node: ast.expr | None = None
         # Computed
         self.lambda_transformer = ToLambdaTransformer(
             fallback_transformer=self,
@@ -184,7 +183,7 @@ class PipeTransformer(ast.NodeTransformer):
     def _add_debug(self, node: ast.expr) -> ast.Call:
         """Updates the node so that it also prints the results before returning it."""
         return ast.Call(
-            func=self.debug_func_node,  # noqa # type: ignore
+            func=self.debug_func_node,  # type: ignore
             args=[node],
             keywords=[],
             lineno=node.lineno,
@@ -277,7 +276,7 @@ class ToLambdaTransformer(ast.NodeTransformer):
     def __init__(
         self,
         fallback_transformer: ast.NodeTransformer,
-        excluded_operator: Type[ast.operator] = ast.RShift,
+        excluded_operator: type[ast.operator] = ast.RShift,
         placeholder: str = DEFAULT_PLACEHOLDER,
         var_name: str = DEFAULT_LAMBDA_VAR,
     ) -> None:
