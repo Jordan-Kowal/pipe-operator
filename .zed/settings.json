@@ -7,9 +7,20 @@
 // custom settings, run `zed: open default settings` from the
 // command palette (cmd-shift-p / ctrl-shift-p)
 {
+  "lsp": {
+    "pyrefly": {
+      "binary": {
+        "path": ".venv/bin/pyrefly",
+        "arguments": ["lsp"],
+        "env": {
+          "PYREFLY_PYTHON_INTERPRETER": "backend/.venv/bin/python",
+        },
+      },
+    },
+  },
   "languages": {
     "Python": {
-      "language_servers": ["basedpyright", "ty", "pyrefly", "pyright"],
+      "language_servers": ["basedpyright", "ty", "pyrefly", "pyright", "ruff"],
     },
   },
 }
